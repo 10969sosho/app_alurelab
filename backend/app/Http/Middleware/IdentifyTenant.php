@@ -28,12 +28,16 @@ class IdentifyTenant
         $store = null;
 
         if ($explicitStoreId) {
-            $store = Cache::remember("tenant:slug_or_id:{$explicitStoreId}", 86400, function () use ($explicitStoreId) {
+            $storeId = Cache::remember("tenant:id_by_slug_or_id:{$explicitStoreId}", 86400, function () use ($explicitStoreId) {
                 if (Str::isUuid($explicitStoreId)) {
-                    return Store::where('id', $explicitStoreId)->first();
+                    return Store::where('id', $explicitStoreId)->value('id');
                 }
-                return Store::where('slug', $explicitStoreId)->first();
+                return Store::where('slug', $explicitStoreId)->value('id');
             });
+
+            if ($storeId) {
+                $store = Store::find($storeId);
+            }
         }
 
         // Jika request dari user terautentikasi (misal di Dashboard) dan belum ada store
