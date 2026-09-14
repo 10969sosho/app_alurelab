@@ -1,7 +1,8 @@
 'use client';
 
-import { use, useState, useMemo } from 'react';
+import { use, useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
+import { fetchApi } from '@/lib/api-client';
 import {
   ShoppingBag,
   Star,
@@ -123,12 +124,82 @@ export default function StorefrontPage({ params }: { params: Promise<{ store_slu
   const resolvedParams = use(params);
   const storeSlug = resolvedParams.store_slug;
 
-  const store = DEMO_STORES[storeSlug] || {
-    storeName: storeSlug.replace('-', ' ').toUpperCase(),
+  const defaultStore = DEMO_STORES[storeSlug] || {
+    storeName: storeSlug.replace(/-/g, ' ').toUpperCase(),
     tagline: 'Toko Resmi ALURELAB E-Commerce Storefront',
     categories: ['Semua', 'Koleksi Utama'],
     products: DEMO_STORES['hijab-mevvah'].products,
   };
+
+  const [liveStore, setLiveStore] = useState<{
+    storeName: string;
+    tagline: string;
+    categories: string[];
+    products: Product[];
+  } | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadStoreAndProducts() {
+      try {
+        const [storeRes, prodRes] = await Promise.all([
+          fetchApi('/store', { headers: { 'x-store-slug': storeSlug } }),
+          fetchApi('/products', { headers: { 'x-store-slug': storeSlug } }),
+        ]);
+
+        if (!isMounted) return;
+
+        const storeData = storeRes?.data || storeRes?.store;
+        const productsRaw = prodRes?.data?.data || prodRes?.data || [];
+
+        if (storeData || (Array.isArray(productsRaw) && productsRaw.length > 0)) {
+          const mappedProducts: Product[] = Array.isArray(productsRaw) && productsRaw.length > 0
+            ? productsRaw.map((p: any) => ({
+                id: p.id,
+                title: p.title,
+                category: p.category_name || 'Koleksi',
+                slug: p.slug,
+                description: p.description || '',
+                price: Number(p.price) || 0,
+                compare_at_price: p.compare_at_price ? Number(p.compare_at_price) : undefined,
+                images: p.images && p.images.length > 0
+                  ? p.images
+                  : ['https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=600'],
+                variants: p.variants && p.variants.length > 0
+                  ? p.variants.map((v: any) => ({
+                      id: v.id,
+                      sku: v.sku,
+                      title: v.title,
+                      price: Number(v.price) || Number(p.price) || 0,
+                      stock: v.stock ?? 10,
+                    }))
+                  : [{ id: p.id + '-v1', sku: 'STD-1', title: 'All Size', price: Number(p.price), stock: 20 }],
+              }))
+            : defaultStore.products;
+
+          const categoriesSet = new Set<string>(['Semua']);
+          mappedProducts.forEach((p) => {
+            if (p.category) categoriesSet.add(p.category);
+          });
+
+          setLiveStore({
+            storeName: storeData?.name || defaultStore.storeName,
+            tagline: storeData?.settings?.tagline || defaultStore.tagline,
+            categories: Array.from(categoriesSet),
+            products: mappedProducts,
+          });
+        }
+      } catch (e) {
+        // Fallback to default
+      }
+    }
+    loadStoreAndProducts();
+    return () => {
+      isMounted = false;
+    };
+  }, [storeSlug]);
+
+  const store = liveStore || defaultStore;
 
   const { items, addItem, removeItem, updateQuantity, getTotalItems, getSubtotal } = useCartStore();
 
