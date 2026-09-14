@@ -46,22 +46,30 @@ export default function OnboardingPage() {
         : [],
     };
 
-    const res = await fetchApi('/merchants/onboard', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-
-    setLoading(false);
-
-    if (res.success) {
-      setCreatedStore(res.store);
-    } else {
-      // Fallback simulasi jika backend belum di-start
-      setCreatedStore({
-        name: formData.storeName,
-        slug: formData.storeSlug || 'toko-baru',
-        storefront_url: `http://localhost:3000/${formData.storeSlug || 'toko-baru'}`,
+    try {
+      const res = await fetchApi('/merchants/onboard', {
+        method: 'POST',
+        body: JSON.stringify(payload),
       });
+
+      setLoading(false);
+
+      if (res?.success && res?.store) {
+        const origin = typeof window !== 'undefined' ? window.location.origin : '';
+        const storefrontUrl = res.store.storefront_url && !res.store.storefront_url.includes('localhost:3000')
+          ? res.store.storefront_url
+          : `${origin}/${res.store.slug}`;
+
+        setCreatedStore({
+          ...res.store,
+          storefront_url: storefrontUrl,
+        });
+      } else {
+        alert(res?.message || 'Gagal membuat toko. Pastikan email dan slug toko belum pernah terdaftar.');
+      }
+    } catch (err: any) {
+      setLoading(false);
+      alert(err?.message || 'Gagal menghubungi server pendaftaran toko.');
     }
   };
 
@@ -80,9 +88,12 @@ export default function OnboardingPage() {
 
           <div className="bg-slate-950/80 border border-slate-800 p-4 rounded-xl text-left text-xs space-y-2 mb-8 font-mono">
             <div className="text-slate-500">Alamat Storefront Publik:</div>
-            <div className="text-emerald-400 font-bold break-all">
+            <a
+              href={`/${createdStore.slug}`}
+              className="text-emerald-400 font-bold break-all hover:underline block"
+            >
               {createdStore.storefront_url}
-            </div>
+            </a>
           </div>
 
           <div className="flex flex-col gap-3">

@@ -34,7 +34,7 @@ class MerchantController extends Controller
             'sample_products' => 'nullable|array',
         ]);
 
-        return DB::transaction(function () use ($validated) {
+        return DB::transaction(function () use ($validated, $request) {
             // 1. Buat Store
             $store = Store::create([
                 'name' => $validated['store_name'],
@@ -49,12 +49,12 @@ class MerchantController extends Controller
                 ],
             ]);
 
-            // 2. Buat User Owner
+            // 2. Buat User Owner (kolom PostgreSQL: password_hash)
             $user = User::create([
                 'name' => $validated['owner_name'],
                 'email' => $validated['owner_email'],
                 'phone_number' => $validated['owner_phone'],
-                'password' => Hash::make($validated['password']),
+                'password_hash' => Hash::make($validated['password']),
                 'is_superadmin' => false,
             ]);
 
@@ -72,7 +72,11 @@ class MerchantController extends Controller
                 'escrow_held_balance' => 0.00,
             ]);
 
-            // 5. Buat Sampel Produk Awal jika ada
+            // 5. Set RLS tenant context & buat Sampel Produk Awal jika ada
+            if (DB::getDriverName() === 'pgsql') {
+                DB::statement("SET app.current_tenant_id = '{$store->id}';");
+            }
+
             if (!empty($validated['sample_products'])) {
                 foreach ($validated['sample_products'] as $prod) {
                     $product = Product::create([
@@ -101,6 +105,10 @@ class MerchantController extends Controller
 
             $token = $user->createToken('merchant-auth')->plainTextToken;
 
+            $proto = $request->header('x-forwarded-proto') ?: $request->getScheme();
+            $host = $request->header('x-forwarded-host') ?: $request->getHost();
+            $storefrontUrl = "{$proto}://{$host}/{$store->slug}";
+
             return response()->json([
                 'success' => true,
                 'message' => 'Toko berhasil dibuat dalam hitungan detik!',
@@ -108,7 +116,7 @@ class MerchantController extends Controller
                     'id' => $store->id,
                     'name' => $store->name,
                     'slug' => $store->slug,
-                    'storefront_url' => "http://localhost:3000/{$store->slug}",
+                    'storefront_url' => $storefrontUrl,
                 ],
                 'user' => [
                     'id' => $user->id,
