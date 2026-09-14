@@ -58,6 +58,9 @@ class DatabaseSeeder extends Seeder
             'escrow_held_balance' => 1250000.00,
         ]);
 
+        // Set RLS tenant context for Postgres non-superuser
+        DB::statement("SET app.current_tenant_id = '{$store1->id}';");
+
         $prod1 = Product::create([
             'tenant_id' => $store1->id,
             'title' => 'Hijab Silk Premium Emerald Glow',
@@ -130,6 +133,9 @@ class DatabaseSeeder extends Seeder
             'available_balance' => 8900000.00,
             'escrow_held_balance' => 4500000.00,
         ]);
+
+        // Set RLS tenant context for Postgres non-superuser
+        DB::statement("SET app.current_tenant_id = '{$store2->id}';");
 
         $prod2 = Product::create([
             'tenant_id' => $store2->id,
