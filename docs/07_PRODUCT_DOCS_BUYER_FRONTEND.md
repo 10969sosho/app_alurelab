@@ -31,8 +31,16 @@
 #### Header (Sticky)
 - Logo toko + nama toko
 - Search bar (tap to expand)
-- Icon Cart (badge jumlah item)
+- Icon Cart (badge jumlah item real-time via Zustand `useCartStore`)
 - Icon WhatsApp untuk kontak penjual
+- **Tombol "Akun Saya" / Buyer Profile Drawer**:
+  - *State Tamu (Belum Login)*: Membuka drawer One-Click Phone/WhatsApp Auth (hanya input nomor HP/WA dan nama, tanpa kerumitan kata sandi atau kode OTP).
+  - *State Terautentikasi (Sudah Login)*:
+    - Tombol navbar berubah menampilkan inisial avatar & nama depan pembeli secara reaktif.
+    - Menampilkan kartu status pembeli terverifikasi & skor proteksi Anti-RTS.
+    - Formulir pembaruan cepat alamat pengiriman default (tersimpan ke database `customers`).
+    - Tab **Riwayat Pesanan**: Menampilkan pesanan real dari toko aktif (`GET /api/v1/buyer/orders`) dengan status pengerjaan (Diproses, Dikirim, Selesai) dan tautan lacak resi.
+    - Tombol **Keluar Akun (Logout)**: Menghapus session localStorage `alurelab_buyer_session`.
 
 #### Hero Banner / Slider
 - Max 5 banner gambar (landscape 16:9)
@@ -195,10 +203,13 @@ Setiap item:
 `[1. Data Penerima] → [2. Alamat] → [3. Pengiriman] → [4. Pembayaran]`
 
 ### Step 1: Data Penerima
-- Nama lengkap *
-- Nomor WhatsApp * (dengan validasi format +62)
-- Email (opsional, untuk kirim invoice)
-- Auto-fill jika sudah pernah order (dari localStorage / phone lookup)
+- **Indikator Status Pembeli**:
+  - Jika pembeli sudah login via `useBuyerStore`: Menampilkan badge *"Terhubung"* dan alert info *"Masuk sebagai [Nama] ([No HP]). Data pengiriman otomatis terisi!"*.
+- **Auto-Fill Pintar**: Kolom Nama, No. WhatsApp, Email, dan Alamat Detail langsung di-prefill otomatis dari data profil pembeli aktif.
+- **Formulir Manual**: Jika pembeli berbelanja sebagai tamu (guest), form dapat diisi langsung tanpa paksaan registrasi:
+  - Nama lengkap *
+  - Nomor WhatsApp aktif * (dengan format 08xxx / 628xxx)
+  - Email (opsional, untuk salinan nota digital)
 
 ### Step 2: Alamat Pengiriman
 - Powered by Biteship Area Search

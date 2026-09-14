@@ -97,7 +97,32 @@ stateDiagram-v2
     RETURN_TO_SHIPPER --> CANCELLED: Paket Balik ke Merchant
     
     DELIVERED --> COMPLETED: 2x24 Jam Tanpa Komplain (Dana Escrow Cair ke Dompet Merchant)
-    COMPLETED --> [*]
+    ```
+
+---
+
+### Flow 3: Otentikasi Pembeli & Profil Terintegrasi (WhatsApp / Phone One-Click Auth)
+
+Pembeli e-commerce di Indonesia menuntut checkout cepat tanpa hambatan kata sandi rumit atau pendaftaran akun berlapis. ALURELAB menerapkan **One-Click Phone/WhatsApp Authentication**:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Buyer as Pembeli
+    participant Storefront as Next.js Storefront (/[store_slug])
+    participant BuyerStore as Zustand (buyer-store.ts)
+    participant API as Laravel 11 (/api/v1/buyer)
+    participant DB as PostgreSQL (Customer Model)
+
+    Buyer->>Storefront: Buka drawer "Akun Saya" & input No. WhatsApp/HP + Nama
+    Storefront->>API: POST /api/v1/buyer/login { phone_number, full_name }
+    API->>API: Normalisasi nomor ke format E.164 (628xxx)
+    API->>DB: Cari Customer by phone_number (atau create baru jika belum ada)
+    API->>API: Terbitkan Laravel Sanctum Token: createToken('buyer-session', ['role:buyer'])
+    API-->>Storefront: Return { success: true, customer, token }
+    Storefront->>BuyerStore: Simpan session ke localStorage (alurelab_buyer_session)
+    Storefront-->>Buyer: Header berubah: inisial avatar + nama pembeli, riwayat pesanan aktif
+    Note over Buyer,Storefront: Saat pembeli masuk ke /[store_slug]/checkout, data nama, HP, dan alamat otomatis terisi!
 ```
 
 ---
@@ -134,3 +159,17 @@ $order = Order::create([...]);
 // Dispatch Delayed Job: Jika dalam 15 menit belum dibayar, kembalikan stok
 ReleaseUnpaidStockJob::dispatch($order->id)->delay(now()->addMinutes(15));
 ```
+
+---
+
+## 5. Arsitektur Dual-Routing Web Server (LiteSpeed & NextAuth v5)
+
+Untuk menyatukan performa sub-detik SSR/Edge Next.js 15 dan keandalan backend Laravel 11 pada satu domain utama (`app.alurelab.com`), server menerapkan aturan routing terisolasi di level web server:
+
+1. **Backend Routing Scope (`/api/v1/*`, `/sanctum/*`, `/storage/*`)**:
+   - Diteruskan langsung ke fast PHP-FPM handler (`backend/public/index.php`).
+   - Menyediakan REST API multi-tenant yang divalidasi oleh PostgreSQL RLS session.
+2. **Frontend & Auth.js Scope (`/*`, `/api/auth/*`)**:
+   - Diproxy ke port internal `3040` yang dikelola oleh daemon PM2 `alurelab-frontend`.
+   - Mengisolasi NextAuth v5 session handler agar tidak berbenturan dengan router internal Laravel.
+   - Variabel lingkungan `AUTH_TRUST_HOST=true` memastikan token JWT dan callback URL Auth.js bekerja di balik reverse proxy.

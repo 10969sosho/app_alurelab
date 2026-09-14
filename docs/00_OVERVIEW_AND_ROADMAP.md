@@ -59,54 +59,55 @@ ALURELAB dirancang sebagai platform **SaaS E-Commerce AI-Native Multi-Tenant** y
 
 Roadmap disusun dalam siklus sprint 2 mingguan:
 
-### SPRINT 1: Fondasi Arsitektur, Multi-Tenancy & Database (Pekan 1–2)
-- [ ] Inisialisasi Repository Monorepo atau Polyrepo (Frontend: Next.js 15, Backend: Laravel 11).
-- [ ] Setup PostgreSQL 16 dengan ekstensi UUID dan integrasi Row-Level Security (RLS).
-- [ ] Implementasi Middleware Tenant Resolution di Laravel (berbasis subdomain `*.alurelab.shop` dan custom domain).
-- [ ] Sistem Autentikasi Master Admin & Merchant (Laravel Sanctum + NextAuth/Iron Session).
-- [ ] Unit Test isolasi tenant: memastikan Merchant A tidak bisa mengakses query data Merchant B.
+### SPRINT 1: Fondasi Arsitektur, Multi-Tenancy & Database (SELESAI & LIVE)
+- [x] Inisialisasi Repository Monorepo (Frontend: Next.js 15, Backend: Laravel 11).
+- [x] Setup PostgreSQL dengan ekstensi UUID dan integrasi Row-Level Security (RLS).
+- [x] Implementasi Middleware Tenant Resolution di Laravel (`IdentifyTenant`) berbasis domain, subdomain, dan header `X-Store-Slug`.
+- [x] Sistem Autentikasi Multi-Role: Merchant (NextAuth v5 + Sanctum) dan Pembeli (Sanctum One-Click Phone Auth).
+- [x] Isolasi tenant PostgreSQL RLS context aktif pada semua transaksi database.
 
-### SPRINT 2: Katalog Produk, Varian & AI Generator Dasar (Pekan 3–4)
-- [ ] Manajemen Produk (CRUD produk, kategori, varian multi-level: warna, ukuran).
-- [ ] Penyimpanan aset media ke Cloudflare R2 (presigned URL upload langsung dari browser).
-- [ ] Integrasi AI Copywriting (OpenAI GPT-4o-mini): generate judul, deskripsi persuasif, dan SEO tag otomatis.
-- [ ] Pipeline integrasi AI Photo Studio (RMBG-2.0 via Replicate): background removal dan mockup studio.
+### SPRINT 2: Katalog Produk, Varian & Dynamic Store Seeding (SELESAI & LIVE)
+- [x] Manajemen Produk (CRUD produk, kategori, varian multi-level: warna, ukuran, SKU, harga, stok).
+- [x] Instant store generator pada wizard onboarding 60 detik (`/onboarding`).
+- [x] Dynamic product fetching real-time dari PostgreSQL pada storefront publik.
+- [ ] Pipeline integrasi AI Photo Studio (RMBG-2.0 via Replicate): background removal dan mockup studio otomatis.
 
-### SPRINT 3: Storefront Frontend Sub-Detik & Customizer (Pekan 5–6)
-- [ ] Next.js 15 Storefront ultra-cepat: dynamic routing `/[store_slug]`, static regeneration (ISR).
-- [ ] Tema visual toko yang responsif, bersih, dan berorientasi konversi (mobile-first).
-- [ ] Halaman Checkout 1-Halaman (1-Page Fast Checkout) teroptimasi tanpa login bagi pembeli.
-- [ ] Keranjang belanja lokal (LocalStorage / Zustand) sinkronisasi stok riil.
+### SPRINT 3: Storefront Frontend Sub-Detik, Buyer Auth & Fast Checkout (SELESAI & LIVE)
+- [x] Next.js 15 Storefront ultra-cepat: dynamic routing `/[store_slug]`, SSR & client interactivity.
+- [x] Tema visual toko mobile-first responsif dengan sticky navigation dan drawer slide-over.
+- [x] Halaman 1-Page Fast Checkout (`/[store_slug]/checkout`) dengan progress indicator 4-langkah.
+- [x] Otentikasi Pembeli One-Click WhatsApp/No. HP tanpa password via drawer "Akun Saya".
+- [x] Penyimpanan riwayat pesanan toko real & auto-fill otomatis formulir checkout dari profil pembeli aktif.
+- [x] Keranjang belanja lokal via Zustand `useCartStore` sinkronisasi varian.
 
-### SPRINT 4: Integrasi Pembayaran & Escrow Xendit (Pekan 7–8)
-- [ ] Integrasi Xendit XenPlatform: pembuatan Sub-Account otomatis saat merchant onboard.
-- [ ] Pembuatan tagihan pembayaran: QRIS Dinamis, Virtual Account, dan e-Wallet.
-- [ ] Webhook Receiver Xendit dengan verifikasi kriptografis signature token.
-- [ ] Sistem Escrow Virtual & Dompet Saldo Merchant (Ledger internal).
-- [ ] Mekanisme Withdrawal (Tarik Dana) berkala ke rekening bank pribadi merchant via XenDisburse.
+### SPRINT 4: Integrasi Pembayaran & Escrow Xendit (TAHAP IMPLEMENTASI AKTIF)
+- [x] Desain skema relasi pembayaran (`payments`, `wallet_txs`) dan state machine order escrow.
+- [x] UI pilihan metode pembayaran: QRIS, Virtual Account bank besar, dan COD dengan proteksi Anti-RTS.
+- [x] Mock invoice viewer terintegrasi (`/mock/xendit-invoice/[id]`) untuk simulasi checkout end-to-end tanpa kredensial live.
+- [ ] Integrasi Xendit XenPlatform Live API & webhook signature validation.
+- [ ] Dompet Saldo Merchant & auto-withdrawal ke rekening bank merchant.
 
-### SPRINT 5: Integrasi Logistik Biteship & COD Protection (Pekan 9–10)
-- [ ] Integrasi Biteship API: kalkulasi ongkos kirim real-time per kelurahan/kecamatan se-Indonesia.
-- [ ] Pembuatan pesanan kirim & auto-generate nomor resi (AWB) + download thermal label PDF (100x150mm).
-- [ ] Penjadwalan auto-pickup kurir dan opsi drop-off gerai.
-- [ ] Sistem COD terproteksi: verifikasi nomor WhatsApp OTP dan Smart Anti-RTS Risk Scoring.
-- [ ] Webhook tracking status pengiriman real-time (normalisasi status kurir).
+### SPRINT 5: Integrasi Logistik Biteship & COD Protection (TAHAP IMPLEMENTASI AKTIF)
+- [x] Standardisasi Biteship Area ID pada formulir alamat pengiriman storefront & checkout.
+- [x] UI kalkulasi dan pemilihan layanan kurir (SiCepat, J&T, JNE).
+- [x] Anti-RTS Risk Scoring formula & field pada profil pembeli (`customers.risk_score`).
+- [ ] Live Biteship API rate checking, auto-booking resi (AWB), dan cetak PDF thermal label (100x150mm).
 
-### SPRINT 6: WhatsApp Automation & Abandoned Cart Recovery (Pekan 11–12)
-- [ ] Integrasi WhatsApp Gateway (Fonnte / Wablas API) untuk notifikasi instan:
-  - Notifikasi pesanan baru ke merchant.
-  - Notifikasi nomor resi & link tracking ke pembeli.
-- [ ] Autonomous Cart Recovery: follow-up otomatis ke pembeli yang meninggalkan keranjang setelah 15 menit dan 24 jam dengan voucher diskon dinamis.
-- [ ] Tracking Pixel: integrasi Meta Pixel (Browser + Conversions API / CAPI) dan TikTok Events API.
+### SPRINT 6: WhatsApp Automation & Abandoned Cart Recovery (BACKLOG)
+- [ ] Integrasi WhatsApp Gateway (Fonnte / Wablas API) untuk notifikasi nomor resi & link tracking ke pembeli.
+- [ ] Autonomous Cart Recovery: follow-up otomatis ke pembeli yang meninggalkan keranjang.
+- [ ] Tracking Pixel: integrasi Meta Pixel dan TikTok Events API.
 
-### SPRINT 7: Custom Domain (Cloudflare for SaaS) & Merchant Billing (Pekan 13–14)
-- [ ] Integrasi Cloudflare for SaaS API: merchant bisa memasang domain sendiri (misal: `tokosaya.com`) dengan CNAME dan SSL otomatis diterbitkan dalam 3 menit.
-- [ ] Subscription Billing Engine: sistem langganan bulanan paket Starter (Rp 99K), Pro (Rp 249K), dan Business (Rp 599K).
-- [ ] Sistem Afiliasi Berulang (Recurring Affiliate 20%): pelacakan referral link untuk media buyer dan agensi periklanan.
+### SPRINT 7: Custom Domain & Merchant Billing (BACKLOG)
+- [ ] Cloudflare for SaaS API: CNAME dan SSL otomatis untuk domain custom merchant.
+- [ ] Subscription Billing Engine (Starter, Pro, Business).
+- [ ] Program Afiliasi Berulang (Recurring Affiliate 20%).
 
-### SPRINT 8: Security Hardening, Load Testing & Go-Live Production (Pekan 15–16)
-- [ ] Audit Keamanan & Penetration Testing: validasi SQL injection, XSS, CSRF, IDOR, dan RLS bypass.
-- [ ] Stress & Load Testing: simulasi 10.000 concurrent user checkout bersamaan via k6 / Locust.
-- [ ] Setup Server Production di VPS Ubuntu 24.04 (Hetzner / DigitalOcean) dengan Docker Swarm / Kubernetes k3s.
+### SPRINT 8: Production Deployment & Dual-Routing Optimization (SELESAI & LIVE)
+- [x] Deployment live ke server production `emerald.hidden-server.net:31988` (`app.alurelab.com`).
+- [x] Arsitektur Dual-Routing LiteSpeed `.htaccess`: isolasi `/api/v1/*` ke PHP-FPM dan semua route lainnya ke Next.js port 3040.
+- [x] Daemon PM2 `alurelab-frontend` running stable.
+- [x] NextAuth v5 Trusted Host fix (`AUTH_TRUST_HOST=true`).
+- [x] Seed demo toko aktif: Kalmora Official (`kalmora`), Hijab Mevvah (`hijab-mevvah`), Vibe Sneakers (`vibe-sneakers`).
 - [ ] Konfigurasi Monitoring & Alerting: Sentry (error tracking), Prometheus + Grafana, dan UptimeRobot.
 - [ ] Soft Launching dengan 20 Beta Merchant pilihan.
