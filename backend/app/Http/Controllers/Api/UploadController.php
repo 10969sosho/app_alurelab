@@ -1,0 +1,89 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Str;
+
+class UploadController extends Controller
+{
+    /**
+     * POST /merchant/upload/presign
+     * Generate presigned URL untuk upload langsung ke Cloudflare R2 dari browser.
+     * Tidak ada file yang melewati server Laravel — hemat bandwidth & lebih cepat.
+     */
+    public function presign(Request $request): JsonResponse
+    {
+        $store = $request->attributes->get('current_store');
+
+        $request->validate([
+            'filename'  => 'required|string|max:255',
+            'mime_type' => 'required|string|in:image/jpeg,image/png,image/webp,image/gif,video/mp4',
+            'folder'    => 'nullable|string|in:products,banners,logos,labels',
+        ]);
+
+        $ext      = pathinfo($request->filename, PATHINFO_EXTENSION);
+        $key      = sprintf(
+            '%s/%s/%s.%s',
+            $request->input('folder', 'products'),
+            $store->slug,
+            Str::uuid(),
+            strtolower($ext)
+        );
+
+        // Buat presigned URL menggunakan AWS SDK (Cloudflare R2 kompatibel dengan S3 API)
+        $s3Client = new \Aws\S3\S3Client([
+            'version'     => 'latest',
+            'region'      => 'auto',
+            'endpoint'    => config('filesystems.disks.r2.endpoint'),
+            'credentials' => [
+                'key'    => config('filesystems.disks.r2.key'),
+                'secret' => config('filesystems.disks.r2.secret'),
+            ],
+        ]);
+
+        $cmd = $s3Client->getCommand('PutObject', [
+            'Bucket'      => config('filesystems.disks.r2.bucket'),
+            'Key'         => $key,
+            'ContentType' => $request->mime_type,
+            'ACL'         => 'public-read',
+        ]);
+
+        $presignedRequest = $s3Client->createPresignedRequest($cmd, '+15 minutes');
+        $presignedUrl     = (string) $presignedRequest->getUri();
+        $publicUrl        = config('filesystems.disks.r2.url') . '/' . $key;
+
+        return response()->json([
+            'upload_url' => $presignedUrl,
+            'public_url' => $publicUrl,
+            'key'        => $key,
+            'expires_in' => 900, // 15 menit
+        ]);
+    }
+
+    /**
+     * POST /merchant/upload/presign-bg-removal
+     * Buat presigned URL untuk upload gambar yang akan diproses AI background removal.
+     */
+    public function presignBgRemoval(Request $request): JsonResponse
+    {
+        // Sama dengan presign, tapi folder 'temp' dan trigger job background removal
+        $request->validate([
+            'filename'  => 'required|string|max:255',
+            'mime_type' => 'required|string|in:image/jpeg,image/png,image/webp',
+        ]);
+
+        // Return presigned URL ke temp folder
+        // Frontend upload ke sana, lalu call /ai/remove-background dengan key ini
+        $key = 'temp/' . Str::uuid() . '.' . pathinfo($request->filename, PATHINFO_EXTENSION);
+
+        // Untuk sementara return mock URL sampai AWS SDK disetup
+        return response()->json([
+            'upload_url' => 'https://r2-upload-placeholder.alurelab.shop/' . $key,
+            'temp_key'   => $key,
+            'expires_in' => 300,
+        ]);
+    }
+}

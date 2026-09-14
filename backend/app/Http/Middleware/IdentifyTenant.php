@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use App\Models\Store;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
 class IdentifyTenant
@@ -20,16 +21,24 @@ class IdentifyTenant
         $rootDomain = config('app.root_domain', 'alurelab.shop');
 
         // Boleh override lewat header atau route parameter untuk development & API testing
-        $explicitStoreId = $request->header('x-tenant-id') ?: $request->route('store_slug');
+        $explicitStoreId = $request->header('x-tenant-id')
+            ?: $request->header('x-store-slug')
+            ?: $request->route('store_slug');
 
         $store = null;
 
         if ($explicitStoreId) {
             $store = Cache::remember("tenant:slug_or_id:{$explicitStoreId}", 86400, function () use ($explicitStoreId) {
-                return Store::where('id', $explicitStoreId)
-                    ->orWhere('slug', $explicitStoreId)
-                    ->first();
+                if (Str::isUuid($explicitStoreId)) {
+                    return Store::where('id', $explicitStoreId)->first();
+                }
+                return Store::where('slug', $explicitStoreId)->first();
             });
+        }
+
+        // Jika request dari user terautentikasi (misal di Dashboard) dan belum ada store
+        if (!$store && $request->user()) {
+            $store = $request->user()->stores()->first();
         }
 
         if (!$store) {
@@ -72,7 +81,9 @@ class IdentifyTenant
 
         // Ikat instance Store ke Service Container & request attribute
         app()->instance('current_tenant', $store);
+        app()->instance('current_store', $store);
         $request->attributes->set('tenant', $store);
+        $request->attributes->set('current_store', $store);
 
         return $next($request);
     }

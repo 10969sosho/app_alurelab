@@ -41,3 +41,8 @@ backend/bootstrap/cache/*
 # Testing
 .phpunit.result.cache
 coverage/
+
+# Local backups
+*.bak
+*.bak*
+backend.bak/

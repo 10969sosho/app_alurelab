@@ -300,7 +300,7 @@ export default function StorefrontPage({ params }: { params: Promise<{ store_slu
               className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between"
             >
               {/* Image Thumbnail */}
-              <div className="aspect-square bg-slate-100 relative overflow-hidden group">
+              <Link href={`/${storeSlug}/products/${product.slug}`} className="aspect-square bg-slate-100 relative overflow-hidden group block">
                 <img
                   src={product.images[0]}
                   alt={product.title}
@@ -314,7 +314,7 @@ export default function StorefrontPage({ params }: { params: Promise<{ store_slu
                 <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-xs text-slate-800 text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 shadow-xs">
                   <Star className="w-3 h-3 text-amber-500 fill-amber-500" /> 4.9
                 </div>
-              </div>
+              </Link>
 
               {/* Detail */}
               <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
@@ -322,13 +322,16 @@ export default function StorefrontPage({ params }: { params: Promise<{ store_slu
                   <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 block mb-1">
                     {product.category}
                   </span>
-                  <h3 className="font-bold text-slate-900 text-sm leading-snug mb-1">
-                    {product.title}
-                  </h3>
+                  <Link href={`/${storeSlug}/products/${product.slug}`}>
+                    <h3 className="font-bold text-slate-900 text-sm leading-snug mb-1 hover:text-emerald-600 transition-colors">
+                      {product.title}
+                    </h3>
+                  </Link>
                   <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
                     {product.description}
                   </p>
                 </div>
+
 
                 <div>
                   <div className="flex items-baseline gap-2 mb-3">
@@ -500,10 +503,18 @@ export default function StorefrontPage({ params }: { params: Promise<{ store_slu
                   ))}
                 </div>
               </div>
+
+              <Link
+                href={`/${storeSlug}/orders/${trackNumber}`}
+                className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors"
+              >
+                Lihat Halaman Pelacakan Lengkap →
+              </Link>
             </div>
           )}
         </form>
       </SlideOver>
+
 
       {/* DRAWER 3: SLIDE-OVER AKUN SAYA (BUYER PROFILE) */}
       <SlideOver

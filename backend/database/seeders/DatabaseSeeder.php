@@ -16,6 +16,9 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // 0. Seed Roles & Permissions
+        $this->call(RoleSeeder::class);
+
         // ==========================================
         // Tenant 1: Hijab Mevvah Official
         // ==========================================
@@ -40,7 +43,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Amanda Putri',
             'email' => 'amanda@hijabmevvah.com',
             'phone_number' => '081234567890',
-            'password' => Hash::make('password123'),
+            'password_hash' => Hash::make('password123'),
         ]);
 
         StoreUser::create([
@@ -113,7 +116,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Budi Santoso',
             'email' => 'budi@vibesneakers.id',
             'phone_number' => '087812345678',
-            'password' => Hash::make('password123'),
+            'password_hash' => Hash::make('password123'),
         ]);
 
         StoreUser::create([

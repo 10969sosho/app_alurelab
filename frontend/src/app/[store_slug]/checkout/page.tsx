@@ -121,16 +121,22 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
             </div>
           </div>
 
-          {form.paymentMethod === 'ONLINE' && orderSuccess.payment?.invoice_url && (
-            <a
-              href={orderSuccess.payment.invoice_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl shadow mb-3 text-sm transition-all"
+          {form.paymentMethod === 'ONLINE' && (
+            <Link
+              href={`/mock/xendit-invoice/${orderSuccess.order_number}?store=${storeSlug}&amount=${totalAmount}&order=${orderSuccess.order_number}`}
+              className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow mb-3 text-sm transition-all"
             >
-              Bayar Sekarang via Xendit →
-            </a>
+              Bayar Sekarang via Xendit (Simulasi QRIS / VA) →
+            </Link>
           )}
+
+
+          <Link
+            href={`/${storeSlug}/orders/${orderSuccess.order_number}`}
+            className="block w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl mb-3 text-sm transition-all"
+          >
+            Lacak Status Pesanan Ini →
+          </Link>
 
           <Link
             href={`/${storeSlug}`}
@@ -142,6 +148,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
       </div>
     );
   }
+
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-16">
