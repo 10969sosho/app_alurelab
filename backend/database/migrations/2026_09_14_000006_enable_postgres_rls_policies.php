@@ -37,7 +37,10 @@ return new class extends Migration
                     ) THEN
                         CREATE POLICY tenant_isolation_{$table} ON {$table}
                             FOR ALL 
-                            USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid);
+                            USING (
+                                COALESCE(current_setting('app.is_system_bypass', true), 'off') = 'on'
+                                OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+                            );
                     END IF;
                 END
                 $$;

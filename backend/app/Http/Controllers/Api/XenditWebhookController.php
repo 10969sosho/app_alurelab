@@ -48,10 +48,24 @@ class XenditWebhookController extends Controller
             return response()->json(['error' => 'Missing external_id'], 400);
         }
 
+        // External webhook needs system bypass to locate order by global external_id
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("SET app.is_system_bypass = 'on';");
+        }
+
         $order = Order::where('order_number', $externalId)->first();
         if (!$order) {
+            if (DB::getDriverName() === 'pgsql') {
+                DB::statement("SET app.is_system_bypass = 'off';");
+            }
             Log::warning("Webhook Xendit: Order {$externalId} tidak ditemukan");
             return response()->json(['error' => 'Order not found'], 404);
+        }
+
+        // Bind tenant session for order scope & reset bypass
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("SET app.current_tenant_id = '{$order->tenant_id}';");
+            DB::statement("SET app.is_system_bypass = 'off';");
         }
 
         // Idempotency: Jika order sudah PAID, return success seketika

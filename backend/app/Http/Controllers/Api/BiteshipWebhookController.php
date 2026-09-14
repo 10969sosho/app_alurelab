@@ -10,6 +10,7 @@ use App\Models\Shipment;
 use App\Services\AntiRtsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class BiteshipWebhookController extends Controller
@@ -34,12 +35,24 @@ class BiteshipWebhookController extends Controller
             'waybill_id' => $waybillId,
         ]);
 
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("SET app.is_system_bypass = 'on';");
+        }
+
         $shipment = Shipment::where('biteship_order_id', $orderId)
             ->orWhere('waybill_id', $waybillId)
             ->first();
 
         if (!$shipment) {
+            if (DB::getDriverName() === 'pgsql') {
+                DB::statement("SET app.is_system_bypass = 'off';");
+            }
             return response()->json(['message' => 'Shipment ignored or not found'], 200);
+        }
+
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("SET app.current_tenant_id = '{$shipment->tenant_id}';");
+            DB::statement("SET app.is_system_bypass = 'off';");
         }
 
         $order = $shipment->order;
