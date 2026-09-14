@@ -20,8 +20,11 @@ import {
   ExternalLink,
   ChevronRight,
   ArrowRight,
+  Sparkles,
+  CheckCircle2,
 } from 'lucide-react';
 import { useCartStore } from '@/store/cart-store';
+import { useBuyerStore } from '@/store/buyer-store';
 import SlideOver from '@/components/SlideOver';
 
 interface ProductVariant {
@@ -211,6 +214,98 @@ export default function StorefrontPage({ params }: { params: Promise<{ store_slu
   const [trackNumber, setTrackNumber] = useState('ORD-20260914-00192');
   const [trackResult, setTrackResult] = useState<any>(null);
 
+  // ── Buyer Authentication & Profile State ──────────────────────────────
+  const { buyer, setBuyer, logout: logoutBuyer, updateAddress: updateBuyerAddress } = useBuyerStore();
+  const [buyerPhoneInput, setBuyerPhoneInput] = useState('');
+  const [buyerNameInput, setBuyerNameInput] = useState('');
+  const [buyerEmailInput, setBuyerEmailInput] = useState('');
+  const [buyerLoginLoading, setBuyerLoginLoading] = useState(false);
+  const [buyerOrders, setBuyerOrders] = useState<any[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const [addressDetailInput, setAddressDetailInput] = useState('');
+
+  // Auto-fetch buyer orders when profile drawer opens
+  useEffect(() => {
+    if (!buyer?.phoneNumber || !isProfileOpen) return;
+    const buyerPhone = buyer.phoneNumber;
+    let isMounted = true;
+    async function loadBuyerOrders() {
+      setLoadingOrders(true);
+      try {
+        const res = await fetchApi(`/buyer/orders?phone=${encodeURIComponent(buyerPhone)}`, {
+          headers: { 'x-store-slug': storeSlug },
+        });
+        if (isMounted && res?.success) {
+          setBuyerOrders(res.data || []);
+        }
+      } catch (err) {
+        // silent
+      } finally {
+        if (isMounted) setLoadingOrders(false);
+      }
+    }
+    loadBuyerOrders();
+    return () => {
+      isMounted = false;
+    };
+  }, [buyer, isProfileOpen, storeSlug]);
+
+  const handleBuyerLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!buyerPhoneInput) return;
+    setBuyerLoginLoading(true);
+    try {
+      const res = await fetchApi('/buyer/login', {
+        method: 'POST',
+        body: JSON.stringify({
+          phone_number: buyerPhoneInput,
+          full_name: buyerNameInput || undefined,
+          email: buyerEmailInput || undefined,
+        }),
+        headers: { 'x-store-slug': storeSlug },
+      });
+      if (res?.success && res?.customer) {
+        setBuyer({
+          id: res.customer.id,
+          phoneNumber: res.customer.phone_number,
+          fullName: res.customer.full_name,
+          email: res.customer.email,
+          defaultAddress: res.customer.default_address,
+          riskScore: res.customer.risk_score,
+        }, res.token);
+      } else {
+        alert(res?.message || 'Gagal masuk akun pembeli.');
+      }
+    } catch (err: any) {
+      alert(err?.message || 'Terjadi kesalahan saat masuk.');
+    } finally {
+      setBuyerLoginLoading(false);
+    }
+  };
+
+  const handleSaveAddress = async () => {
+    if (!buyer) return;
+    try {
+      const updatedAddress = {
+        ...(buyer.defaultAddress || {}),
+        detail: addressDetailInput,
+      };
+      await fetchApi('/buyer/profile', {
+        method: 'PUT',
+        body: JSON.stringify({
+          phone_number: buyer.phoneNumber,
+          default_address: updatedAddress,
+        }),
+        headers: { 'x-store-slug': storeSlug },
+      });
+      updateBuyerAddress(updatedAddress);
+      setIsEditingAddress(false);
+    } catch (err) {
+      alert('Gagal menyimpan alamat.');
+    }
+  };
+
   // Filter Produk
   const filteredProducts = useMemo(() => {
     return store.products.filter((prod) => {
@@ -301,10 +396,18 @@ export default function StorefrontPage({ params }: { params: Promise<{ store_slu
 
             <button
               onClick={() => setIsProfileOpen(true)}
-              className="text-xs font-semibold text-slate-600 hover:text-slate-900 flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl hover:bg-slate-100 transition-all"
+              className="text-xs font-semibold text-slate-700 hover:text-slate-900 flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl hover:bg-slate-100 transition-all border border-slate-200/60"
             >
-              <User className="w-4 h-4" />
-              <span className="hidden sm:inline">Akun Saya</span>
+              {buyer ? (
+                <div className="w-5 h-5 rounded-full bg-emerald-600 text-white text-[10px] font-bold flex items-center justify-center">
+                  {buyer.fullName.charAt(0).toUpperCase()}
+                </div>
+              ) : (
+                <User className="w-4 h-4 text-slate-600" />
+              )}
+              <span className="hidden sm:inline">
+                {buyer ? buyer.fullName.split(' ')[0] : 'Akun Saya'}
+              </span>
             </button>
 
             {/* Cart Button */}
@@ -587,45 +690,199 @@ export default function StorefrontPage({ params }: { params: Promise<{ store_slu
       </SlideOver>
 
 
-      {/* DRAWER 3: SLIDE-OVER AKUN SAYA (BUYER PROFILE) */}
+      {/* DRAWER 3: SLIDE-OVER AKUN SAYA (BUYER PROFILE & LOGIN) */}
       <SlideOver
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
-        title="Akun & Riwayat Pembeli"
-        subtitle="Profil transaksi dan alamat pengiriman tersimpan Anda."
+        title={buyer ? 'Akun & Riwayat Belanja' : 'Masuk Akun Pembeli'}
+        subtitle={buyer ? 'Profil dan riwayat pesanan Anda di toko ini.' : 'Masukkan nomor WhatsApp untuk melacak pesanan & auto-fill alamat.'}
       >
-        <div className="space-y-5 text-xs">
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-base">
-              RW
-            </div>
-            <div>
-              <h4 className="font-bold text-sm text-slate-900">Rina Wulandari</h4>
-              <p className="text-slate-500 font-mono">081234567890</p>
-              <span className="text-[10px] text-emerald-600 font-semibold">Pelanggan Terverifikasi (Skor Anti-RTS: Aman)</span>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <span className="font-bold text-slate-700 block">Alamat Pengiriman Utama:</span>
-            <div className="p-3.5 bg-white rounded-xl border border-slate-200 text-slate-700 leading-relaxed">
-              Jl. Kertajaya Indah No. 12, Sukolilo, Surabaya, Jawa Timur (60111)
-            </div>
-          </div>
-
-          <div className="space-y-2 pt-2">
-            <span className="font-bold text-slate-700 block">Riwayat Pesanan Terakhir:</span>
-            <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex justify-between items-center">
-              <div>
-                <div className="font-mono font-bold text-slate-900">ORD-20260914-00192</div>
-                <div className="text-slate-500 text-[11px]">Hijab Silk Premium Emerald (1x) • Rp 166.000</div>
+        {!buyer ? (
+          <form onSubmit={handleBuyerLogin} className="space-y-4 text-xs">
+            <div className="bg-emerald-50 border border-emerald-200/80 p-3.5 rounded-2xl text-emerald-900 space-y-1">
+              <div className="font-bold flex items-center gap-1.5 text-xs text-emerald-800">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-600" /> One-Click Buyer Login
               </div>
-              <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded">
-                Sedang Dikirim
-              </span>
+              <p className="text-[11px] text-emerald-700 leading-relaxed">
+                Tanpa ribet password! Cukup masukkan No. WhatsApp Anda untuk melacak pesanan real-time dan menyimpan alamat pengiriman.
+              </p>
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">
+                Nomor WhatsApp / HP <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="tel"
+                required
+                placeholder="Contoh: 081298765432"
+                value={buyerPhoneInput}
+                onChange={(e) => setBuyerPhoneInput(e.target.value)}
+                className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">
+                Nama Lengkap (Opsional untuk pembeli baru)
+              </label>
+              <input
+                type="text"
+                placeholder="Contoh: Siti Nurhaliza"
+                value={buyerNameInput}
+                onChange={(e) => setBuyerNameInput(e.target.value)}
+                className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">
+                Email (Opsional untuk invoice)
+              </label>
+              <input
+                type="email"
+                placeholder="Contoh: pembeli@gmail.com"
+                value={buyerEmailInput}
+                onChange={(e) => setBuyerEmailInput(e.target.value)}
+                className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={buyerLoginLoading}
+              className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 transition-all text-xs disabled:opacity-50"
+            >
+              {buyerLoginLoading ? 'Memverifikasi...' : 'Masuk Sekarang →'}
+            </button>
+          </form>
+        ) : (
+          <div className="space-y-5 text-xs">
+            {/* Logged in Profile Card */}
+            <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200/80 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-emerald-600 text-white flex items-center justify-center font-extrabold text-base shadow-xs">
+                  {buyer.fullName.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-slate-900">{buyer.fullName}</h4>
+                  <p className="text-slate-600 font-mono text-[11px]">{buyer.phoneNumber}</p>
+                  {buyer.email && <p className="text-slate-500 text-[10px]">{buyer.email}</p>}
+                  <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-1 mt-0.5">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Pelanggan Terverifikasi
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  logoutBuyer();
+                  setBuyerOrders([]);
+                }}
+                className="text-[11px] font-semibold text-red-600 hover:text-red-700 hover:underline shrink-0"
+              >
+                Keluar
+              </button>
+            </div>
+
+            {/* Saved Address */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="font-bold text-slate-800">Alamat Pengiriman Utama:</span>
+                {!isEditingAddress ? (
+                  <button
+                    onClick={() => {
+                      setAddressDetailInput(buyer.defaultAddress?.detail || '');
+                      setIsEditingAddress(true);
+                    }}
+                    className="text-[11px] font-bold text-emerald-700 hover:underline"
+                  >
+                    Ubah Alamat
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setIsEditingAddress(false)}
+                    className="text-[11px] font-semibold text-slate-500 hover:underline"
+                  >
+                    Batal
+                  </button>
+                )}
+              </div>
+
+              {!isEditingAddress ? (
+                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-slate-700 leading-relaxed">
+                  {buyer.defaultAddress?.detail ? (
+                    <div>
+                      <p>{buyer.defaultAddress.detail}</p>
+                      {buyer.defaultAddress.postalCode && (
+                        <p className="text-slate-500 text-[10px] mt-1 font-mono">Kode Pos: {buyer.defaultAddress.postalCode}</p>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-slate-400 italic">Belum ada alamat pengiriman tersimpan. Alamat akan tersimpan otomatis saat checkout.</span>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <textarea
+                    rows={2}
+                    value={addressDetailInput}
+                    onChange={(e) => setAddressDetailInput(e.target.value)}
+                    placeholder="Alamat lengkap jalan, nomor rumah, RT/RW, kelurahan..."
+                    className="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                  <button
+                    onClick={handleSaveAddress}
+                    className="w-full py-2 bg-slate-900 text-white rounded-xl font-bold text-xs hover:bg-slate-800"
+                  >
+                    Simpan Alamat
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Real Orders List */}
+            <div className="space-y-2 pt-2">
+              <div className="flex justify-between items-center">
+                <span className="font-bold text-slate-800">Riwayat Pesanan di {store.storeName}:</span>
+                <span className="text-[10px] text-slate-500">{buyerOrders.length} Pesanan</span>
+              </div>
+
+              {loadingOrders ? (
+                <div className="p-4 text-center text-slate-400 text-xs">Memuat riwayat pesanan...</div>
+              ) : buyerOrders.length === 0 ? (
+                <div className="p-4 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-center space-y-1">
+                  <p className="text-slate-600 font-medium">Belum ada riwayat pesanan di toko ini.</p>
+                  <p className="text-[11px] text-slate-400">Pilih produk favorit Anda dan rasakan kemudahan fast checkout!</p>
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {buyerOrders.map((ord) => (
+                    <Link
+                      key={ord.id}
+                      href={`/${storeSlug}/orders/${ord.order_number}`}
+                      className="block p-3.5 rounded-xl border border-slate-200 bg-white hover:border-emerald-400 hover:shadow-xs transition-all"
+                    >
+                      <div className="flex justify-between items-start gap-2">
+                        <div>
+                          <div className="font-mono font-bold text-slate-900">{ord.order_number}</div>
+                          <div className="text-slate-500 text-[11px] mt-0.5">
+                            {ord.items?.length || 0} Barang • Rp {Number(ord.total_amount).toLocaleString('id-ID')}
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 uppercase">
+                          {ord.status}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-emerald-700 font-semibold mt-2 flex items-center gap-1">
+                        Lihat Status Pengiriman & Resi →
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
-        </div>
+        )}
       </SlideOver>
     </div>
   );

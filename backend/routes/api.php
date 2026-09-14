@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CustomerAuthController;
 use App\Http\Controllers\Api\StorefrontController;
 use App\Http\Controllers\Api\LogisticsController;
 use App\Http\Controllers\Api\XenditWebhookController;
@@ -55,6 +56,12 @@ Route::prefix('v1')->group(function () {
         Route::get('/logistics/areas',    [LogisticsController::class, 'searchAreas']);
         Route::post('/logistics/rates',   [LogisticsController::class, 'checkRates']);
         Route::post('/checkout',          [StorefrontController::class, 'checkout']);
+
+        // ── Akun Pembeli (Buyer Auth, Profile, & Orders) ─────────────
+        Route::post('/buyer/login',       [CustomerAuthController::class, 'login']);
+        Route::get('/buyer/profile',      [CustomerAuthController::class, 'getProfile']);
+        Route::put('/buyer/profile',      [CustomerAuthController::class, 'updateProfile']);
+        Route::get('/buyer/orders',       [CustomerAuthController::class, 'getOrders']);
     });
 
     // ═══════════════════════════════════════════════════════════════════════

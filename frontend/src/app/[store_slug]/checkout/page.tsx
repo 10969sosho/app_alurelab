@@ -1,9 +1,10 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, ShieldCheck, Truck, CreditCard, Banknote, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, Truck, CreditCard, Banknote, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
 import { useCartStore } from '@/store/cart-store';
+import { useBuyerStore } from '@/store/buyer-store';
 import { fetchApi } from '@/lib/api-client';
 
 export default function CheckoutPage({ params }: { params: Promise<{ store_slug: string }> }) {
@@ -11,6 +12,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
   const storeSlug = resolvedParams.store_slug;
 
   const { items, getSubtotal, clearCart } = useCartStore();
+  const { buyer } = useBuyerStore();
 
   const [form, setForm] = useState({
     name: '',
@@ -24,6 +26,19 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
     shippingCost: 17000,
     paymentMethod: 'ONLINE' as 'ONLINE' | 'COD',
   });
+
+  useEffect(() => {
+    if (buyer) {
+      setForm((prev) => ({
+        ...prev,
+        name: prev.name || buyer.fullName || '',
+        phone: prev.phone || buyer.phoneNumber || '',
+        email: prev.email || buyer.email || '',
+        addressDetail: prev.addressDetail || buyer.defaultAddress?.detail || '',
+        areaId: buyer.defaultAddress?.areaId || prev.areaId,
+      }));
+    }
+  }, [buyer]);
 
   const [loading, setLoading] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState<any>(null);
@@ -181,10 +196,26 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
           <div className="md:col-span-3 space-y-6">
             {/* Step 1: Identitas Pembeli */}
             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-              <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
-                <span className="w-5 h-5 bg-slate-900 text-white text-xs rounded-full flex items-center justify-center font-mono">1</span>
-                Informasi Kontak Pembeli
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
+                  <span className="w-5 h-5 bg-slate-900 text-white text-xs rounded-full flex items-center justify-center font-mono">1</span>
+                  Informasi Kontak Pembeli
+                </h3>
+                {buyer && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                    <Sparkles className="w-3.5 h-3.5" /> Terhubung
+                  </span>
+                )}
+              </div>
+
+              {buyer && (
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center gap-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>
+                    Masuk sebagai <strong>{buyer.fullName}</strong> ({buyer.phoneNumber}). Data pengiriman otomatis terisi!
+                  </span>
+                </div>
+              )}
 
               <div className="space-y-3">
                 <div>
