@@ -80,7 +80,7 @@ class IdentifyTenant
 
         // Kunci isolasi data di level PostgreSQL kernel (Row Level Security)
         if (DB::getDriverName() === 'pgsql') {
-            DB::statement("SET LOCAL app.current_tenant_id = '{$store->id}';");
+            DB::statement("SET app.current_tenant_id = '{$store->id}';");
         }
 
         // Ikat instance Store ke Service Container & request attribute
