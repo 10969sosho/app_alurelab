@@ -9,6 +9,7 @@ use App\Models\Store;
 use App\Models\StoreUser;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
