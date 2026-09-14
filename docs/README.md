@@ -1,7 +1,7 @@
 # 🚀 ALURELAB: Engineering & Production Blueprint
 ### *Autonomous E-Commerce SaaS & Vibe Commerce Infrastructure*
 
-Dokumentasi ini adalah panduan teknis dan operasional resmi untuk membangun **ALURELAB** dari nol (*ground zero*) hingga tahap *production* skala tinggi.
+Dokumentasi ini adalah panduan teknis, arsitektur, dan operasional resmi untuk membangun serta mengelola **ALURELAB** dari nol (*ground zero*) hingga tahap *production* skala tinggi.
 
 ---
 
@@ -15,15 +15,16 @@ Dokumentasi ini adalah panduan teknis dan operasional resmi untuk membangun **AL
 | **03** | [**03_PAYMENT_AND_SHIPPING_INTEGRATION.md**](./03_PAYMENT_AND_SHIPPING_INTEGRATION.md) | Alur teknis Xendit XenPlatform (Escrow & Split Fee), dompet merchant, Biteship API (Auto-AWB & Pickup), dan proteksi COD Anti-RTS. |
 | **04** | [**04_SECURITY_PROGRAM_AND_COMPLIANCE.md**](./04_SECURITY_PROGRAM_AND_COMPLIANCE.md) | Program keamanan menyeluruh: PostgreSQL Row Level Security (RLS), validasi webhook kriptografis, pencegahan race condition stok, dan backup disaster recovery. |
 | **05** | [**05_DATABASE_SCHEMA.md**](./05_DATABASE_SCHEMA.md) | DDL schema database PostgreSQL multi-tenant lengkap dengan relasi, indeks performa, dan SQL RLS policies. |
+| **06** | [**06_HOSTING_AND_DEPLOYMENT_SOP.md**](./06_HOSTING_AND_DEPLOYMENT_SOP.md) | Panduan infrastruktur hosting cPanel/LiteSpeed, pemetaan domain/subdomain, reverse proxy `.htaccess`, dan SOP deployment PM2. |
 
 ---
 
 ## 🛠️ Ringkasan Stack Teknologi Produksi
 
-- **Backend & Core Engine**: Laravel 11 (PHP 8.3+) Modular Monolith, Laravel Sanctum, Laravel Horizon.
-- **Frontend Storefront & Merchant Dashboard**: Next.js 15 (React 19, App Router, TypeScript, Tailwind CSS, shadcn/ui).
-- **Database & Cache Layer**: PostgreSQL 16 (dengan Row-Level Security) + Redis 7 Cluster (Atomic Locks & Queues).
-- **Edge, DNS & Assets**: Cloudflare for SaaS (SSL for Custom Domains), Cloudflare R2 (Object Storage tanpa biaya egress).
+- **Backend & Core Engine**: Laravel 11 (PHP 8.4+) Modular Monolith, Laravel Sanctum, PostgreSQL RLS.
+- **Frontend Storefront & Merchant Dashboard**: Next.js 15 (React 19, App Router, TypeScript, Tailwind CSS, Lucide Icons).
+- **Process Manager**: PM2 (Port 3040 pada daemon `alurelab-frontend`).
+- **Web Server & Edge**: LiteSpeed Enterprise Reverse Proxy via `.htaccess`.
+- **Database & Cache Layer**: PostgreSQL 16 (dengan Row-Level Security) + Redis 7 (Atomic Locks & Queues).
 - **Payment & Escrow Provider**: Xendit XenPlatform (PJP Kategori 1 Bank Indonesia).
 - **Logistics Aggregator**: Biteship API (Multi-courier: J&T, SiCepat, JNE, GoSend, dll).
-- **AI Processing Pipeline**: OpenAI GPT-4o-mini (Copywriting) + Replicate/RMBG-2.0 (Studio Photo Rendering).
