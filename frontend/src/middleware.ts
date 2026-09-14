@@ -28,15 +28,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: [
-    /*
-     * Match semua request path kecuali:
-     * - _next/static (static files)
-     * - _next/image (image optimization)
-     * - favicon.ico
-     * - API routes /api/*
-     * - File-file public (png, jpg, dll)
-     */
-    '/((?!_next/static|_next/image|favicon.ico|api/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
+  matcher: ['/dashboard/:path*', '/login', '/register'],
 };
