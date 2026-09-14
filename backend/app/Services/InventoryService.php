@@ -9,28 +9,49 @@ use Illuminate\Support\Facades\Log;
 class InventoryService
 {
     /**
-     * Mengunci stok secara atomik di Redis untuk mencegah Flash Sale Race Condition / Overselling.
+     * Mengunci stok secara atomik. Jika Redis tersedia, gunakan Redis concurrency decrement.
+     * Jika Redis tidak aktif (e.g. shared hosting), fallback ke atomic database condition (UPDATE ... WHERE stock >= qty).
      */
     public function reserveStock(string $storeId, string $variantId, int $quantity): bool
     {
-        $redisKey = "store:{$storeId}:stock:{$variantId}";
+        // 1. Coba via Redis jika module & service aktif
+        try {
+            if (extension_loaded('redis') && config('database.redis.default.host')) {
+                $redisKey = "store:{$storeId}:stock:{$variantId}";
 
-        // Pastikan key ada di Redis; jika belum, populate dari DB
-        if (!Redis::exists($redisKey)) {
-            $variant = ProductVariant::find($variantId);
-            if (!$variant) {
-                return false;
+                if (!Redis::exists($redisKey)) {
+                    $variant = ProductVariant::find($variantId);
+                    if (!$variant) {
+                        return false;
+                    }
+                    Redis::set($redisKey, $variant->stock);
+                }
+
+                $remaining = Redis::decrby($redisKey, $quantity);
+
+                if ($remaining < 0) {
+                    Redis::incrby($redisKey, $quantity);
+                    Log::warning("Stok habis saat checkout (Redis)", [
+                        'store_id' => $storeId,
+                        'variant_id' => $variantId,
+                        'requested_qty' => $quantity,
+                    ]);
+                    return false;
+                }
+
+                return true;
             }
-            Redis::set($redisKey, $variant->stock);
+        } catch (\Throwable $e) {
+            Log::info("Redis tidak tersedia, fallback ke PostgreSQL atomic decrement: " . $e->getMessage());
         }
 
-        // Atomic Decrement di Redis
-        $remaining = Redis::decrby($redisKey, $quantity);
+        // 2. Fallback: PostgreSQL atomic condition UPDATE product_variants SET stock = stock - qty WHERE id = ? AND stock >= qty
+        $updated = ProductVariant::where('id', $variantId)
+            ->where('stock', '>=', $quantity)
+            ->decrement('stock', $quantity);
 
-        if ($remaining < 0) {
-            // Revert seketika karena stok fisik tidak mencukupi
-            Redis::incrby($redisKey, $quantity);
-            Log::warning("Stok habis saat checkout", [
+        if (!$updated) {
+            Log::warning("Stok habis saat checkout (PostgreSQL Atomic)", [
                 'store_id' => $storeId,
                 'variant_id' => $variantId,
                 'requested_qty' => $quantity,
@@ -42,14 +63,20 @@ class InventoryService
     }
 
     /**
-     * Mengembalikan stok jika transaksi dibatalkan atau invoice kadaluarsa (15 menit TTL).
+     * Mengembalikan stok jika transaksi dibatalkan atau invoice kadaluarsa.
      */
     public function releaseStock(string $storeId, string $variantId, int $quantity): void
     {
-        $redisKey = "store:{$storeId}:stock:{$variantId}";
-        Redis::incrby($redisKey, $quantity);
+        try {
+            if (extension_loaded('redis') && config('database.redis.default.host')) {
+                $redisKey = "store:{$storeId}:stock:{$variantId}";
+                Redis::incrby($redisKey, $quantity);
+            }
+        } catch (\Throwable $e) {
+            // Abaikan error Redis jika offline
+        }
 
-        // Sinkronisasi kembali ke DB
+        // Kembalikan ke DB
         ProductVariant::where('id', $variantId)->increment('stock', $quantity);
 
         Log::info("Stok berhasil dikembalikan (Release Unpaid Stock)", [
@@ -64,11 +91,18 @@ class InventoryService
      */
     public function syncStockToDatabase(string $storeId, string $variantId): void
     {
-        $redisKey = "store:{$storeId}:stock:{$variantId}";
-        $currentRedisStock = (int) Redis::get($redisKey);
-
-        ProductVariant::where('id', $variantId)->update([
-            'stock' => max(0, $currentRedisStock),
-        ]);
+        try {
+            if (extension_loaded('redis') && config('database.redis.default.host')) {
+                $redisKey = "store:{$storeId}:stock:{$variantId}";
+                if (Redis::exists($redisKey)) {
+                    $currentRedisStock = (int) Redis::get($redisKey);
+                    ProductVariant::where('id', $variantId)->update([
+                        'stock' => max(0, $currentRedisStock),
+                    ]);
+                }
+            }
+        } catch (\Throwable $e) {
+            // Abaikan jika Redis offline
+        }
     }
 }
