@@ -18,19 +18,21 @@ import {
   ExternalLink,
   ChevronDown,
   Crown,
+  Palette,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { href: '/dashboard',             icon: LayoutDashboard, label: 'Dashboard',    exact: true  },
-  { href: '/dashboard/products',    icon: Package,         label: 'Produk'                     },
-  { href: '/dashboard/orders',      icon: ShoppingBag,     label: 'Pesanan'                    },
-  { href: '/dashboard/customers',   icon: Users,           label: 'Pelanggan'                  },
-  { href: '/dashboard/promotions',  icon: Tag,             label: 'Promo'                      },
-  { href: '/dashboard/shipping',    icon: Truck,           label: 'Pengiriman'                 },
-  { href: '/dashboard/finance',     icon: Wallet,          label: 'Keuangan'                   },
-  { href: '/dashboard/analytics',   icon: BarChart3,       label: 'Analitik'                   },
-  { href: '/dashboard/settings',    icon: Settings,        label: 'Pengaturan'                 },
+  { href: '/dashboard',             icon: LayoutDashboard, label: 'Dashboard',           exact: true  },
+  { href: '/dashboard/cms',         icon: Palette,         label: 'Tampilan Toko (CMS)'              },
+  { href: '/dashboard/products',    icon: Package,         label: 'Produk'                            },
+  { href: '/dashboard/orders',      icon: ShoppingBag,     label: 'Pesanan'                           },
+  { href: '/dashboard/customers',   icon: Users,           label: 'Pelanggan'                         },
+  { href: '/dashboard/promotions',  icon: Tag,             label: 'Promo'                             },
+  { href: '/dashboard/shipping',    icon: Truck,           label: 'Pengiriman'                        },
+  { href: '/dashboard/finance',     icon: Wallet,          label: 'Keuangan'                          },
+  { href: '/dashboard/analytics',   icon: BarChart3,       label: 'Analitik'                          },
+  { href: '/dashboard/settings',    icon: Settings,        label: 'Pengaturan'                        },
 ];
 
 export function Sidebar() {

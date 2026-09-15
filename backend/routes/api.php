@@ -96,5 +96,9 @@ Route::prefix('v1')->group(function () {
         // ── Upload (Cloudflare R2) ───────────────────────────────────────
         Route::post('/upload/presign',          [UploadController::class, 'presign']);
         Route::post('/upload/presign-bg',       [UploadController::class, 'presignBgRemoval']);
+
+        // ── Store CMS & Tampilan Toko ─────────────────────────────────────
+        Route::get('/cms/settings',             [MerchantController::class, 'getCmsSettings']);
+        Route::put('/cms/settings',             [MerchantController::class, 'updateCmsSettings']);
     });
 });

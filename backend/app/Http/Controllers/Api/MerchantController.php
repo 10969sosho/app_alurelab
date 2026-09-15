@@ -158,4 +158,50 @@ class MerchantController extends Controller
             'recent_orders' => $recentOrders,
         ]);
     }
+
+    /**
+     * Mengambil konfigurasi CMS tampilan toko aktif.
+     */
+    public function getCmsSettings(Request $request): JsonResponse
+    {
+        /** @var Store $store */
+        $store = app('current_tenant');
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'store_name' => $store->name,
+                'store_slug' => $store->slug,
+                'settings' => $store->settings ?? [],
+            ],
+        ]);
+    }
+
+    /**
+     * Menyimpan pembaruan konfigurasi CMS tampilan toko aktif.
+     */
+    public function updateCmsSettings(Request $request): JsonResponse
+    {
+        /** @var Store $store */
+        $store = app('current_tenant');
+
+        $validated = $request->validate([
+            'settings' => 'required|array',
+        ]);
+
+        $currentSettings = $store->settings ?? [];
+        $newSettings = array_merge($currentSettings, $validated['settings']);
+
+        $store->update([
+            'settings' => $newSettings,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Konfigurasi tampilan toko berhasil disimpan.',
+            'data' => [
+                'settings' => $store->fresh()->settings,
+            ],
+        ]);
+    }
 }
