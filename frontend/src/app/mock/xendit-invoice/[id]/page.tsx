@@ -191,7 +191,7 @@ function MockXenditInvoiceContent({
             {activeTab === 'qris' ? (
               <div className="flex flex-col items-center text-center space-y-4">
                 <p className="text-xs text-slate-500 max-w-xs">
-                  Scan QRIS menggunakan BCA Mobile, GoPay, OVO, ShopeePay, atau aplikasi m-Banking Anda.
+                  Scan QRIS menggunakan BCA Mobile, GoPay, OVO, DANA, LinkAja, atau aplikasi m-Banking Anda.
                 </p>
 
                 {/* Simulated QR Box */}

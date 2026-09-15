@@ -171,6 +171,13 @@ const COLOR_PRESETS = [
     accent: "#059669",
   },
   {
+    name: "Warm Orange & Minimal Sand",
+    bg: "#FDFBF7",
+    text: "#18181B",
+    primary: "#18181B",
+    accent: "#EE4D2D",
+  },
+  {
     name: "Clean Monochrome Studio",
     bg: "#FFFFFF",
     text: "#000000",
@@ -529,33 +536,33 @@ export default function StorefrontCmsPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-16">
+    <div className="w-full space-y-3 pb-16 font-sans select-none">
       {/* Top Header & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 rounded-xs border border-slate-200 shadow-2xs">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black">
-              <Palette className="w-5 h-5 text-emerald-400" />
+            <div className="w-8 h-8 rounded-xs bg-[#EE4D2D] text-white flex items-center justify-center font-bold shrink-0">
+              <Palette className="w-4 h-4" />
             </div>
             <div>
-              <h1 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+              <h1 className="text-base font-bold text-slate-800 tracking-tight flex items-center gap-2">
                 Tampilan Toko (CMS Studio)
-                <span className="text-[10px] font-mono uppercase bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-mono uppercase bg-orange-50 text-[#EE4D2D] border border-orange-200 font-bold px-2 py-0.5 rounded-xs">
                   Live Sync
                 </span>
               </h1>
-              <p className="text-xs text-slate-500">
-                Atur template, banner carousel, cerita About, halaman kustom, dan warna toko Anda sesuka hati.
+              <p className="text-xs text-slate-400">
+                Atur template, banner carousel, cerita About, halaman kustom, dan warna toko Anda
               </p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
           <button
             type="button"
             onClick={handleResetToDefault}
-            className="px-3 py-2 border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all"
+            className="px-3 py-1.5 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-xs text-xs font-medium flex items-center gap-1.5 transition-colors shadow-2xs"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             Reset
@@ -564,10 +571,10 @@ export default function StorefrontCmsPage() {
           <button
             type="button"
             onClick={() => setShowLivePreview(!showLivePreview)}
-            className={`px-3.5 py-2 border rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
+            className={`px-3 py-1.5 border rounded-xs text-xs font-medium flex items-center gap-1.5 transition-colors shadow-2xs ${
               showLivePreview
-                ? "bg-slate-900 text-white border-slate-900"
-                : "border-slate-200 text-slate-700 hover:bg-slate-50"
+                ? "bg-slate-800 text-white border-slate-800"
+                : "border-slate-300 text-slate-700 hover:bg-slate-50"
             }`}
           >
             <Eye className="w-3.5 h-3.5" />
@@ -577,7 +584,7 @@ export default function StorefrontCmsPage() {
           <Link
             href={`/${storeSlug}`}
             target="_blank"
-            className="px-3.5 py-2 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all"
+            className="px-3 py-1.5 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-xs text-xs font-medium flex items-center gap-1.5 transition-colors shadow-2xs"
           >
             <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
             Buka Storefront
@@ -587,120 +594,120 @@ export default function StorefrontCmsPage() {
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="px-4 py-2 bg-slate-900 hover:bg-black text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-xs transition-all disabled:opacity-50"
+            className="px-3.5 py-1.5 bg-[#EE4D2D] hover:bg-[#d73f20] text-white rounded-xs text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors disabled:opacity-50"
           >
-            <Save className="w-3.5 h-3.5 text-emerald-400" />
+            <Save className="w-3.5 h-3.5 stroke-[2.5]" />
             {saving ? "Menyimpan..." : "Simpan & Publikasikan"}
           </button>
         </div>
       </div>
 
       {/* Main Grid: Left Control Tabs, Right Live Preview */}
-      <div className={`grid gap-6 ${showLivePreview ? "lg:grid-cols-12" : "grid-cols-1"}`}>
+      <div className={`grid gap-4 ${showLivePreview ? "lg:grid-cols-12" : "grid-cols-1"}`}>
         {/* Editor Controls */}
-        <div className={showLivePreview ? "lg:col-span-7 space-y-6" : "space-y-6"}>
+        <div className={showLivePreview ? "lg:col-span-7 space-y-3" : "space-y-3"}>
           {/* Navigation Tabs */}
-          <div className="flex items-center gap-1.5 p-1.5 bg-slate-200/70 rounded-2xl overflow-x-auto text-xs font-semibold">
+          <div className="bg-white border-b border-slate-200 px-3 flex items-center gap-1 sm:gap-4 overflow-x-auto text-xs shadow-2xs">
             <button
               onClick={() => setActiveTab("template")}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all shrink-0 ${
+              className={`flex items-center gap-1.5 py-2.5 px-2 font-medium border-b-2 whitespace-nowrap transition-colors shrink-0 ${
                 activeTab === "template"
-                  ? "bg-white text-slate-900 shadow-xs font-bold"
-                  : "text-slate-600 hover:text-slate-900"
+                  ? "border-[#EE4D2D] text-[#EE4D2D] font-bold"
+                  : "border-transparent text-slate-600 hover:text-slate-900"
               }`}
             >
-              <LayoutTemplate className="w-4 h-4 text-emerald-600" />
+              <LayoutTemplate className="w-3.5 h-3.5" />
               1. Base Template
             </button>
 
             <button
               onClick={() => setActiveTab("hero")}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all shrink-0 ${
+              className={`flex items-center gap-1.5 py-2.5 px-2 font-medium border-b-2 whitespace-nowrap transition-colors shrink-0 ${
                 activeTab === "hero"
-                  ? "bg-white text-slate-900 shadow-xs font-bold"
-                  : "text-slate-600 hover:text-slate-900"
+                  ? "border-[#EE4D2D] text-[#EE4D2D] font-bold"
+                  : "border-transparent text-slate-600 hover:text-slate-900"
               }`}
             >
-              <ImageIcon className="w-4 h-4 text-indigo-600" />
+              <ImageIcon className="w-3.5 h-3.5" />
               2. Banner Carousel
             </button>
 
             <button
               onClick={() => setActiveTab("about")}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all shrink-0 ${
+              className={`flex items-center gap-1.5 py-2.5 px-2 font-medium border-b-2 whitespace-nowrap transition-colors shrink-0 ${
                 activeTab === "about"
-                  ? "bg-white text-slate-900 shadow-xs font-bold"
-                  : "text-slate-600 hover:text-slate-900"
+                  ? "border-[#EE4D2D] text-[#EE4D2D] font-bold"
+                  : "border-transparent text-slate-600 hover:text-slate-900"
               }`}
             >
-              <BookOpen className="w-4 h-4 text-amber-600" />
+              <BookOpen className="w-3.5 h-3.5" />
               3. Cerita Toko (About)
             </button>
 
             <button
               onClick={() => setActiveTab("pages")}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all shrink-0 ${
+              className={`flex items-center gap-1.5 py-2.5 px-2 font-medium border-b-2 whitespace-nowrap transition-colors shrink-0 ${
                 activeTab === "pages"
-                  ? "bg-white text-slate-900 shadow-xs font-bold"
-                  : "text-slate-600 hover:text-slate-900"
+                  ? "border-[#EE4D2D] text-[#EE4D2D] font-bold"
+                  : "border-transparent text-slate-600 hover:text-slate-900"
               }`}
             >
-              <FileText className="w-4 h-4 text-teal-600" />
+              <FileText className="w-3.5 h-3.5" />
               4. Halaman Kustom
             </button>
 
             <button
               onClick={() => setActiveTab("navigation")}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all shrink-0 ${
+              className={`flex items-center gap-1.5 py-2.5 px-2 font-medium border-b-2 whitespace-nowrap transition-colors shrink-0 ${
                 activeTab === "navigation"
-                  ? "bg-white text-slate-900 shadow-xs font-bold"
-                  : "text-slate-600 hover:text-slate-900"
+                  ? "border-[#EE4D2D] text-[#EE4D2D] font-bold"
+                  : "border-transparent text-slate-600 hover:text-slate-900"
               }`}
             >
-              <Compass className="w-4 h-4 text-blue-600" />
+              <Compass className="w-3.5 h-3.5" />
               5. Sidebar & Navigasi
             </button>
 
             <button
               onClick={() => setActiveTab("styling")}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all shrink-0 ${
+              className={`flex items-center gap-1.5 py-2.5 px-2 font-medium border-b-2 whitespace-nowrap transition-colors shrink-0 ${
                 activeTab === "styling"
-                  ? "bg-white text-slate-900 shadow-xs font-bold"
-                  : "text-slate-600 hover:text-slate-900"
+                  ? "border-[#EE4D2D] text-[#EE4D2D] font-bold"
+                  : "border-transparent text-slate-600 hover:text-slate-900"
               }`}
             >
-              <Palette className="w-4 h-4 text-rose-600" />
+              <Palette className="w-3.5 h-3.5" />
               6. Warna & Tipografi
             </button>
           </div>
 
           {/* TAB 1: TEMPLATE */}
           {activeTab === "template" && (
-            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 space-y-4">
+            <div className="bg-white p-4 rounded-xs border border-slate-200 space-y-4 shadow-2xs">
               <div>
-                <h3 className="text-sm font-bold text-slate-900">Pondasi Visual Storefront</h3>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <h3 className="text-xs font-bold text-slate-800">Pondasi Visual Storefront</h3>
+                <p className="text-xs text-slate-400 mt-0.5">
                   Pilih arsitektur template yang paling cocok dengan karakter brand Anda.
                 </p>
               </div>
 
-              <div className="grid sm:grid-cols-2 gap-4 pt-2">
+              <div className="grid sm:grid-cols-2 gap-4 pt-1">
                 {/* L-Kids Editorial */}
                 <div
                   onClick={() => setCms({ ...cms, template: "editorial" })}
-                  className={`cursor-pointer p-5 rounded-2xl border-2 transition-all relative ${
+                  className={`cursor-pointer p-4 rounded-xs border-2 transition-all relative ${
                     cms.template === "editorial"
-                      ? "border-slate-900 bg-slate-50/50 shadow-md ring-2 ring-slate-900/10"
+                      ? "border-[#EE4D2D] bg-orange-50/20 shadow-2xs ring-1 ring-[#EE4D2D]"
                       : "border-slate-200 hover:border-slate-300"
                   }`}
                 >
                   {cms.template === "editorial" && (
-                    <span className="absolute top-4 right-4 flex items-center gap-1 text-[10px] font-bold bg-slate-900 text-white px-2 py-0.5 rounded-full">
-                      <Check className="w-3 h-3 text-emerald-400" /> Aktif
+                    <span className="absolute top-3 right-3 flex items-center gap-1 text-[10px] font-bold bg-[#EE4D2D] text-white px-2 py-0.5 rounded-xs">
+                      <Check className="w-3 h-3 stroke-[2.5]" /> Aktif
                     </span>
                   )}
                   <div className="space-y-3">
-                    <div className="h-28 rounded-xl bg-[#F5F5F3] border border-[#DADADA] flex flex-col justify-between p-3 relative overflow-hidden">
+                    <div className="h-28 rounded-xs bg-[#F5F5F3] border border-[#DADADA] flex flex-col justify-between p-3 relative overflow-hidden">
                       <div className="flex justify-between items-center text-[9px] tracking-widest uppercase font-bold text-slate-800">
                         <span>MENU</span>
                         <span>KALMORA</span>
@@ -714,7 +721,7 @@ export default function StorefrontCmsPage() {
                       </div>
                     </div>
                     <div>
-                      <h4 className="font-bold text-slate-900 text-sm">Editorial L-Kids (Fashion & Curation)</h4>
+                      <h4 className="font-bold text-slate-800 text-xs">Editorial L-Kids (Fashion & Curation)</h4>
                       <p className="text-xs text-slate-500 mt-1 leading-relaxed">
                         Layout bergaya editorial majalah fashion minimalis dengan tipografi besar, rasio visual 3:4, drawer menu di sisi kiri, dan navigasi katalog vertikal.
                       </p>
@@ -725,27 +732,27 @@ export default function StorefrontCmsPage() {
                 {/* Modern E-Commerce */}
                 <div
                   onClick={() => setCms({ ...cms, template: "modern" })}
-                  className={`cursor-pointer p-5 rounded-2xl border-2 transition-all relative ${
+                  className={`cursor-pointer p-4 rounded-xs border-2 transition-all relative ${
                     cms.template === "modern"
-                      ? "border-slate-900 bg-slate-50/50 shadow-md ring-2 ring-slate-900/10"
+                      ? "border-[#EE4D2D] bg-orange-50/20 shadow-2xs ring-1 ring-[#EE4D2D]"
                       : "border-slate-200 hover:border-slate-300"
                   }`}
                 >
                   {cms.template === "modern" && (
-                    <span className="absolute top-4 right-4 flex items-center gap-1 text-[10px] font-bold bg-slate-900 text-white px-2 py-0.5 rounded-full">
-                      <Check className="w-3 h-3 text-emerald-400" /> Aktif
+                    <span className="absolute top-3 right-3 flex items-center gap-1 text-[10px] font-bold bg-[#EE4D2D] text-white px-2 py-0.5 rounded-xs">
+                      <Check className="w-3 h-3 stroke-[2.5]" /> Aktif
                     </span>
                   )}
                   <div className="space-y-3">
-                    <div className="h-28 rounded-xl bg-white border border-slate-200 flex flex-col justify-center items-center p-3 relative overflow-hidden">
-                      <div className="w-full max-w-[180px] bg-slate-100 h-4 rounded-md mb-2 flex items-center px-2 text-[9px] text-slate-400">Search products...</div>
+                    <div className="h-28 rounded-xs bg-white border border-slate-200 flex flex-col justify-center items-center p-3 relative overflow-hidden">
+                      <div className="w-full max-w-[180px] bg-slate-100 h-4 rounded-xs mb-2 flex items-center px-2 text-[9px] text-slate-400">Search products...</div>
                       <div className="flex gap-1.5">
-                        <div className="w-12 h-6 bg-emerald-50 text-emerald-700 text-[9px] font-bold rounded flex items-center justify-center">Semua</div>
-                        <div className="w-12 h-6 bg-slate-100 text-[9px] rounded flex items-center justify-center text-slate-500">Koleksi</div>
+                        <div className="w-12 h-6 bg-orange-50 text-[#EE4D2D] border border-orange-200 text-[9px] font-bold rounded-xs flex items-center justify-center">Semua</div>
+                        <div className="w-12 h-6 bg-slate-100 text-[9px] rounded-xs flex items-center justify-center text-slate-500">Koleksi</div>
                       </div>
                     </div>
                     <div>
-                      <h4 className="font-bold text-slate-900 text-sm">Modern E-Commerce (Clean Store)</h4>
+                      <h4 className="font-bold text-slate-800 text-xs">Modern E-Commerce (Clean Store)</h4>
                       <p className="text-xs text-slate-500 mt-1 leading-relaxed">
                         Tampilan toko online modern dengan search bar di header, pill filter kategori, kartu produk informatif, dan banner garansi terintegrasi.
                       </p>
@@ -758,24 +765,24 @@ export default function StorefrontCmsPage() {
 
           {/* TAB 2: HERO & CAROUSEL */}
           {activeTab === "hero" && (
-            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 space-y-6">
+            <div className="bg-white p-4 rounded-xs border border-slate-200 space-y-4 shadow-2xs">
               <div>
-                <h3 className="text-sm font-bold text-slate-900">Banner Hero & Multi-Slide Carousel</h3>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <h3 className="text-xs font-bold text-slate-800">Banner Hero & Multi-Slide Carousel</h3>
+                <p className="text-xs text-slate-400 mt-0.5">
                   Unggah beberapa foto slide banner untuk beranda. Banner akan bergeser otomatis (carousel) di storefront pembeli.
                 </p>
               </div>
 
               {/* Upload Dropzone for Banners */}
-              <div className="space-y-3">
-                <label className="font-bold text-slate-700 text-xs block">
+              <div className="space-y-2.5">
+                <label className="font-semibold text-slate-700 text-xs block">
                   Unggah Slide Banner (Bisa Multi-Slide):
                 </label>
 
-                <label className={`block relative border-2 border-dashed rounded-2xl p-5 text-center cursor-pointer transition-all ${
+                <label className={`block relative border-2 border-dashed rounded-xs p-4 text-center cursor-pointer transition-all ${
                   isUploadingBanner
-                    ? "border-emerald-500 bg-emerald-50/50"
-                    : "border-slate-200 hover:border-slate-900 hover:bg-slate-50"
+                    ? "border-[#EE4D2D] bg-orange-50/50"
+                    : "border-slate-300 hover:border-[#EE4D2D] hover:bg-orange-50/20"
                 }`}>
                   <input
                     type="file"
@@ -785,14 +792,14 @@ export default function StorefrontCmsPage() {
                     className="sr-only"
                   />
                   <div className="flex flex-col items-center justify-center gap-1.5">
-                    <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full bg-orange-50 text-[#EE4D2D] flex items-center justify-center">
                       {isUploadingBanner ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <Loader2 className="w-4 h-4 animate-spin" />
                       ) : (
-                        <Upload className="w-5 h-5" />
+                        <Upload className="w-4 h-4" />
                       )}
                     </div>
-                    <div className="text-xs font-semibold text-slate-800">
+                    <div className="text-xs font-semibold text-slate-700">
                       {isUploadingBanner ? "Sedang Mengunggah Banner..." : "Klik untuk Unggah Slide Banner"}
                     </div>
                     <p className="text-[11px] text-slate-400">
@@ -807,7 +814,7 @@ export default function StorefrontCmsPage() {
                     type="url"
                     id="bannerUrlInput"
                     placeholder="Atau tempel URL gambar banner baru di sini..."
-                    className="flex-1 text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900 font-mono"
+                    className="flex-1 text-xs px-2.5 py-1.5 rounded-xs border border-slate-300 focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D] font-mono"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         handleAddBannerUrl((e.target as HTMLInputElement).value);
@@ -824,9 +831,9 @@ export default function StorefrontCmsPage() {
                         el.value = "";
                       }
                     }}
-                    className="px-3 py-2 bg-slate-900 hover:bg-black text-white text-xs font-medium rounded-xl flex items-center gap-1"
+                    className="px-3 py-1.5 bg-[#EE4D2D] hover:bg-[#d73f20] text-white text-xs font-semibold rounded-xs flex items-center gap-1 transition-colors shadow-2xs"
                   >
-                    <Plus className="w-3.5 h-3.5" /> Tambah URL
+                    <Plus className="w-3.5 h-3.5 stroke-[2.5]" /> Tambah URL
                   </button>
                 </div>
               </div>
@@ -843,21 +850,21 @@ export default function StorefrontCmsPage() {
                     {(cms.hero?.bannerImages || (cms.hero?.bannerImage ? [cms.hero.bannerImage] : [])).map((imgUrl, idx) => (
                       <div
                         key={idx}
-                        className={`group relative aspect-video rounded-xl overflow-hidden border bg-slate-100 ${
-                          idx === 0 ? "border-slate-900 ring-2 ring-slate-900/10 shadow-xs" : "border-slate-200"
+                        className={`group relative aspect-video rounded-xs overflow-hidden border bg-slate-100 ${
+                          idx === 0 ? "border-[#EE4D2D] ring-1 ring-[#EE4D2D] shadow-2xs" : "border-slate-200"
                         }`}
                       >
                         <img src={imgUrl} alt={`Slide ${idx + 1}`} className="w-full h-full object-cover" />
                         
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
                           <div className="flex justify-between items-center">
-                            <span className="text-[10px] font-mono font-bold text-white bg-black/60 px-1.5 py-0.5 rounded">
+                            <span className="text-[10px] font-mono font-bold text-white bg-black/60 px-1.5 py-0.5 rounded-xs">
                               Slide {idx + 1}
                             </span>
                             <button
                               type="button"
                               onClick={() => handleRemoveBannerSlide(idx)}
-                              className="p-1 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors"
+                              className="p-1 bg-red-600 hover:bg-red-700 text-white rounded-xs transition-colors"
                               title="Hapus Slide"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -868,7 +875,7 @@ export default function StorefrontCmsPage() {
                             <button
                               type="button"
                               onClick={() => handleSetPrimarySlide(idx)}
-                              className="w-full py-1 bg-white/90 hover:bg-white text-slate-900 text-[10px] font-bold rounded shadow-xs"
+                              className="w-full py-1 bg-white/90 hover:bg-white text-slate-900 text-[10px] font-bold rounded-xs shadow-2xs"
                             >
                               Jadikan Slide Awal
                             </button>
@@ -876,7 +883,7 @@ export default function StorefrontCmsPage() {
                         </div>
 
                         {idx === 0 && (
-                          <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 bg-slate-900 text-white text-[9px] font-bold uppercase rounded">
+                          <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 bg-[#EE4D2D] text-white text-[9px] font-bold uppercase rounded-xs">
                             Cover Awal
                           </span>
                         )}
@@ -887,10 +894,10 @@ export default function StorefrontCmsPage() {
               )}
 
               {/* Banner Text Settings */}
-              <div className="pt-4 border-t border-slate-100 space-y-4 text-xs">
+              <div className="pt-3 border-t border-slate-200 space-y-3 text-xs">
                 <div className="grid sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="font-bold text-slate-700 block mb-1">Kicker / Subtitle Atas:</label>
+                    <label className="font-semibold text-slate-700 block mb-1">Kicker / Subtitle Atas:</label>
                     <input
                       type="text"
                       value={cms.hero?.badgeText || ""}
@@ -898,11 +905,11 @@ export default function StorefrontCmsPage() {
                         setCms({ ...cms, hero: { ...cms.hero, badgeText: e.target.value } })
                       }
                       placeholder="MINIMAL / MODERN / COMFORT / EDITORIAL"
-                      className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900"
+                      className="w-full text-xs px-2.5 py-1.5 rounded-xs border border-slate-300 focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D]"
                     />
                   </div>
                   <div>
-                    <label className="font-bold text-slate-700 block mb-1">Headline Utama (Judul Besar):</label>
+                    <label className="font-semibold text-slate-700 block mb-1">Headline Utama (Judul Besar):</label>
                     <input
                       type="text"
                       value={cms.hero?.headline || ""}
@@ -910,13 +917,13 @@ export default function StorefrontCmsPage() {
                         setCms({ ...cms, hero: { ...cms.hero, headline: e.target.value } })
                       }
                       placeholder="KALMORA"
-                      className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900 font-bold"
+                      className="w-full text-xs px-2.5 py-1.5 rounded-xs border border-slate-300 focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D] font-bold"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Deskripsi Narasi Beranda:</label>
+                  <label className="font-semibold text-slate-700 block mb-1">Deskripsi Narasi Beranda:</label>
                   <textarea
                     rows={3}
                     value={cms.hero?.description || ""}
@@ -924,13 +931,13 @@ export default function StorefrontCmsPage() {
                       setCms({ ...cms, hero: { ...cms.hero, description: e.target.value } })
                     }
                     placeholder="Tuliskan kurasi filosofi atau pesan sambutan toko Anda..."
-                    className="w-full text-xs p-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900 leading-relaxed"
+                    className="w-full text-xs p-2.5 rounded-xs border border-slate-300 focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D] leading-relaxed"
                   />
                 </div>
 
                 <div className="grid sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="font-bold text-slate-700 block mb-1">Teks Tombol Aksi (CTA):</label>
+                    <label className="font-semibold text-slate-700 block mb-1">Teks Tombol Aksi (CTA):</label>
                     <input
                       type="text"
                       value={cms.hero?.ctaText || ""}
@@ -938,11 +945,11 @@ export default function StorefrontCmsPage() {
                         setCms({ ...cms, hero: { ...cms.hero, ctaText: e.target.value } })
                       }
                       placeholder="DISCOVER COLLECTION"
-                      className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900"
+                      className="w-full text-xs px-2.5 py-1.5 rounded-xs border border-slate-300 focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D]"
                     />
                   </div>
                   <div>
-                    <label className="font-bold text-slate-700 block mb-1">Tujuan Tombol Aksi (Anchor/Link):</label>
+                    <label className="font-semibold text-slate-700 block mb-1">Tujuan Tombol Aksi (Anchor/Link):</label>
                     <input
                       type="text"
                       value={cms.hero?.ctaLink || ""}
@@ -950,7 +957,7 @@ export default function StorefrontCmsPage() {
                         setCms({ ...cms, hero: { ...cms.hero, ctaLink: e.target.value } })
                       }
                       placeholder="#collections atau #catalog"
-                      className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900 font-mono"
+                      className="w-full text-xs px-2.5 py-1.5 rounded-xs border border-slate-300 focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D] font-mono"
                     />
                   </div>
                 </div>
@@ -960,17 +967,17 @@ export default function StorefrontCmsPage() {
 
           {/* TAB 3: ABOUT / CERITA TOKO */}
           {activeTab === "about" && (
-            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 space-y-6">
+            <div className="bg-white p-4 rounded-xs border border-slate-200 space-y-4 shadow-2xs">
               <div>
-                <h3 className="text-sm font-bold text-slate-900">Cerita Toko & Filosofi Brand (About Section)</h3>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <h3 className="text-xs font-bold text-slate-800">Cerita Toko & Filosofi Brand (About Section)</h3>
+                <p className="text-xs text-slate-400 mt-0.5">
                   Bagian beranda yang menjelaskan kisah brand, keunggulan material, dan dedikasi studio Anda.
                 </p>
               </div>
 
-              <div className="space-y-4 text-xs">
+              <div className="space-y-3 text-xs">
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Judul Bagian About:</label>
+                  <label className="font-semibold text-slate-700 block mb-1">Judul Bagian About:</label>
                   <input
                     type="text"
                     value={cms.highlights?.aboutHeading || ""}
@@ -981,14 +988,14 @@ export default function StorefrontCmsPage() {
                       })
                     }
                     placeholder="ABOUT KALMORA"
-                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900 font-bold"
+                    className="w-full text-xs px-2.5 py-1.5 rounded-xs border border-slate-300 focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D] font-bold"
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Narasi Cerita Lengkap (Paragraf):</label>
+                  <label className="font-semibold text-slate-700 block mb-1">Narasi Cerita Lengkap (Paragraf):</label>
                   <textarea
-                    rows={6}
+                    rows={5}
                     value={cms.highlights?.aboutStory || ""}
                     onChange={(e) =>
                       setCms({
@@ -997,19 +1004,19 @@ export default function StorefrontCmsPage() {
                       })
                     }
                     placeholder="Ceritakan latar belakang brand Anda. Gunakan enter dua kali untuk memisahkan paragraf..."
-                    className="w-full text-xs p-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900 leading-relaxed font-sans"
+                    className="w-full text-xs p-2.5 rounded-xs border border-slate-300 focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D] leading-relaxed font-sans"
                   />
-                  <span className="text-[11px] text-slate-400 mt-1 block">
+                  <span className="text-[10px] text-slate-400 mt-1 block">
                     Gunakan spasi baris kosong (enter 2x) untuk membuat paragraf baru.
                   </span>
                 </div>
 
                 {/* Studio Portrait Image */}
-                <div className="pt-2 border-t border-slate-100 space-y-3">
-                  <label className="font-bold text-slate-700 block">Foto Studio / Atelier / Founder:</label>
-                  <div className="flex flex-col sm:flex-row gap-4 items-start">
+                <div className="pt-2 border-t border-slate-200 space-y-2.5">
+                  <label className="font-semibold text-slate-700 block">Foto Studio / Atelier / Founder:</label>
+                  <div className="flex flex-col sm:flex-row gap-3 items-start">
                     {cms.highlights?.aboutImage && (
-                      <div className="w-28 aspect-[3/4] rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shrink-0 relative group">
+                      <div className="w-24 aspect-[3/4] rounded-xs overflow-hidden border border-slate-300 bg-slate-100 shrink-0 relative group">
                         <img src={cms.highlights.aboutImage} alt="About Studio" className="w-full h-full object-cover" />
                         <button
                           type="button"
@@ -1019,7 +1026,7 @@ export default function StorefrontCmsPage() {
                               highlights: { ...cms.highlights, aboutImage: "" },
                             })
                           }
-                          className="absolute top-1 right-1 p-1 bg-red-600 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute top-1 right-1 p-1 bg-red-600 text-white rounded-xs opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
@@ -1027,8 +1034,8 @@ export default function StorefrontCmsPage() {
                     )}
 
                     <div className="flex-1 space-y-2 w-full">
-                      <label className={`block border border-dashed rounded-xl p-3 text-center cursor-pointer transition-all ${
-                        isUploadingAbout ? "bg-amber-50 border-amber-400" : "hover:bg-slate-50 border-slate-300"
+                      <label className={`block border-2 border-dashed rounded-xs p-3 text-center cursor-pointer transition-all ${
+                        isUploadingAbout ? "bg-orange-50 border-[#EE4D2D]" : "hover:bg-orange-50/20 border-slate-300 hover:border-[#EE4D2D]"
                       }`}>
                         <input
                           type="file"
@@ -1050,8 +1057,8 @@ export default function StorefrontCmsPage() {
                           className="sr-only"
                         />
                         <div className="flex items-center justify-center gap-2 text-slate-600 text-xs">
-                          {isUploadingAbout ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                          <span>{isUploadingAbout ? "Mengunggah foto..." : "Pilih / Upload Foto Studio"}</span>
+                          {isUploadingAbout ? <Loader2 className="w-4 h-4 animate-spin text-[#EE4D2D]" /> : <Upload className="w-4 h-4 text-[#EE4D2D]" />}
+                          <span className="font-medium">{isUploadingAbout ? "Mengunggah foto..." : "Pilih / Upload Foto Studio"}</span>
                         </div>
                       </label>
 
@@ -1065,7 +1072,7 @@ export default function StorefrontCmsPage() {
                           })
                         }
                         placeholder="Atau tempel URL gambar studio..."
-                        className="w-full text-xs p-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900 font-mono"
+                        className="w-full text-xs px-2.5 py-1.5 rounded-xs border border-slate-300 focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D] font-mono"
                       />
                     </div>
                   </div>
@@ -1073,7 +1080,7 @@ export default function StorefrontCmsPage() {
 
                 {/* Founder Quote */}
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Kutipan Inspirasi / Quote Pendiri:</label>
+                  <label className="font-semibold text-slate-700 block mb-1">Kutipan Inspirasi / Quote Pendiri:</label>
                   <input
                     type="text"
                     value={cms.highlights?.founderQuote || ""}
@@ -1084,7 +1091,7 @@ export default function StorefrontCmsPage() {
                       })
                     }
                     placeholder="Contoh: Pakaian terbaik adalah yang membiarkan anak bebas bereksplorasi."
-                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900 italic font-serif"
+                    className="w-full text-xs px-2.5 py-1.5 rounded-xs border border-slate-300 focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D] italic font-serif"
                   />
                 </div>
               </div>
@@ -1093,11 +1100,11 @@ export default function StorefrontCmsPage() {
 
           {/* TAB 4: HALAMAN KUSTOM (CUSTOM PAGES) */}
           {activeTab === "pages" && (
-            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 space-y-6">
+            <div className="bg-white p-4 rounded-xs border border-slate-200 space-y-4 shadow-2xs">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">Manajer Halaman Kustom (Custom Pages)</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <h3 className="text-xs font-bold text-slate-800">Manajer Halaman Kustom (Custom Pages)</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
                     Buat halaman baru (seperti About, Cerita Brand, FAQ, atau Panduan) dengan format layout elegan tetap sesuai tema.
                   </p>
                 </div>
@@ -1105,25 +1112,25 @@ export default function StorefrontCmsPage() {
                   <button
                     type="button"
                     onClick={handleStartCreatePage}
-                    className="px-3.5 py-2 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition-colors self-start sm:self-auto shrink-0 shadow-xs"
+                    className="px-3 py-1.5 bg-[#EE4D2D] hover:bg-[#d73f20] text-white text-xs font-semibold rounded-xs flex items-center gap-1.5 transition-colors self-start sm:self-auto shrink-0 shadow-2xs"
                   >
-                    <Plus className="w-3.5 h-3.5" /> Buat Halaman Baru
+                    <Plus className="w-3.5 h-3.5 stroke-[2.5]" /> Buat Halaman Baru
                   </button>
                 )}
               </div>
 
               {/* Page Editor Form if open */}
               {editingPageId ? (
-                <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-4 text-xs">
-                  <div className="flex items-center justify-between border-b border-slate-200/80 pb-3">
-                    <span className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
-                      <FileText className="w-4 h-4 text-emerald-600" />
+                <div className="p-3.5 bg-slate-50 rounded-xs border border-slate-300 space-y-3 text-xs">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
+                    <span className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                      <FileText className="w-4 h-4 text-[#EE4D2D]" />
                       {editingPageId === "new" ? "Buat Halaman Baru" : `Edit: ${pageForm.title}`}
                     </span>
                     <button
                       type="button"
                       onClick={() => setEditingPageId(null)}
-                      className="text-slate-500 hover:text-slate-800 text-xs font-semibold"
+                      className="text-slate-500 hover:text-slate-800 text-xs font-medium"
                     >
                       Batal
                     </button>
@@ -1131,46 +1138,46 @@ export default function StorefrontCmsPage() {
 
                   <div className="grid sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="font-bold text-slate-700 block mb-1">Judul Halaman:</label>
+                      <label className="font-semibold text-slate-700 block mb-1">Judul Halaman:</label>
                       <input
                         type="text"
                         value={pageForm.title}
                         onChange={(e) => setPageForm({ ...pageForm, title: e.target.value })}
                         placeholder="Misal: Cerita Atelier & Pengrajin"
-                        className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900 font-bold bg-white"
+                        className="w-full text-xs px-2.5 py-1.5 rounded-xs border border-slate-300 focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D] font-bold bg-white"
                       />
                     </div>
                     <div>
-                      <label className="font-bold text-slate-700 block mb-1">URL Slug (Otomatis):</label>
-                      <div className="flex items-center rounded-xl border border-slate-200 bg-white overflow-hidden px-2.5">
+                      <label className="font-semibold text-slate-700 block mb-1">URL Slug (Otomatis):</label>
+                      <div className="flex items-center rounded-xs border border-slate-300 bg-white overflow-hidden px-2">
                         <span className="text-slate-400 font-mono text-[11px]">/pages/</span>
                         <input
                           type="text"
                           value={pageForm.slug}
                           onChange={(e) => setPageForm({ ...pageForm, slug: e.target.value })}
                           placeholder="cerita-atelier"
-                          className="flex-1 text-xs py-2.5 pl-1 focus:outline-none font-mono"
+                          className="flex-1 text-xs py-1.5 pl-1 focus:outline-none font-mono"
                         />
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <label className="font-bold text-slate-700 block mb-1">Sub-judul / Kicker Halaman:</label>
+                    <label className="font-semibold text-slate-700 block mb-1">Sub-judul / Kicker Halaman:</label>
                     <input
                       type="text"
                       value={pageForm.subtitle || ""}
                       onChange={(e) => setPageForm({ ...pageForm, subtitle: e.target.value })}
                       placeholder="EDITORIAL ARCHIVE & CRAFTSMANSHIP"
-                      className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white"
+                      className="w-full text-xs px-2.5 py-1.5 rounded-xs border border-slate-300 focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D] bg-white"
                     />
                   </div>
 
                   {/* Banner Image */}
                   <div>
-                    <label className="font-bold text-slate-700 block mb-1">Banner Atas Halaman (Opsional):</label>
+                    <label className="font-semibold text-slate-700 block mb-1">Banner Atas Halaman (Opsional):</label>
                     <div className="flex gap-2 items-center">
-                      <label className="px-3 py-2 bg-white border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-100 flex items-center gap-1.5 shrink-0">
+                      <label className="px-3 py-1.5 bg-white border border-slate-300 rounded-xs cursor-pointer hover:bg-slate-50 flex items-center gap-1.5 shrink-0">
                         <input
                           type="file"
                           accept="image/*"
@@ -1184,37 +1191,37 @@ export default function StorefrontCmsPage() {
                           }}
                           className="sr-only"
                         />
-                        {isUploadingPageBanner ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-                        <span>Upload Banner</span>
+                        {isUploadingPageBanner ? <Loader2 className="w-3.5 h-3.5 animate-spin text-[#EE4D2D]" /> : <Upload className="w-3.5 h-3.5 text-[#EE4D2D]" />}
+                        <span className="font-medium">Upload Banner</span>
                       </label>
                       <input
                         type="url"
                         value={pageForm.bannerImage || ""}
                         onChange={(e) => setPageForm({ ...pageForm, bannerImage: e.target.value })}
                         placeholder="Atau URL gambar banner..."
-                        className="flex-1 text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white font-mono"
+                        className="flex-1 text-xs px-2.5 py-1.5 rounded-xs border border-slate-300 focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D] bg-white font-mono"
                       />
                     </div>
                   </div>
 
                   {/* Content */}
                   <div>
-                    <label className="font-bold text-slate-700 block mb-1">Konten Cerita & Teks Halaman:</label>
+                    <label className="font-semibold text-slate-700 block mb-1">Konten Cerita & Teks Halaman:</label>
                     <textarea
-                      rows={6}
+                      rows={5}
                       value={pageForm.content}
                       onChange={(e) => setPageForm({ ...pageForm, content: e.target.value })}
                       placeholder="Tuliskan cerita lengkap. Tekan enter dua kali untuk memisahkan paragraf..."
-                      className="w-full text-xs p-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900 leading-relaxed bg-white"
+                      className="w-full text-xs p-2.5 rounded-xs border border-slate-300 focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D] leading-relaxed bg-white"
                     />
                   </div>
 
                   {/* Side Image & Quote */}
-                  <div className="grid sm:grid-cols-2 gap-3 pt-2 border-t border-slate-200/60">
+                  <div className="grid sm:grid-cols-2 gap-3 pt-2 border-t border-slate-200">
                     <div>
-                      <label className="font-bold text-slate-700 block mb-1">Foto Samping (Side Image):</label>
+                      <label className="font-semibold text-slate-700 block mb-1">Foto Samping (Side Image):</label>
                       <div className="flex gap-2">
-                        <label className="px-2.5 py-2 bg-white border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-100 flex items-center gap-1 shrink-0">
+                        <label className="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xs cursor-pointer hover:bg-slate-50 flex items-center gap-1 shrink-0">
                           <input
                             type="file"
                             accept="image/*"
@@ -1228,21 +1235,21 @@ export default function StorefrontCmsPage() {
                             }}
                             className="sr-only"
                           />
-                          {isUploadingPageSide ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-                          <span>Upload</span>
+                          {isUploadingPageSide ? <Loader2 className="w-3.5 h-3.5 animate-spin text-[#EE4D2D]" /> : <Upload className="w-3.5 h-3.5 text-[#EE4D2D]" />}
+                          <span className="font-medium">Upload</span>
                         </label>
                         <input
                           type="url"
                           value={pageForm.sideImage || ""}
                           onChange={(e) => setPageForm({ ...pageForm, sideImage: e.target.value })}
                           placeholder="URL foto samping..."
-                          className="flex-1 text-xs p-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white font-mono"
+                          className="flex-1 text-xs px-2 py-1.5 rounded-xs border border-slate-300 focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D] bg-white font-mono"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="font-bold text-slate-700 block mb-1">Posisi Foto Samping:</label>
+                      <label className="font-semibold text-slate-700 block mb-1">Posisi Foto Samping:</label>
                       <select
                         value={pageForm.sideImagePosition || "right"}
                         onChange={(e) =>
@@ -1251,7 +1258,7 @@ export default function StorefrontCmsPage() {
                             sideImagePosition: e.target.value as any,
                           })
                         }
-                        className="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-white"
+                        className="w-full text-xs px-2.5 py-1.5 rounded-xs border border-slate-300 bg-white"
                       >
                         <option value="right">Kanan (Teks di Kiri)</option>
                         <option value="left">Kiri (Teks di Kanan)</option>
@@ -1262,54 +1269,54 @@ export default function StorefrontCmsPage() {
 
                   <div className="grid sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="font-bold text-slate-700 block mb-1">Kutipan / Quote Block:</label>
+                      <label className="font-semibold text-slate-700 block mb-1">Kutipan / Quote Block:</label>
                       <input
                         type="text"
                         value={pageForm.quoteText || ""}
                         onChange={(e) => setPageForm({ ...pageForm, quoteText: e.target.value })}
                         placeholder="Kutipan filosofi singkat..."
-                        className="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-white italic font-serif"
+                        className="w-full text-xs px-2.5 py-1.5 rounded-xs border border-slate-300 bg-white italic font-serif"
                       />
                     </div>
                     <div>
-                      <label className="font-bold text-slate-700 block mb-1">Penulis Kutipan:</label>
+                      <label className="font-semibold text-slate-700 block mb-1">Penulis Kutipan:</label>
                       <input
                         type="text"
                         value={pageForm.quoteAuthor || ""}
                         onChange={(e) => setPageForm({ ...pageForm, quoteAuthor: e.target.value })}
                         placeholder="Contoh: Tim Kurator 2026"
-                        className="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-white"
+                        className="w-full text-xs px-2.5 py-1.5 rounded-xs border border-slate-300 bg-white"
                       />
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-3 border-t border-slate-200/80">
+                  <div className="flex items-center justify-between pt-2.5 border-t border-slate-200">
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={pageForm.isPublished !== false}
                         onChange={(e) => setPageForm({ ...pageForm, isPublished: e.target.checked })}
-                        className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500"
+                        className="w-4 h-4 rounded-xs text-[#EE4D2D] focus:ring-[#EE4D2D]"
                       />
-                      <span className="font-bold text-slate-800">Publikasikan Halaman (Aktif)</span>
+                      <span className="font-semibold text-slate-800">Publikasikan Halaman (Aktif)</span>
                     </label>
 
                     <button
                       type="button"
                       onClick={handleSavePage}
-                      className="px-4 py-2 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-xs"
+                      className="px-3.5 py-1.5 bg-[#EE4D2D] hover:bg-[#d73f20] text-white text-xs font-semibold rounded-xs flex items-center gap-1.5 shadow-2xs"
                     >
-                      <Check className="w-3.5 h-3.5 text-emerald-400" /> Simpan Halaman
+                      <Check className="w-3.5 h-3.5 stroke-[2.5]" /> Simpan Halaman
                     </button>
                   </div>
                 </div>
               ) : (
                 /* List Existing Pages */
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {(!cms.pages || cms.pages.length === 0) ? (
-                    <div className="p-8 text-center border-2 border-dashed border-slate-200 rounded-2xl space-y-2">
-                      <FileText className="w-8 h-8 text-slate-400 mx-auto" />
-                      <p className="text-xs font-bold text-slate-700">Belum ada Halaman Kustom</p>
+                    <div className="p-6 text-center border-2 border-dashed border-slate-200 rounded-xs space-y-2">
+                      <FileText className="w-6 h-6 text-slate-400 mx-auto" />
+                      <p className="text-xs font-semibold text-slate-700">Belum ada Halaman Kustom</p>
                       <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
                         Klik tombol di atas untuk membuat halaman baru seperti Our Story, Profil Brand, atau Kebijakan Toko.
                       </p>
@@ -1318,16 +1325,16 @@ export default function StorefrontCmsPage() {
                     cms.pages.map((p) => (
                       <div
                         key={p.id}
-                        className="p-4 rounded-xl border border-slate-200 hover:border-slate-300 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all"
+                        className="p-3 rounded-xs border border-slate-200 hover:border-slate-300 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 transition-all shadow-2xs"
                       >
-                        <div className="space-y-1">
+                        <div className="space-y-0.5">
                           <div className="flex items-center gap-2">
-                            <h4 className="font-bold text-slate-900 text-xs">{p.title}</h4>
+                            <h4 className="font-bold text-slate-800 text-xs">{p.title}</h4>
                             <span
-                              className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded-full ${
+                              className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-xs border ${
                                 p.isPublished !== false
-                                  ? "bg-emerald-100 text-emerald-800"
-                                  : "bg-slate-100 text-slate-600"
+                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                  : "bg-slate-100 text-slate-600 border-slate-200"
                               }`}
                             >
                               {p.isPublished !== false ? "Terbit" : "Draft"}
@@ -1338,30 +1345,30 @@ export default function StorefrontCmsPage() {
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-1.5 shrink-0">
                           <button
                             type="button"
                             onClick={() => handleAddPageToMenu(p)}
-                            className="px-2.5 py-1.5 border border-slate-200 hover:border-slate-400 text-slate-700 text-[11px] font-medium rounded-lg flex items-center gap-1"
+                            className="px-2.5 py-1 border border-slate-300 hover:border-slate-400 text-slate-700 text-[11px] font-medium rounded-xs flex items-center gap-1 transition-colors"
                             title="Tambahkan link halaman ini ke sidebar drawer toko"
                           >
-                            <Compass className="w-3 h-3 text-blue-600" />
+                            <Compass className="w-3 h-3 text-[#EE4D2D]" />
                             + Ke Menu
                           </button>
 
                           <Link
                             href={`/${storeSlug}/pages/${p.slug}`}
                             target="_blank"
-                            className="px-2.5 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-700 text-[11px] font-medium rounded-lg flex items-center gap-1"
+                            className="px-2.5 py-1 border border-slate-300 hover:bg-slate-50 text-slate-700 text-[11px] font-medium rounded-xs flex items-center gap-1 transition-colors"
                           >
-                            <ExternalLink className="w-3 h-3" />
+                            <ExternalLink className="w-3 h-3 text-slate-400" />
                             Lihat
                           </Link>
 
                           <button
                             type="button"
                             onClick={() => handleStartEditPage(p)}
-                            className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-medium rounded-lg transition-colors"
+                            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-medium rounded-xs transition-colors"
                           >
                             Edit
                           </button>
@@ -1369,7 +1376,7 @@ export default function StorefrontCmsPage() {
                           <button
                             type="button"
                             onClick={() => handleDeletePage(p.id)}
-                            className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            className="p-1 text-red-500 hover:bg-red-50 rounded-xs transition-colors"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -1384,35 +1391,35 @@ export default function StorefrontCmsPage() {
 
           {/* TAB 5: SIDEBAR & NAVIGASI */}
           {activeTab === "navigation" && (
-            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 space-y-6">
+            <div className="bg-white p-4 rounded-xs border border-slate-200 space-y-4 shadow-2xs">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">Menu Drawer Sidebar</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <h3 className="text-xs font-bold text-slate-800">Menu Drawer Sidebar</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
                     Menu yang muncul saat pembeli menekan tombol &ldquo;MENU&rdquo; di kiri atas.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={addMenuItem}
-                  className="px-3 py-1.5 bg-slate-900 hover:bg-black text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-colors"
+                  className="px-3 py-1.5 bg-[#EE4D2D] hover:bg-[#d73f20] text-white text-xs font-semibold rounded-xs flex items-center gap-1.5 transition-colors shadow-2xs"
                 >
-                  <Plus className="w-3.5 h-3.5" /> Tambah Menu
+                  <Plus className="w-3.5 h-3.5 stroke-[2.5]" /> Tambah Menu
                 </button>
               </div>
 
               {/* Menu items list */}
-              <div className="space-y-2">
-                {(cms.navigation?.menuItems || []).map((item, idx) => (
+              <div className="space-y-1.5">
+                {(cms.navigation?.menuItems || []).map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 bg-slate-50/70"
+                    className="flex items-center gap-2 p-2 rounded-xs border border-slate-200 bg-slate-50/70"
                   >
                     <input
                       type="checkbox"
                       checked={item.enabled}
                       onChange={(e) => updateMenuItem(item.id, "enabled", e.target.checked)}
-                      className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500"
+                      className="w-4 h-4 rounded-xs text-[#EE4D2D] focus:ring-[#EE4D2D]"
                     />
 
                     <input
@@ -1420,7 +1427,7 @@ export default function StorefrontCmsPage() {
                       value={item.label}
                       onChange={(e) => updateMenuItem(item.id, "label", e.target.value)}
                       placeholder="NAMA MENU"
-                      className="w-1/3 text-xs p-2 rounded-lg border border-slate-200 bg-white font-bold"
+                      className="w-1/3 text-xs px-2.5 py-1 rounded-xs border border-slate-300 bg-white font-bold focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D]"
                     />
 
                     <input
@@ -1428,13 +1435,13 @@ export default function StorefrontCmsPage() {
                       value={item.url}
                       onChange={(e) => updateMenuItem(item.id, "url", e.target.value)}
                       placeholder="#collections atau /cart"
-                      className="flex-1 text-xs p-2 rounded-lg border border-slate-200 bg-white font-mono"
+                      className="flex-1 text-xs px-2.5 py-1 rounded-xs border border-slate-300 bg-white font-mono focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D]"
                     />
 
                     <button
                       type="button"
                       onClick={() => removeMenuItem(item.id)}
-                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xs transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -1443,8 +1450,8 @@ export default function StorefrontCmsPage() {
               </div>
 
               {/* Social Links */}
-              <div className="pt-4 border-t border-slate-100 space-y-3">
-                <h4 className="text-xs font-bold text-slate-900">Tautan Media Sosial Toko</h4>
+              <div className="pt-3 border-t border-slate-200 space-y-2.5">
+                <h4 className="text-xs font-bold text-slate-800">Tautan Media Sosial Toko</h4>
                 <div className="grid sm:grid-cols-3 gap-3 text-xs">
                   <div>
                     <label className="text-[11px] text-slate-600 block mb-1">WhatsApp CS (Nomor):</label>
@@ -1461,7 +1468,7 @@ export default function StorefrontCmsPage() {
                         })
                       }
                       placeholder="628123456789"
-                      className="w-full text-xs p-2 rounded-xl border border-slate-200"
+                      className="w-full text-xs px-2.5 py-1.5 rounded-xs border border-slate-300 focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D]"
                     />
                   </div>
                   <div>
@@ -1479,7 +1486,7 @@ export default function StorefrontCmsPage() {
                         })
                       }
                       placeholder="https://instagram.com/..."
-                      className="w-full text-xs p-2 rounded-xl border border-slate-200"
+                      className="w-full text-xs px-2.5 py-1.5 rounded-xs border border-slate-300 focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D]"
                     />
                   </div>
                   <div>
@@ -1497,7 +1504,7 @@ export default function StorefrontCmsPage() {
                         })
                       }
                       placeholder="https://tiktok.com/@..."
-                      className="w-full text-xs p-2 rounded-xl border border-slate-200"
+                      className="w-full text-xs px-2.5 py-1.5 rounded-xs border border-slate-300 focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D]"
                     />
                   </div>
                 </div>
@@ -1507,20 +1514,20 @@ export default function StorefrontCmsPage() {
 
           {/* TAB 6: WARNA & TIPOGRAFI */}
           {activeTab === "styling" && (
-            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 space-y-6">
+            <div className="bg-white p-4 rounded-xs border border-slate-200 space-y-4 shadow-2xs">
               <div>
-                <h3 className="text-sm font-bold text-slate-900">Warna Brand & Pilihan Font Display</h3>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <h3 className="text-xs font-bold text-slate-800">Warna Brand & Pilihan Font Display</h3>
+                <p className="text-xs text-slate-400 mt-0.5">
                   Sesuaikan warna dan gaya tipografi dengan identitas produk Anda.
                 </p>
               </div>
 
               {/* Font Heading */}
-              <div className="space-y-3">
-                <label className="font-bold text-slate-700 text-xs block">
+              <div className="space-y-2.5">
+                <label className="font-semibold text-slate-700 text-xs block">
                   Font Heading / Judul Toko:
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {[
                     { id: "bebas", name: "Bebas Neue", sample: "EDITORIAL STYLE", desc: "Tinggi, tebal, majalah fashion" },
                     { id: "playfair", name: "Playfair Display", sample: "Luxury Serif", desc: "Klasik, mewah, atelier" },
@@ -1535,14 +1542,14 @@ export default function StorefrontCmsPage() {
                           branding: { ...cms.branding, fontHeading: f.id as any },
                         })
                       }
-                      className={`cursor-pointer p-3 rounded-xl border-2 transition-all ${
+                      className={`cursor-pointer p-2.5 rounded-xs border transition-all ${
                         cms.branding?.fontHeading === f.id
-                          ? "border-slate-900 bg-slate-50 shadow-xs"
+                          ? "border-[#EE4D2D] bg-orange-50/30 ring-1 ring-[#EE4D2D] shadow-2xs"
                           : "border-slate-200 hover:border-slate-300"
                       }`}
                     >
-                      <div className="text-xs font-bold text-slate-900">{f.name}</div>
-                      <div className="text-lg text-slate-800 my-1 truncate">{f.sample}</div>
+                      <div className="text-xs font-bold text-slate-800">{f.name}</div>
+                      <div className="text-base text-slate-800 my-1 truncate">{f.sample}</div>
                       <div className="text-[10px] text-slate-400">{f.desc}</div>
                     </div>
                   ))}
@@ -1550,11 +1557,11 @@ export default function StorefrontCmsPage() {
               </div>
 
               {/* Preset Palettes */}
-              <div className="space-y-3 pt-4 border-t border-slate-100">
-                <label className="font-bold text-slate-700 text-xs block">
+              <div className="space-y-2.5 pt-3 border-t border-slate-200">
+                <label className="font-semibold text-slate-700 text-xs block">
                   Pilihan Palet Warna Siap Pakai:
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {COLOR_PRESETS.map((p, idx) => (
                     <div
                       key={idx}
@@ -1570,7 +1577,7 @@ export default function StorefrontCmsPage() {
                           },
                         })
                       }
-                      className="cursor-pointer p-3 rounded-xl border border-slate-200 hover:border-slate-400 transition-all flex items-center justify-between"
+                      className="cursor-pointer p-2.5 rounded-xs border border-slate-200 hover:border-[#EE4D2D] transition-all flex items-center justify-between shadow-2xs"
                     >
                       <div>
                         <div className="text-xs font-bold text-slate-800">{p.name}</div>
@@ -1579,9 +1586,9 @@ export default function StorefrontCmsPage() {
                         </div>
                       </div>
                       <div className="flex gap-1">
-                        <span className="w-5 h-5 rounded-full border border-slate-300" style={{ backgroundColor: p.bg }} />
-                        <span className="w-5 h-5 rounded-full border border-slate-300" style={{ backgroundColor: p.text }} />
-                        <span className="w-5 h-5 rounded-full border border-slate-300" style={{ backgroundColor: p.accent }} />
+                        <span className="w-4 h-4 rounded-full border border-slate-300" style={{ backgroundColor: p.bg }} />
+                        <span className="w-4 h-4 rounded-full border border-slate-300" style={{ backgroundColor: p.text }} />
+                        <span className="w-4 h-4 rounded-full border border-slate-300" style={{ backgroundColor: p.accent }} />
                       </div>
                     </div>
                   ))}
@@ -1589,8 +1596,8 @@ export default function StorefrontCmsPage() {
               </div>
 
               {/* Manual Color Pickers */}
-              <div className="space-y-3 pt-4 border-t border-slate-100">
-                <label className="font-bold text-slate-700 text-xs block">
+              <div className="space-y-2.5 pt-3 border-t border-slate-200">
+                <label className="font-semibold text-slate-700 text-xs block">
                   Atur Warna Manual (Hex Picker):
                 </label>
                 <div className="grid grid-cols-3 gap-3">
@@ -1606,7 +1613,7 @@ export default function StorefrontCmsPage() {
                             branding: { ...cms.branding, backgroundColor: e.target.value },
                           })
                         }
-                        className="w-8 h-8 rounded-lg cursor-pointer border border-slate-200"
+                        className="w-7 h-7 rounded-xs cursor-pointer border border-slate-300 p-0"
                       />
                       <input
                         type="text"
@@ -1617,7 +1624,7 @@ export default function StorefrontCmsPage() {
                             branding: { ...cms.branding, backgroundColor: e.target.value },
                           })
                         }
-                        className="text-xs p-1.5 rounded border border-slate-200 font-mono w-24"
+                        className="text-xs px-2 py-1 rounded-xs border border-slate-300 font-mono w-24 focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D]"
                       />
                     </div>
                   </div>
@@ -1634,7 +1641,7 @@ export default function StorefrontCmsPage() {
                             branding: { ...cms.branding, textColor: e.target.value },
                           })
                         }
-                        className="w-8 h-8 rounded-lg cursor-pointer border border-slate-200"
+                        className="w-7 h-7 rounded-xs cursor-pointer border border-slate-300 p-0"
                       />
                       <input
                         type="text"
@@ -1645,7 +1652,7 @@ export default function StorefrontCmsPage() {
                             branding: { ...cms.branding, textColor: e.target.value },
                           })
                         }
-                        className="text-xs p-1.5 rounded border border-slate-200 font-mono w-24"
+                        className="text-xs px-2 py-1 rounded-xs border border-slate-300 font-mono w-24 focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D]"
                       />
                     </div>
                   </div>
@@ -1655,25 +1662,25 @@ export default function StorefrontCmsPage() {
                     <div className="flex items-center gap-2">
                       <input
                         type="color"
-                        value={cms.branding?.accentColor || "#059669"}
+                        value={cms.branding?.accentColor || "#EE4D2D"}
                         onChange={(e) =>
                           setCms({
                             ...cms,
                             branding: { ...cms.branding, accentColor: e.target.value },
                           })
                         }
-                        className="w-8 h-8 rounded-lg cursor-pointer border border-slate-200"
+                        className="w-7 h-7 rounded-xs cursor-pointer border border-slate-300 p-0"
                       />
                       <input
                         type="text"
-                        value={cms.branding?.accentColor || "#059669"}
+                        value={cms.branding?.accentColor || "#EE4D2D"}
                         onChange={(e) =>
                           setCms({
                             ...cms,
                             branding: { ...cms.branding, accentColor: e.target.value },
                           })
                         }
-                        className="text-xs p-1.5 rounded border border-slate-200 font-mono w-24"
+                        className="text-xs px-2 py-1 rounded-xs border border-slate-300 font-mono w-24 focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D]"
                       />
                     </div>
                   </div>
@@ -1685,14 +1692,14 @@ export default function StorefrontCmsPage() {
 
         {/* Live Preview Panel */}
         {showLivePreview && (
-          <div className="lg:col-span-5 sticky top-6 h-[85vh] bg-white rounded-2xl border border-slate-200/80 shadow-md flex flex-col overflow-hidden">
-            <div className="p-3 bg-slate-900 text-white flex items-center justify-between text-xs">
+          <div className="lg:col-span-5 sticky top-4 h-[85vh] bg-white rounded-xs border border-slate-200 shadow-2xs flex flex-col overflow-hidden">
+            <div className="px-3 py-2 bg-slate-900 text-white flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-[#EE4D2D] animate-pulse" />
                 <span className="font-mono font-bold">Live Preview: /{storeSlug}</span>
               </div>
               <div className="text-[11px] text-slate-400">
-                Template: <span className="font-bold text-white uppercase">{cms.template}</span>
+                Template: <span className="font-bold text-[#EE4D2D] uppercase">{cms.template}</span>
               </div>
             </div>
 
@@ -1700,7 +1707,7 @@ export default function StorefrontCmsPage() {
               <iframe
                 src={`/${storeSlug}?preview=true&template=${cms.template}`}
                 title="Storefront Preview"
-                className="w-full flex-1 rounded-xl border border-slate-200 bg-white shadow-xs"
+                className="w-full flex-1 rounded-xs border border-slate-200 bg-white shadow-2xs"
               />
             </div>
           </div>

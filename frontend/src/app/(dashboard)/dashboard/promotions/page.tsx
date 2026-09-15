@@ -118,7 +118,7 @@ export default function PromotionsPage() {
         </button>
       </div>
 
-      {/* ─── 2. Feature Cards (Shopee Seller Centre Promo Hub) ─── */}
+      {/* ─── 2. Feature Cards (Promo Hub) ─── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
         <div className="bg-white border border-slate-200 rounded-xs p-3.5 shadow-2xs hover:border-[#EE4D2D]/50 transition-colors cursor-pointer"
              onClick={() => setIsCreateOpen(true)}>

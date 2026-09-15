@@ -37,7 +37,7 @@ export function DashboardHeader() {
 
   return (
     <header className="h-12 bg-white border-b border-slate-200/80 flex items-center justify-between px-4 sm:px-6 flex-shrink-0 z-20">
-      {/* Left: Shopee Bag Icon + Breadcrumb */}
+      {/* Left: Store Icon + Breadcrumb */}
       <div className="flex items-center gap-3">
         <Link href="/dashboard" className="flex items-center gap-2 group">
           <div className="w-6 h-6 rounded-xs bg-[#EE4D2D] text-white flex items-center justify-center shadow-xs group-hover:opacity-95 transition-opacity">
@@ -99,7 +99,7 @@ export function DashboardHeader() {
           </Link>
         )}
 
-        {/* Notification bell with Shopee badge */}
+        {/* Notification bell with badge */}
         <button
           type="button"
           className="relative p-1.5 text-slate-600 hover:text-slate-900 transition-colors"

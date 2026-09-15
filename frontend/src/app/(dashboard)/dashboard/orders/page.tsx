@@ -104,7 +104,7 @@ function OrdersContent() {
         </div>
       </div>
 
-      {/* ─── 2. Top Tabs (Shopee Underline Tabs) ─── */}
+      {/* ─── 2. Top Tabs (Underline Tabs) ─── */}
       <div className="bg-white border-b border-slate-200 px-3 flex items-center gap-6 overflow-x-auto text-xs">
         {STATUS_TABS.map((tab) => (
           <button
@@ -145,7 +145,7 @@ function OrdersContent() {
         </div>
       </div>
 
-      {/* ─── 4. Compact Orders Table (Shopee Space-Saving Layout) ─── */}
+      {/* ─── 4. Compact Orders Table (Space-Saving Layout) ─── */}
       <div className="bg-white border border-slate-200 rounded-xs overflow-hidden shadow-2xs">
         {isLoading ? (
           <div className="flex items-center justify-center py-24 text-slate-400">

@@ -396,7 +396,7 @@ class MerchantController extends Controller
     }
 
     /**
-     * Analisis Bisnis Saya (Shopee Style).
+     * Analisis Bisnis Saya.
      */
     public function getAnalytics(Request $request): JsonResponse
     {

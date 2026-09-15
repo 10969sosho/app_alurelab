@@ -81,7 +81,7 @@ export function Sidebar() {
         </div>
       </div>
 
-      {/* Navigation Grouped Lists (Shopee Seller Centre Style) */}
+      {/* Navigation Grouped Lists */}
       <nav className="flex-1 px-2 py-2.5 space-y-3 overflow-y-auto">
         {/* Dashboard Overview shortcut */}
         <div>

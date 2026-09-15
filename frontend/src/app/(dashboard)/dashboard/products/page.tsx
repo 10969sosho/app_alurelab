@@ -177,7 +177,7 @@ export default function ProductsPage() {
             <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
           </button>
 
-          {/* Shopee Orange Button: + Tambah Produk Baru */}
+          {/* Orange Button: + Tambah Produk Baru */}
           <Link
             href="/dashboard/products/new"
             className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-[#EE4D2D] hover:bg-[#d73f20] text-white text-xs font-semibold rounded-xs transition-colors shadow-2xs"
@@ -188,7 +188,7 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      {/* ─── 2. Top Tabs (Shopee Underline Tabs) ─── */}
+      {/* ─── 2. Top Tabs (Underline Tabs) ─── */}
       <div className="bg-white border-b border-slate-200 px-3 flex items-center gap-6 overflow-x-auto text-xs">
         <button
           type="button"
@@ -262,14 +262,14 @@ export default function ProductsPage() {
         </button>
       </div>
 
-      {/* ─── 3. Slim Promo Banner (Shopee Seller Centre Style) ─── */}
+      {/* ─── 3. Slim Promo Banner ─── */}
       <div className="bg-orange-50/90 border border-orange-200/80 px-3.5 py-2 rounded-xs flex items-center justify-between text-xs text-slate-700">
         <div className="flex items-center gap-2 min-w-0">
           <div className="w-5 h-5 rounded-xs bg-[#EE4D2D] text-white flex items-center justify-center shrink-0">
             <Megaphone className="w-3 h-3" />
           </div>
           <p className="truncate">
-            <span className="font-semibold text-slate-900">Iklan Shopee:</span>{' '}
+            <span className="font-semibold text-slate-900">Iklan Toko:</span>{' '}
             Tingkatkan penjualan hingga 3x lipat dengan beriklan di halaman pencarian & rekomendasi terkait.
           </p>
         </div>
@@ -608,7 +608,7 @@ export default function ProductsPage() {
           </div>
         )}
 
-        {/* ─── 6. Pagination Footer (Shopee Style) ─── */}
+        {/* ─── 6. Pagination Footer ─── */}
         {total > 0 && (
           <div className="px-4 py-2.5 border-t border-slate-200 bg-[#FAFAFA] flex items-center justify-between text-xs text-slate-500">
             <span>

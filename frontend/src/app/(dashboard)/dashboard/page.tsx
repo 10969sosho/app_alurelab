@@ -95,7 +95,7 @@ export default function DashboardPage() {
         <p className="text-slate-400 text-xs mt-0.5">{storeName} — ringkasan performa hari ini</p>
       </div>
 
-      {/* Shopee Style "Hal yang Perlu Dilakukan" (To-Do List Widget) */}
+      {/* Hal yang Perlu Dilakukan (To-Do List Widget) */}
       <div className="bg-white border border-slate-200 rounded-xs p-3.5 shadow-2xs">
         <div className="flex items-center justify-between mb-2.5">
           <h2 className="text-xs font-bold text-slate-800">Hal yang Perlu Dilakukan</h2>
@@ -126,7 +126,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Shopee Style Metric Cards (Space Saving) */}
+      {/* Metric Cards (Space Saving) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
         <MetricCard
           label="Penjualan Hari Ini"
