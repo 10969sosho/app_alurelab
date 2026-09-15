@@ -103,18 +103,27 @@ class ProductController extends Controller
             ],
         ]);
 
-        // Buat varian jika ada
+        // Buat varian jika ada, atau buat varian default jika produk tunggal
         if (!empty($validated['variants'])) {
             foreach ($validated['variants'] as $variantData) {
                 ProductVariant::create([
                     'tenant_id'  => $store->id,
                     'product_id' => $product->id,
-                    'sku'        => $variantData['sku'] ?? null,
+                    'sku'        => $variantData['sku'] ?? strtoupper(Str::random(8)),
                     'title'      => $variantData['title'],
                     'price'      => $variantData['price'],
                     'stock'      => $variantData['stock'],
                 ]);
             }
+        } else {
+            ProductVariant::create([
+                'tenant_id'  => $store->id,
+                'product_id' => $product->id,
+                'sku'        => strtoupper(Str::random(8)),
+                'title'      => 'Standard',
+                'price'      => $product->price,
+                'stock'      => $request->input('stock', 100),
+            ]);
         }
 
         return response()->json(
@@ -158,6 +167,7 @@ class ProductController extends Controller
             'meta_title'       => 'nullable|string|max:60',
             'meta_description' => 'nullable|string|max:160',
             'tags'             => 'nullable|array',
+            'variants'         => 'nullable|array',
         ]);
 
         // Merge settings jika ada
@@ -171,7 +181,44 @@ class ProductController extends Controller
             unset($validated['meta_title'], $validated['meta_description'], $validated['tags']);
         }
 
+        $variantsData = $validated['variants'] ?? null;
+        unset($validated['variants']);
+
         $product->update($validated);
+
+        if ($variantsData !== null) {
+            if (!empty($variantsData)) {
+                ProductVariant::where('product_id', $product->id)->delete();
+                foreach ($variantsData as $variantData) {
+                    ProductVariant::create([
+                        'tenant_id'  => $store->id,
+                        'product_id' => $product->id,
+                        'sku'        => $variantData['sku'] ?? strtoupper(Str::random(8)),
+                        'title'      => $variantData['title'],
+                        'price'      => $variantData['price'] ?? $product->price,
+                        'stock'      => $variantData['stock'] ?? 10,
+                    ]);
+                }
+            } else if ($product->variants()->count() === 0) {
+                ProductVariant::create([
+                    'tenant_id'  => $store->id,
+                    'product_id' => $product->id,
+                    'sku'        => strtoupper(Str::random(8)),
+                    'title'      => 'Standard',
+                    'price'      => $product->price,
+                    'stock'      => $request->input('stock', 100),
+                ]);
+            }
+        } elseif ($product->variants()->count() === 0) {
+            ProductVariant::create([
+                'tenant_id'  => $store->id,
+                'product_id' => $product->id,
+                'sku'        => strtoupper(Str::random(8)),
+                'title'      => 'Standard',
+                'price'      => $product->price,
+                'stock'      => 100,
+            ]);
+        }
 
         return response()->json($product->load('variants'));
     }

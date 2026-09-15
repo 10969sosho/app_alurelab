@@ -142,7 +142,7 @@ export default function ProductDetailPage({
   const [quantity, setQuantity] = useState(1);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
-  // Fetch product detail or fallback to curated demo
+  // Fetch product detail or fallback
   const { data: product } = useQuery({
     queryKey: ['buyer-product', storeSlug, slug],
     queryFn: async () => {
@@ -165,33 +165,44 @@ export default function ProductDetailPage({
         category_name: 'CURATED ESSENTIALS',
         season: 'SEASON 2026',
         description:
-          'A calm everyday piece curated for comfort, softness, and timeless simplicity. Made using premium natural fibers designed for effortless styling.',
+          'Produk kurasi resmi dirancang untuk kenyamanan, kelembutan, dan kesederhanaan abadi untuk aktivitas harian.',
         details: [
-          'PREMIUM BREATHABLE COTTON',
-          'RELAXED MODERN FIT',
-          'MINIMAL EVERYDAY STYLE',
-          'UNISEX DESIGN',
+          'KUALITAS PREMIUM TERUJI',
+          'SILUET SANTAI & NYAMAN',
+          'MATERIAL BERNAPAS',
+          'GARANSI RETUR 100%',
         ],
         price: 149000,
         compare_at_price: 199000,
         images: [
           'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=1600&auto=format&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=1600&auto=format&fit=crop&q=80',
         ],
         variants: [
-          { id: 'var-1', title: 'Size 4-5Y', price: 149000, stock: 25 },
-          { id: 'var-2', title: 'Size 6-7Y', price: 149000, stock: 15 },
+          { id: 'var-1', title: 'Standard', price: 149000, stock: 25 },
         ],
       };
     },
   });
 
   const images = product?.images?.length ? product.images : ['https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=1600'];
-  const variants = product?.variants || [];
+  const variants = product?.variants && product.variants.length > 0
+    ? product.variants
+    : product
+    ? [{ id: product.id, title: 'Standar', price: Number(product.price), stock: 50 }]
+    : [];
   const activeVariant = variants.find((v: any) => v.id === selectedVariantId) || variants[0];
   const currentPrice = activeVariant ? Number(activeVariant.price) : Number(product?.price || 0);
   const comparePrice = product?.compare_at_price ? Number(product.compare_at_price) : null;
   const storeDisplayName = storeSlug.replace(/-/g, ' ').toUpperCase();
+
+  const productDetails = product?.details && product.details.length > 0
+    ? product.details
+    : [
+        `KATEGORI: ${(product?.category_name || 'KOLEKSI UTAMA').toUpperCase()}`,
+        `BERAT PENGIRIMAN: ${product?.weight_grams || 200} GRAM`,
+        'PRODUK 100% ORIGINAL BERGARANSI',
+        'MULTI-KURIR INTEGRASI BITESHIP',
+      ];
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -410,13 +421,13 @@ export default function ProductDetailPage({
             </div>
 
             {/* Specifications List */}
-            {product?.details && product.details.length > 0 && (
+            {productDetails.length > 0 && (
               <div className="pt-6 border-t border-[#DADADA] space-y-3">
                 <span className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[#111111] block">
                   SPESIFIKASI & DETAIL:
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] tracking-wider uppercase text-[#666666]">
-                  {product.details.map((item: string, i: number) => (
+                  {productDetails.map((item: string, i: number) => (
                     <div key={i} className="py-1.5 border-b border-[#DADADA] flex items-center gap-2">
                       <span className="w-1 h-1 bg-[#111111] rounded-full shrink-0" />
                       <span>{item}</span>

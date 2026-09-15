@@ -135,16 +135,25 @@ export default function EditorialTemplate({
         { id: 'm9', label: 'TRACK ORDER', url: `/${storeSlug}/account` },
       ];
 
-  // Highlight Collections from CMS or derived
-  const displayCollections = (highlights.collections && highlights.collections.length > 0)
-    ? highlights.collections.map((c: any) => ({
-        id: c.id || c.title.toLowerCase().replace(/\s+/g, '-'),
-        title: c.title,
-        desc: c.subtitle,
-        image: c.image || 'https://images.unsplash.com/photo-1503944583220-79d8926ad5e2?w=800',
-        link: c.link || '#shop',
-      }))
-    : collections;
+  // Highlight Collections from CMS or derived from real categories
+  const displayCollections = useMemo(() => {
+    if (highlights.collections && highlights.collections.length > 0) {
+      const hasCategoryMatch = highlights.collections.some((c: any) =>
+        store.categories.some((sc) => sc.toLowerCase() === (c.category || c.title).toLowerCase())
+      );
+      if (hasCategoryMatch) {
+        return highlights.collections.map((c: any) => ({
+          id: c.id || c.title.toLowerCase().replace(/\s+/g, '-'),
+          title: c.title,
+          desc: c.subtitle,
+          category: c.category || c.title,
+          image: c.image || store.products[0]?.images[0] || 'https://images.unsplash.com/photo-1503944583220-79d8926ad5e2?w=800',
+          link: c.link || '#shop',
+        }));
+      }
+    }
+    return collections;
+  }, [highlights.collections, store.categories, store.products, collections]);
 
   // Hero Banner Carousel
   const bannerSlides: string[] = useMemo(() => {
@@ -481,7 +490,13 @@ export default function EditorialTemplate({
               <a
                 key={c.id}
                 href={c.link || '#shop'}
-                onClick={() => setSelectedCategory(c.title === 'ESSENTIALS' ? 'Semua' : c.title)}
+                onClick={() => {
+                  const targetCat = c.category || c.title;
+                  const match = store.categories.find(
+                    (cat) => cat.toLowerCase() === targetCat.toLowerCase()
+                  );
+                  setSelectedCategory(match || 'Semua');
+                }}
                 className="group relative min-h-[440px] overflow-hidden bg-stone-200 block border border-transparent hover:border-[#DADADA] transition-all"
               >
                 {/* Media image */}
@@ -546,7 +561,24 @@ export default function EditorialTemplate({
           </div>
 
           {/* Products Grid: 3-column editorial 3:4 aspect ratio */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {filteredProducts.length === 0 ? (
+            <div className="py-20 text-center border border-dashed border-[#DADADA] p-8 space-y-2">
+              <p className="text-sm font-semibold uppercase tracking-wider opacity-80">
+                Belum ada produk di kategori ini
+              </p>
+              <p className="text-xs opacity-50">
+                Pilih kategori lain atau kembali ke Semua untuk melihat seluruh katalog toko.
+              </p>
+              <button
+                type="button"
+                onClick={() => setSelectedCategory('Semua')}
+                className="mt-3 inline-block text-xs uppercase tracking-widest font-bold border-b border-current pb-0.5 hover:opacity-75"
+              >
+                Tampilkan Semua Produk
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredProducts.map((product) => (
               <div key={product.id} className="group flex flex-col justify-between">
                 <div>
@@ -608,6 +640,7 @@ export default function EditorialTemplate({
               </div>
             ))}
           </div>
+        )}
         </section>
       )}
 
