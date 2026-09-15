@@ -22,8 +22,12 @@ export function DashboardHeader() {
     if (pathname.includes('/products/new')) return 'Tambah Produk Baru';
     if (pathname.includes('/products')) return 'Produk Saya';
     if (pathname.includes('/cms')) return 'Tampilan Toko (CMS)';
+    if (pathname.includes('/shipping')) return 'Pengiriman Massal';
     if (pathname.includes('/orders')) return 'Pesanan Saya';
-    if (pathname.includes('/finance')) return 'Keuangan & Escrow';
+    if (pathname.includes('/promotions')) return 'Pusat Promosi';
+    if (pathname.includes('/customers')) return 'Pelanggan & Member';
+    if (pathname.includes('/finance')) return 'Saldo Escrow & Kas';
+    if (pathname.includes('/analytics')) return 'Analisis Bisnis';
     if (pathname.includes('/settings')) return 'Pengaturan Toko';
     return 'Dashboard';
   };

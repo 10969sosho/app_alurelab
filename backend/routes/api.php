@@ -101,5 +101,28 @@ Route::prefix('v1')->group(function () {
         // ── Store CMS & Tampilan Toko ─────────────────────────────────────
         Route::get('/cms/settings',             [MerchantController::class, 'getCmsSettings']);
         Route::put('/cms/settings',             [MerchantController::class, 'updateCmsSettings']);
+
+        // ── Pengiriman Massal ─────────────────────────────────────────────
+        Route::post('/shipping/bulk-ship',       [MerchantController::class, 'bulkShip']);
+
+        // ── Pelanggan & Member ────────────────────────────────────────────
+        Route::get('/customers',                [MerchantController::class, 'getCustomers']);
+
+        // ── Keuangan & Escrow ─────────────────────────────────────────────
+        Route::get('/finance',                  [MerchantController::class, 'getFinance']);
+        Route::post('/finance/withdraw',        [MerchantController::class, 'requestPayout']);
+
+        // ── Analisis Bisnis ───────────────────────────────────────────────
+        Route::get('/analytics',                [MerchantController::class, 'getAnalytics']);
+
+        // ── Pengaturan Toko ───────────────────────────────────────────────
+        Route::get('/settings',                 [MerchantController::class, 'getSettings']);
+        Route::put('/settings',                 [MerchantController::class, 'updateSettings']);
+
+        // ── Pusat Promosi ─────────────────────────────────────────────────
+        Route::get('/promotions',               [MerchantController::class, 'getPromotions']);
+        Route::post('/promotions',              [MerchantController::class, 'savePromotion']);
+        Route::delete('/promotions/{id}',       [MerchantController::class, 'deletePromotion']);
     });
 });
+
