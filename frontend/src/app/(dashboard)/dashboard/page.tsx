@@ -78,100 +78,107 @@ export default function DashboardPage() {
 
   if (loadingDashboard) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+      <div className="flex items-center justify-center h-48 text-slate-400">
+        <Loader2 className="w-6 h-6 animate-spin text-[#EE4D2D] mr-2" />
+        <span className="text-xs">Memuat data dashboard...</span>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 select-none font-sans pb-8">
       {/* Page Title */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800">Selamat datang! 👋</h1>
-        <p className="text-slate-500 text-sm mt-0.5">{storeName} — ringkasan hari ini</p>
+      <div className="pt-0.5">
+        <h1 className="text-base sm:text-lg font-bold text-slate-800 leading-tight">
+          Ikhtisar Toko
+        </h1>
+        <p className="text-slate-400 text-xs mt-0.5">{storeName} — ringkasan performa hari ini</p>
       </div>
 
-      {/* Metric Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Shopee Style "Hal yang Perlu Dilakukan" (To-Do List Widget) */}
+      <div className="bg-white border border-slate-200 rounded-xs p-3.5 shadow-2xs">
+        <div className="flex items-center justify-between mb-2.5">
+          <h2 className="text-xs font-bold text-slate-800">Hal yang Perlu Dilakukan</h2>
+          <span className="text-[11px] text-slate-400">Tindakan mendesak untuk toko Anda</span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <PriorityCard
+            label="Menunggu Konfirmasi"
+            count={stats.orders_pending}
+            href="/dashboard/orders?status=paid_escrow"
+            ctaLabel="Proses Pesanan"
+            highlight={stats.orders_pending > 0}
+          />
+          <PriorityCard
+            label="Sedang Diproses"
+            count={stats.orders_processing}
+            href="/dashboard/orders?status=processing"
+            ctaLabel="Cetak Label & Kirim"
+            highlight={stats.orders_processing > 0}
+          />
+          <PriorityCard
+            label="Stok Hampir Habis"
+            count={stats.products_low_stock}
+            href="/dashboard/products?low_stock=true"
+            ctaLabel="Perbarui Stok"
+            highlight={stats.products_low_stock > 0}
+          />
+        </div>
+      </div>
+
+      {/* Shopee Style Metric Cards (Space Saving) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
         <MetricCard
           label="Penjualan Hari Ini"
           value={formatRupiah(stats.revenue_today, { compact: true })}
           icon={TrendingUp}
-          iconBg="bg-emerald-100"
-          iconColor="text-emerald-600"
+          iconBg="bg-orange-50"
+          iconColor="text-[#EE4D2D]"
         />
         <MetricCard
           label="Pesanan Baru"
           value={stats.orders_today.toString()}
           icon={ShoppingBag}
-          iconBg="bg-blue-100"
+          iconBg="bg-blue-50"
           iconColor="text-blue-600"
         />
         <MetricCard
           label="Produk Aktif"
           value={stats.products_active.toString()}
           icon={Package}
-          iconBg="bg-purple-100"
-          iconColor="text-purple-600"
+          iconBg="bg-emerald-50"
+          iconColor="text-emerald-600"
         />
         <MetricCard
-          label="Pelanggan"
+          label="Pelanggan Baru"
           value="—"
           icon={Users}
-          iconBg="bg-orange-100"
-          iconColor="text-orange-600"
+          iconBg="bg-slate-100"
+          iconColor="text-slate-600"
         />
       </div>
 
-      {/* Priority Queue */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <PriorityCard
-          label="Menunggu Konfirmasi"
-          count={stats.orders_pending}
-          color="border-blue-400 bg-blue-50"
-          textColor="text-blue-700"
-          href="/dashboard/orders?status=paid_escrow"
-          ctaLabel="Proses Semua"
-        />
-        <PriorityCard
-          label="Sedang Diproses"
-          count={stats.orders_processing}
-          color="border-purple-400 bg-purple-50"
-          textColor="text-purple-700"
-          href="/dashboard/orders?status=processing"
-          ctaLabel="Cetak Label"
-        />
-        <PriorityCard
-          label="Stok Hampir Habis"
-          count={stats.products_low_stock}
-          color="border-orange-400 bg-orange-50"
-          textColor="text-orange-700"
-          href="/dashboard/products?low_stock=true"
-          ctaLabel="Update Stok"
-        />
-      </div>
-
-      {/* Recent Orders */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-          <h2 className="font-semibold text-slate-800">Pesanan Terbaru</h2>
+      {/* Recent Orders Compact Table */}
+      <div className="bg-white border border-slate-200 rounded-xs overflow-hidden shadow-2xs">
+        <div className="px-3.5 py-2.5 border-b border-slate-100 flex items-center justify-between">
+          <h2 className="text-xs font-bold text-slate-800">Pesanan Terbaru</h2>
           <Link
             href="/dashboard/orders"
-            className="text-sm text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1"
+            className="text-xs text-[#EE4D2D] hover:underline font-medium flex items-center gap-1"
           >
-            Lihat Semua <ArrowUpRight className="w-3.5 h-3.5" />
+            Lihat Semua <ArrowUpRight className="w-3 h-3" />
           </Link>
         </div>
 
         {loadingOrders ? (
-          <div className="flex items-center justify-center h-32">
-            <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+          <div className="flex items-center justify-center h-28 text-slate-400">
+            <Loader2 className="w-5 h-5 animate-spin text-[#EE4D2D] mr-2" />
+            <span className="text-xs">Memuat pesanan...</span>
           </div>
         ) : recentOrders.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-40 text-slate-400">
-            <ShoppingBag className="w-10 h-10 mb-2 opacity-40" />
-            <p className="text-sm">Belum ada pesanan</p>
+          <div className="flex flex-col items-center justify-center py-10 text-slate-400">
+            <ShoppingBag className="w-8 h-8 mb-1.5 opacity-30" />
+            <p className="text-xs font-medium">Belum ada pesanan terbaru</p>
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
@@ -182,19 +189,19 @@ export default function DashboardPage() {
                 <Link
                   key={order.id}
                   href={`/dashboard/orders/${order.id}`}
-                  className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50 transition-colors"
+                  className="flex items-center gap-3 px-3.5 py-2.5 hover:bg-orange-50/30 transition-colors text-xs"
                 >
-                  <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium ${statusCfg.color}`}>
+                  <div className={`flex items-center gap-1 px-2 py-0.5 rounded-xs border text-[11px] font-medium shrink-0 ${statusCfg.color}`}>
                     <Icon className="w-3 h-3" />
                     {statusCfg.label}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-800 truncate">{order.customer.full_name}</p>
-                    <p className="text-xs text-slate-400">{order.order_number}</p>
+                    <p className="font-medium text-slate-800 truncate">{order.customer.full_name}</p>
+                    <p className="text-[11px] text-slate-400 font-mono">{order.order_number}</p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="text-sm font-semibold text-slate-800">{formatRupiah(order.total_amount)}</p>
-                    <p className="text-xs text-slate-400">{formatDateTime(order.created_at)}</p>
+                    <p className="font-semibold text-slate-900">{formatRupiah(order.total_amount)}</p>
+                    <p className="text-[10px] text-slate-400">{formatDateTime(order.created_at)}</p>
                   </div>
                 </Link>
               );
@@ -214,30 +221,43 @@ function MetricCard({
   icon: React.ElementType; iconBg: string; iconColor: string;
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-5">
-      <div className={`w-10 h-10 ${iconBg} rounded-xl flex items-center justify-center mb-3`}>
-        <Icon className={`w-5 h-5 ${iconColor}`} />
+    <div className="bg-white border border-slate-200 rounded-xs p-3 shadow-2xs flex items-center justify-between">
+      <div>
+        <p className="text-[11px] text-slate-500 font-medium">{label}</p>
+        <p className="text-base sm:text-lg font-bold text-slate-900 mt-0.5">{value}</p>
       </div>
-      <p className="text-2xl font-bold text-slate-800">{value}</p>
-      <p className="text-xs text-slate-500 mt-0.5">{label}</p>
+      <div className={`w-8 h-8 ${iconBg} rounded-xs flex items-center justify-center shrink-0`}>
+        <Icon className={`w-4 h-4 ${iconColor}`} />
+      </div>
     </div>
   );
 }
 
 function PriorityCard({
-  label, count, color, textColor, href, ctaLabel,
+  label, count, href, ctaLabel, highlight,
 }: {
-  label: string; count: number; color: string; textColor: string; href: string; ctaLabel: string;
+  label: string; count: number; href: string; ctaLabel: string; highlight?: boolean;
 }) {
   return (
-    <div className={`rounded-2xl border-2 p-5 ${color}`}>
-      <p className={`text-3xl font-bold ${textColor}`}>{count}</p>
-      <p className="text-sm text-slate-600 mt-0.5 mb-4">{label}</p>
-      {count > 0 && (
-        <Link href={href} className={`text-xs font-semibold ${textColor} underline`}>
-          {ctaLabel} →
+    <div className={`rounded-xs border p-3 flex flex-col justify-between transition-colors ${
+      highlight ? 'border-orange-200 bg-orange-50/40' : 'border-slate-200 bg-slate-50/50'
+    }`}>
+      <div>
+        <p className={`text-xl font-bold leading-tight ${highlight ? 'text-[#EE4D2D]' : 'text-slate-800'}`}>
+          {count}
+        </p>
+        <p className="text-xs text-slate-600 mt-0.5">{label}</p>
+      </div>
+      <div className="mt-2.5">
+        <Link
+          href={href}
+          className={`text-[11px] font-semibold transition-colors ${
+            highlight ? 'text-[#EE4D2D] hover:underline' : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          {ctaLabel} &gt;
         </Link>
-      )}
+      </div>
     </div>
   );
 }
