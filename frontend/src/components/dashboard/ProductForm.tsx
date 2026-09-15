@@ -18,6 +18,7 @@ import {
   Tag,
   Scale,
   Layers,
+  Upload,
 } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/api';
@@ -55,6 +56,53 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
   const [images, setImages] = useState<string[]>(initialData?.images || []);
   const [newImageUrl, setNewImageUrl] = useState('');
   const [hasVariants, setHasVariants] = useState(Boolean(initialData?.variants?.length));
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    const toastId = toast.loading(`Mengunggah ${files.length} foto produk...`);
+
+    try {
+      const formData = new FormData();
+      formData.append('folder', 'products');
+      Array.from(files).forEach((file) => {
+        formData.append('files[]', file);
+      });
+
+      const res = await api.post('/merchant/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      const uploaded = res.data?.urls || (res.data?.url ? [res.data.url] : []);
+      if (uploaded.length > 0) {
+        setImages((prev) => [...prev, ...uploaded]);
+        toast.success(`Berhasil mengunggah ${uploaded.length} foto produk`, { id: toastId });
+      } else {
+        toast.error('Gagal mengunggah foto produk', { id: toastId });
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Gagal mengunggah foto. Pastikan ukuran di bawah 8MB.', {
+        id: toastId,
+      });
+    } finally {
+      setIsUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleSetPrimaryImage = (index: number) => {
+    if (index === 0) return;
+    setImages((prev) => {
+      const target = prev[index];
+      const remaining = prev.filter((_, i) => i !== index);
+      return [target, ...remaining];
+    });
+    toast.success('Foto utama produk berhasil diubah');
+  };
 
   const {
     register,
@@ -242,56 +290,112 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2 text-slate-800 font-semibold">
             <ImageIcon className="w-5 h-5 text-emerald-500" />
-            <h2>Foto & Media</h2>
+            <h2>Foto & Media Produk</h2>
           </div>
-          <span className="text-xs text-slate-400">Mendukung format JPG, PNG, WebP</span>
+          <span className="text-xs text-slate-400">Maks 8MB per file • JPG, PNG, WebP</span>
         </div>
 
-        {/* Image Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {images.map((url, idx) => (
-            <div
-              key={idx}
-              className="group relative aspect-square rounded-xl overflow-hidden border border-slate-200 bg-slate-50"
-            >
-              <img
-                src={url}
-                alt={`Preview ${idx + 1}`}
-                className="w-full h-full object-cover"
-              />
-              <button
-                type="button"
-                onClick={() => handleRemoveImage(idx)}
-                className="absolute top-2 right-2 p-1.5 bg-red-600 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-              {idx === 0 && (
-                <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-slate-900/80 text-white text-[10px] font-semibold rounded-md">
-                  Cover
-                </span>
+        {/* Drag-and-Drop & File Picker Zone */}
+        <label className={`block relative border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all ${
+          isUploading
+            ? 'border-emerald-500 bg-emerald-50/50'
+            : 'border-slate-200 hover:border-emerald-500 hover:bg-slate-50'
+        }`}>
+          <input
+            type="file"
+            multiple
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            onChange={handleFileUpload}
+            disabled={isUploading}
+            className="sr-only"
+          />
+          <div className="flex flex-col items-center justify-center gap-2">
+            <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              {isUploading ? (
+                <Loader2 className="w-6 h-6 animate-spin" />
+              ) : (
+                <Upload className="w-6 h-6" />
               )}
             </div>
-          ))}
-        </div>
+            <div className="text-sm font-semibold text-slate-800">
+              {isUploading ? 'Sedang Mengunggah Foto...' : 'Klik atau Tarik Foto Produk ke Sini'}
+            </div>
+            <p className="text-xs text-slate-500 max-w-sm">
+              Bisa pilih lebih dari satu foto sekaligus. Foto pertama akan otomatis menjadi foto sampul (Cover) di katalog toko.
+            </p>
+          </div>
+        </label>
 
-        {/* Add Image URL */}
-        <div className="flex gap-2">
-          <input
-            type="url"
-            value={newImageUrl}
-            onChange={(e) => setNewImageUrl(e.target.value)}
-            placeholder="Tempel tautan URL gambar (misal dari Cloudflare R2 / Unsplash)..."
-            className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-          />
-          <button
-            type="button"
-            onClick={handleAddImage}
-            className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium rounded-xl flex items-center gap-1.5 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Tambah Foto
-          </button>
+        {/* Image Grid */}
+        {images.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
+            {images.map((url, idx) => (
+              <div
+                key={idx}
+                className={`group relative aspect-square rounded-xl overflow-hidden border bg-slate-50 transition-all ${
+                  idx === 0 ? 'border-emerald-500 ring-2 ring-emerald-200 shadow-xs' : 'border-slate-200'
+                }`}
+              >
+                <img
+                  src={url}
+                  alt={`Preview ${idx + 1}`}
+                  className="w-full h-full object-cover"
+                />
+                
+                {/* Overlay actions */}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(idx)}
+                      className="p-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                      title="Hapus foto"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {idx !== 0 && (
+                    <button
+                      type="button"
+                      onClick={() => handleSetPrimaryImage(idx)}
+                      className="w-full py-1 bg-white/90 hover:bg-white text-slate-900 text-[10px] font-bold rounded shadow-xs transition-colors"
+                    >
+                      Jadikan Cover
+                    </button>
+                  )}
+                </div>
+
+                {idx === 0 && (
+                  <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-emerald-600 text-white text-[10px] font-bold tracking-wider uppercase rounded-md shadow-xs pointer-events-none">
+                    Cover Utama
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Or Paste URL */}
+        <div className="pt-2 border-t border-slate-100">
+          <div className="text-xs text-slate-500 font-medium mb-2">Atau tempel tautan URL gambar eksternal:</div>
+          <div className="flex gap-2">
+            <input
+              type="url"
+              value={newImageUrl}
+              onChange={(e) => setNewImageUrl(e.target.value)}
+              placeholder="https://images.unsplash.com/... atau tautan gambar lainnya"
+              className="flex-1 px-4 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+            />
+            <button
+              type="button"
+              onClick={handleAddImage}
+              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-xl flex items-center gap-1.5 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Tambah URL
+            </button>
+          </div>
         </div>
       </div>
 

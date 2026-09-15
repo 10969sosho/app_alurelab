@@ -52,6 +52,9 @@ export interface CmsHero {
   headline?: string;
   description?: string;
   bannerImage?: string;
+  bannerImages?: string[];
+  autoPlay?: boolean;
+  autoPlayInterval?: number;
   ctaText?: string;
   ctaLink?: string;
 }
@@ -80,9 +83,28 @@ export interface CmsHighlights {
   featuredCategory?: string;
   collections?: CollectionCardSetting[];
   aboutHeading?: string;
+  aboutSubheading?: string;
   aboutStory?: string;
+  aboutImage?: string;
+  founderQuote?: string;
+  valuePillars?: { title: string; description: string }[];
   lookbookHeading?: string;
   lookbookImages?: string[];
+}
+
+export interface CmsPage {
+  id: string;
+  slug: string;
+  title: string;
+  subtitle?: string;
+  bannerImage?: string;
+  content: string;
+  sideImage?: string;
+  sideImagePosition?: 'left' | 'right' | 'none';
+  quoteText?: string;
+  quoteAuthor?: string;
+  isPublished: boolean;
+  createdAt?: string;
 }
 
 export interface CmsSettings {
@@ -92,6 +114,7 @@ export interface CmsSettings {
   navigation?: CmsNavigation;
   sections?: CmsSections;
   highlights?: CmsHighlights;
+  pages?: CmsPage[];
   [key: string]: any;
 }
 

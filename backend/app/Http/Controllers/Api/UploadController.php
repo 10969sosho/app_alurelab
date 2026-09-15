@@ -79,11 +79,82 @@ class UploadController extends Controller
         // Frontend upload ke sana, lalu call /ai/remove-background dengan key ini
         $key = 'temp/' . Str::uuid() . '.' . pathinfo($request->filename, PATHINFO_EXTENSION);
 
-        // Untuk sementara return mock URL sampai AWS SDK disetup
         return response()->json([
             'upload_url' => 'https://r2-upload-placeholder.alurelab.shop/' . $key,
             'temp_key'   => $key,
             'expires_in' => 300,
         ]);
     }
+
+    /**
+     * POST /merchant/upload
+     * Upload langsung file/gambar ke local public storage tanpa AWS S3/R2.
+     * Mendukung single file ('file') atau multi-file ('files[]').
+     */
+    public function directUpload(Request $request): JsonResponse
+    {
+        $store = $request->attributes->get('current_store');
+        $storeSlug = $store ? $store->slug : 'common';
+        $folder = $request->input('folder', 'products');
+        if (!in_array($folder, ['products', 'banners', 'pages', 'general', 'branding'])) {
+            $folder = 'products';
+        }
+
+        $request->validate([
+            'file'    => 'nullable|file|mimes:jpeg,png,jpg,webp,gif|max:8192',
+            'files'   => 'nullable|array',
+            'files.*' => 'file|mimes:jpeg,png,jpg,webp,gif|max:8192',
+        ]);
+
+        $uploadedUrls = [];
+        $uploadedDetails = [];
+
+        // Handle single file
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $ext = strtolower($file->getClientOriginalExtension() ?: 'jpg');
+            $filename = Str::uuid() . '.' . $ext;
+            $subPath = "uploads/{$storeSlug}/{$folder}";
+            $storedPath = $file->storeAs($subPath, $filename, 'public');
+
+            $url = asset('storage/' . $storedPath);
+            return response()->json([
+                'success'  => true,
+                'url'      => $url,
+                'filename' => $file->getClientOriginalName(),
+                'path'     => $storedPath,
+                'size'     => $file->getSize(),
+            ]);
+        }
+
+        // Handle multiple files
+        if ($request->hasFile('files')) {
+            foreach ($request->file('files') as $file) {
+                $ext = strtolower($file->getClientOriginalExtension() ?: 'jpg');
+                $filename = Str::uuid() . '.' . $ext;
+                $subPath = "uploads/{$storeSlug}/{$folder}";
+                $storedPath = $file->storeAs($subPath, $filename, 'public');
+                $url = asset('storage/' . $storedPath);
+
+                $uploadedUrls[] = $url;
+                $uploadedDetails[] = [
+                    'url'      => $url,
+                    'filename' => $file->getClientOriginalName(),
+                    'path'     => $storedPath,
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'url'     => $uploadedUrls[0] ?? null,
+                'urls'    => $uploadedUrls,
+                'files'   => $uploadedDetails,
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Tidak ada file yang diunggah.',
+        ], 422);
+    }
 }
+

@@ -14,6 +14,8 @@ import {
   Check,
   Instagram,
   Facebook,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import {
   TemplateProps,
@@ -143,6 +145,31 @@ export default function EditorialTemplate({
         link: c.link || '#shop',
       }))
     : collections;
+
+  // Hero Banner Carousel
+  const bannerSlides: string[] = useMemo(() => {
+    if (hero.bannerImages && hero.bannerImages.length > 0) {
+      const valid = hero.bannerImages.filter(Boolean);
+      if (valid.length > 0) return valid;
+    }
+    if (hero.bannerImage) {
+      return [hero.bannerImage];
+    }
+    return [
+      store.products[0]?.images[0] ||
+      'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=1600&auto=format&fit=crop&q=80',
+    ];
+  }, [hero.bannerImages, hero.bannerImage, store.products]);
+
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  useEffect(() => {
+    if (bannerSlides.length <= 1) return;
+    const interval = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % bannerSlides.length);
+    }, (hero.autoPlayInterval || 5) * 1000);
+    return () => clearInterval(interval);
+  }, [bannerSlides.length, hero.autoPlayInterval]);
 
   // First letter of store name for the monogram logo mark
   const logoInitial = store.storeName.charAt(0).toUpperCase();
@@ -336,24 +363,72 @@ export default function EditorialTemplate({
       {/* ── 4. HERO SECTION ────────────────────────────────────────────── */}
       {sections.showHero !== false && (
         <section id="top" className="relative">
-          {/* Editorial Banner Image starting from top: 0 behind the navbar */}
-          <div className="relative w-full h-[58vh] sm:h-[68vh] md:h-[78vh] min-h-[460px] overflow-hidden bg-stone-900">
-            <img
-              src={
-                hero.bannerImage ||
-                store.products[0]?.images[0] ||
-                'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=1600&auto=format&fit=crop&q=80'
-              }
-              alt={store.storeName}
-              className="w-full h-full object-cover object-center filter contrast-[1.05] saturate-[0.92]"
-            />
+          {/* Editorial Banner Carousel starting from top: 0 behind the navbar */}
+          <div className="relative w-full h-[58vh] sm:h-[68vh] md:h-[78vh] min-h-[460px] overflow-hidden bg-stone-900 group">
+            {bannerSlides.map((slideUrl, idx) => (
+              <div
+                key={idx}
+                className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                  activeSlide === idx ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
+                }`}
+              >
+                <img
+                  src={slideUrl}
+                  alt={`${store.storeName} Banner ${idx + 1}`}
+                  className="w-full h-full object-cover object-center filter contrast-[1.05] saturate-[0.92]"
+                />
+              </div>
+            ))}
+
             {/* Subtle gradient vignette for top navbar contrast and bottom text contrast */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/15 to-black/60 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/15 to-black/60 pointer-events-none z-20" />
             
             {/* Small badge at bottom left of banner */}
-            <div className="absolute bottom-6 left-6 md:left-12 text-white/90 text-[11px] uppercase tracking-[0.24em] font-medium">
+            <div className="absolute bottom-6 left-6 md:left-12 text-white/90 text-[11px] uppercase tracking-[0.24em] font-medium z-30">
               {hero.badgeText || 'EDITORIAL / CURATED SELECTION 2026'}
             </div>
+
+            {/* Carousel Controls (Prev/Next & Slide Dots) if multiple slides */}
+            {bannerSlides.length > 1 && (
+              <>
+                {/* Arrow Controls */}
+                <button
+                  type="button"
+                  onClick={() => setActiveSlide((prev) => (prev - 1 + bannerSlides.length) % bannerSlides.length)}
+                  className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-black/30 hover:bg-black/70 text-white backdrop-blur-xs flex items-center justify-center border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label="Previous slide"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveSlide((prev) => (prev + 1) % bannerSlides.length)}
+                  className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-black/30 hover:bg-black/70 text-white backdrop-blur-xs flex items-center justify-center border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label="Next slide"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+
+                {/* Bottom Right Carousel Pagination Indicators */}
+                <div className="absolute bottom-6 right-6 md:right-12 z-30 flex items-center gap-3 bg-black/40 backdrop-blur-xs px-3 py-1.5 rounded-full border border-white/15">
+                  <span className="text-[10px] tracking-[0.2em] font-mono text-white/80 font-bold">
+                    0{activeSlide + 1} / 0{bannerSlides.length}
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {bannerSlides.map((_, dotIdx) => (
+                      <button
+                        key={dotIdx}
+                        onClick={() => setActiveSlide(dotIdx)}
+                        className={`h-1.5 rounded-full transition-all ${
+                          activeSlide === dotIdx ? 'w-5 bg-white' : 'w-1.5 bg-white/40 hover:bg-white/70'
+                        }`}
+                        aria-label={`Go to slide ${dotIdx + 1}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Hero Title & Editorial Statement Block */}
@@ -548,21 +623,51 @@ export default function EditorialTemplate({
             </p>
           </div>
 
-          <div className="space-y-4 text-xs md:text-sm opacity-70 leading-relaxed max-w-3xl pb-10">
-            <p>
-              {highlights.aboutStory || (
-                `${store.storeName} was created with the idea that clothing can feel both practical, comfortable, and beautifully curated at the same time.`
+          {/* Story & Optional Studio Image Layout */}
+          <div className={`grid gap-10 pb-10 items-start ${highlights.aboutImage ? 'grid-cols-1 lg:grid-cols-12' : 'grid-cols-1'}`}>
+            <div className={`space-y-4 text-xs md:text-sm opacity-70 leading-relaxed ${highlights.aboutImage ? 'lg:col-span-7' : 'max-w-3xl'}`}>
+              {highlights.aboutStory ? (
+                highlights.aboutStory.split('\n\n').map((para: string, pIdx: number) => (
+                  <p key={pIdx}>{para}</p>
+                ))
+              ) : (
+                <>
+                  <p>
+                    {store.storeName} was created with the idea that clothing can feel both practical, comfortable, and beautifully curated at the same time.
+                  </p>
+                  <p>
+                    Inspired by minimalist fashion editorials, modern architecture, soft natural lighting,
+                    and calm everyday moments, our collections focus on simplicity without losing warmth and personality.
+                  </p>
+                  <p>
+                    Every piece inside our catalog is selected to support movement, softness, and confidence
+                    throughout daily activities. Oversized silhouettes, neutral palettes, breathable fabrics,
+                    and timeless cuts become the foundation of our visual direction.
+                  </p>
+                </>
               )}
-            </p>
-            <p>
-              Inspired by minimalist fashion editorials, modern architecture, soft natural lighting,
-              and calm everyday moments, our collections focus on simplicity without losing warmth and personality.
-            </p>
-            <p>
-              Every piece inside our catalog is selected to support movement, softness, and confidence
-              throughout daily activities. Oversized silhouettes, neutral palettes, breathable fabrics,
-              and timeless cuts become the foundation of our visual direction.
-            </p>
+
+              {highlights.founderQuote && (
+                <blockquote className="border-l-2 border-current pl-4 py-1 italic font-serif text-sm opacity-90 my-6">
+                  &ldquo;{highlights.founderQuote}&rdquo;
+                </blockquote>
+              )}
+            </div>
+
+            {highlights.aboutImage && (
+              <div className="lg:col-span-5">
+                <div className="aspect-[4/5] w-full overflow-hidden border border-[#DADADA] bg-stone-200 shadow-xs">
+                  <img
+                    src={highlights.aboutImage}
+                    alt={highlights.aboutHeading || 'About Our Studio'}
+                    className="w-full h-full object-cover object-center filter contrast-[1.04] saturate-[0.95]"
+                  />
+                </div>
+                <div className="text-[10px] tracking-[0.2em] uppercase opacity-50 mt-2 text-right font-medium">
+                  STUDIO ARCHIVE • 2026
+                </div>
+              </div>
+            )}
           </div>
 
           {/* 4 Value Pillars Grid */}

@@ -93,7 +93,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/orders/{id}/shipment',   [OrderController::class, 'createShipment']);
         Route::get('/orders/{id}/label',       [OrderController::class, 'printLabel']);
 
-        // ── Upload (Cloudflare R2) ───────────────────────────────────────
+        // ── Upload (Local Storage & Cloudflare R2) ───────────────────────
+        Route::post('/upload',                  [UploadController::class, 'directUpload']);
         Route::post('/upload/presign',          [UploadController::class, 'presign']);
         Route::post('/upload/presign-bg',       [UploadController::class, 'presignBgRemoval']);
 
