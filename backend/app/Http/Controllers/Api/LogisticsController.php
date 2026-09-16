@@ -43,11 +43,19 @@ class LogisticsController extends Controller
         $destinationAreaId = $request->input('destination_area_id');
         $items = $request->input('items', []);
 
-        if (!$destinationAreaId) {
+        if (! $destinationAreaId) {
             return response()->json(['error' => 'destination_area_id is required'], 400);
         }
 
-        $originAreaId = $store->address_area_id ?? 'ID_ID_3578_357807';
+        if (! $store->address_area_id) {
+            return response()->json([
+                'success' => false,
+                'error' => 'STORE_ORIGIN_MISSING',
+                'message' => 'Alamat asal toko belum dikonfigurasi.',
+            ], 422);
+        }
+
+        $originAreaId = $store->address_area_id;
 
         $rates = $this->biteshipService->calculateRates($originAreaId, $destinationAreaId, $items);
 
