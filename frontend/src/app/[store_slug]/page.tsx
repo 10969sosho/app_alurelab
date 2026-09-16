@@ -10,19 +10,25 @@ async function getStoreData(storeSlug: string): Promise<StoreData> {
     process.env.NEXT_PUBLIC_API_URL ||
     'https://app.alurelab.com/api/v1';
 
-  try {
-    const [storeRes, prodRes] = await Promise.all([
+  const [storeRes, prodRes] = await Promise.all([
       fetch(`${baseUrl}/store`, {
         headers: { 'x-store-slug': storeSlug, Accept: 'application/json' },
         cache: 'no-store',
-      }).then((r) => (r.ok ? r.json() : null)),
+        }).then((r) => {
+          if (!r.ok) throw new Error(`Store request failed: ${r.status}`);
+          return r.json();
+        }),
       fetch(`${baseUrl}/products`, {
         headers: { 'x-store-slug': storeSlug, Accept: 'application/json' },
         cache: 'no-store',
-      }).then((r) => (r.ok ? r.json() : null)),
-    ]);
+        }).then((r) => {
+          if (!r.ok) throw new Error(`Product request failed: ${r.status}`);
+          return r.json();
+        }),
+      ]);
 
-    const storeData = storeRes?.data || null;
+    const storeData = storeRes?.data;
+    if (!storeData) throw new Error('Store not found.');
     const productsRaw = prodRes?.data?.data || prodRes?.data || [];
 
     const mappedProducts: Product[] = Array.isArray(productsRaw)
@@ -34,20 +40,17 @@ async function getStoreData(storeSlug: string): Promise<StoreData> {
           description: p.description || '',
           price: Number(p.price) || 0,
           compare_at_price: p.compare_at_price ? Number(p.compare_at_price) : undefined,
-          images:
-            p.images && p.images.length > 0
-              ? p.images
-              : ['https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=600'],
+           images: Array.isArray(p.images) ? p.images : [],
           variants:
             p.variants && p.variants.length > 0
               ? p.variants.map((v: any) => ({
                   id: v.id,
                   sku: v.sku,
                   title: v.title,
-                  price: Number(v.price) || Number(p.price) || 0,
-                  stock: v.stock ?? 10,
-                }))
-              : [{ id: p.id + '-std', sku: 'STD-1', title: 'Standard', price: Number(p.price), stock: 20 }],
+                   price: Number(v.price),
+                   stock: Number(v.stock),
+                 }))
+               : [],
         }))
       : [];
 
@@ -57,29 +60,14 @@ async function getStoreData(storeSlug: string): Promise<StoreData> {
     });
 
     const initialStore: StoreData = {
-      storeName:
-        storeData?.settings?.branding?.storeName ||
-        storeData?.name ||
-        storeSlug.replace(/-/g, ' ').toUpperCase(),
-      tagline:
-        storeData?.settings?.branding?.tagline ||
-        storeData?.settings?.tagline ||
-        'Toko Resmi ALURELAB E-Commerce',
+      storeName: storeData.name,
+      tagline: storeData.settings?.branding?.tagline || storeData.settings?.tagline || '',
       categories: Array.from(categoriesSet),
       products: mappedProducts,
       settings: storeData?.settings || {},
     };
 
-    return initialStore;
-  } catch (err) {
-    return {
-      storeName: storeSlug.replace(/-/g, ' ').toUpperCase(),
-      tagline: 'Toko Resmi ALURELAB E-Commerce',
-      categories: ['Semua'],
-      products: [],
-      settings: {},
-    };
-  }
+  return initialStore;
 }
 
 export async function generateMetadata({

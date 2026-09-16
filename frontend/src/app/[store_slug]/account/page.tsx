@@ -50,92 +50,12 @@ export default function AccountPage({
     async function loadOrders() {
       setLoadingOrders(true);
       try {
-        const res = await fetchApi(`/buyer/orders?phone=${encodeURIComponent(phone)}`, {
+        const res = await fetchApi('/buyer/orders', {
           headers: { 'x-store-slug': storeSlug },
         });
-        if (isMounted && res?.success) {
-          setOrders(res.data || []);
-        } else if (isMounted) {
-          // Demo fallback orders if database empty
-          setOrders([
-            {
-              id: 'ord-demo-1',
-              order_number: 'ORD-20260914-00192',
-              status: 'IN_TRANSIT',
-              status_label: 'Dalam Pengiriman',
-              total_amount: 318000,
-              created_at: '14 Sep 2026, 14:15 WIB',
-              courier: 'SiCepat Ekspres (REG)',
-              awb: '004289127819',
-              items: [
-                {
-                  title: 'Essential Oversized Tee',
-                  variant_title: 'Size 4-5Y / Sand Beige',
-                  quantity: 1,
-                  price: 139000,
-                  image_url: 'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=800',
-                },
-                {
-                  title: 'Relaxed Studio Jogger',
-                  variant_title: 'Size 4-5Y / Warm Grey',
-                  quantity: 1,
-                  price: 179000,
-                  image_url: 'https://images.unsplash.com/photo-1503944583220-79d8926ad5e2?w=800',
-                },
-              ],
-            },
-            {
-              id: 'ord-demo-2',
-              order_number: 'ORD-20260828-00084',
-              status: 'COMPLETED',
-              status_label: 'Pesanan Selesai',
-              total_amount: 249000,
-              created_at: '28 Agu 2026, 10:20 WIB',
-              courier: 'J&T Express',
-              awb: 'JT829103941',
-              items: [
-                {
-                  title: 'Mono Minimalist Set',
-                  variant_title: 'Size 5-6Y / Off-White & Black',
-                  quantity: 1,
-                  price: 249000,
-                  image_url: 'https://images.unsplash.com/photo-1519457431-44ccd64a579b?w=800',
-                },
-              ],
-            },
-          ]);
-        }
+        if (isMounted) setOrders(res.data || []);
       } catch {
-        if (isMounted) {
-          setOrders([
-            {
-              id: 'ord-demo-1',
-              order_number: 'ORD-20260914-00192',
-              status: 'IN_TRANSIT',
-              status_label: 'Dalam Pengiriman',
-              total_amount: 318000,
-              created_at: '14 Sep 2026, 14:15 WIB',
-              courier: 'SiCepat Ekspres (REG)',
-              awb: '004289127819',
-              items: [
-                {
-                  title: 'Essential Oversized Tee',
-                  variant_title: 'Size 4-5Y / Sand Beige',
-                  quantity: 1,
-                  price: 139000,
-                  image_url: 'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=800',
-                },
-                {
-                  title: 'Relaxed Studio Jogger',
-                  variant_title: 'Size 4-5Y / Warm Grey',
-                  quantity: 1,
-                  price: 179000,
-                  image_url: 'https://images.unsplash.com/photo-1503944583220-79d8926ad5e2?w=800',
-                },
-              ],
-            },
-          ]);
-        }
+        if (isMounted) setOrders([]);
       } finally {
         if (isMounted) setLoadingOrders(false);
       }
@@ -160,20 +80,14 @@ export default function AccountPage({
       await fetchApi('/buyer/profile', {
         method: 'PUT',
         body: JSON.stringify({
-          phone_number: buyer.phoneNumber,
           default_address: updated,
         }),
         headers: { 'x-store-slug': storeSlug },
       });
       updateAddress(updated);
       setSaveSuccessMsg('Alamat pengiriman berhasil diperbarui.');
-    } catch {
-      // Local store update fallback
-      updateAddress({
-        detail: addressDetail,
-        postalCode: postalCode,
-      });
-      setSaveSuccessMsg('Alamat pengiriman berhasil disimpan.');
+    } catch (err: any) {
+      setSaveSuccessMsg(err?.message || 'Alamat gagal diperbarui.');
     } finally {
       setSavingAddress(false);
     }

@@ -63,38 +63,10 @@ export default function BuyerLoginModal({
         onClose();
         if (onSuccess) onSuccess();
       } else {
-        // Fallback local session if backend mock
-        setBuyer(
-          {
-            id: 'cust-' + Date.now(),
-            phoneNumber,
-            fullName: fullName.trim() || 'Pelanggan ' + phoneNumber.slice(-4),
-            defaultAddress: {
-              detail: 'Jl. Pemuda No. 45, Embong Kaliasin, Kec. Genteng',
-              postalCode: '60271',
-            },
-          },
-          'mock-buyer-jwt-token'
-        );
-        onClose();
-        if (onSuccess) onSuccess();
+        setErrorMsg(res?.message || 'Login pembeli gagal.');
       }
     } catch (err: any) {
-      // Fallback local login
-      setBuyer(
-        {
-          id: 'cust-' + Date.now(),
-          phoneNumber,
-          fullName: fullName.trim() || 'Pelanggan ' + phoneNumber.slice(-4),
-          defaultAddress: {
-            detail: 'Jl. Pemuda No. 45, Embong Kaliasin, Kec. Genteng',
-            postalCode: '60271',
-          },
-        },
-        'mock-buyer-jwt-token'
-      );
-      onClose();
-      if (onSuccess) onSuccess();
+      setErrorMsg(err?.message || 'Login gagal. Coba lagi.');
     } finally {
       setLoading(false);
     }

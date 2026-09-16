@@ -2,26 +2,27 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Shipment;
-use Illuminate\Http\Request;
+use App\Services\BiteshipService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
     // State Machine transitions yang valid
     private const VALID_TRANSITIONS = [
         'pending_payment' => ['cancelled'],
-        'paid_escrow'     => ['processing', 'cancelled'],
-        'cod_verified'    => ['processing', 'cancelled'],
-        'processing'      => ['shipped'],
-        'shipped'         => ['delivered'],
-        'delivered'       => ['completed'],
-        'completed'       => [],
-        'cancelled'       => [],
-        'rts_returned'    => [],
+        'paid_escrow' => ['processing', 'cancelled'],
+        'cod_verified' => ['processing', 'cancelled'],
+        'processing' => ['shipped'],
+        'shipped' => ['delivered'],
+        'delivered' => ['completed'],
+        'completed' => [],
+        'cancelled' => [],
+        'rts_returned' => [],
     ];
 
     /**
@@ -41,7 +42,7 @@ class OrderController extends Controller
         }
         // Filter kurir
         if ($request->filled('courier')) {
-            $query->whereHas('shipment', fn($q) => $q->where('courier_code', $request->courier));
+            $query->whereHas('shipment', fn ($q) => $q->where('courier_code', $request->courier));
         }
         // Filter tanggal
         if ($request->filled('date_from')) {
@@ -55,8 +56,8 @@ class OrderController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('order_number', 'ilike', "%{$search}%")
-                  ->orWhereHas('customer', fn($c) => $c->where('full_name', 'ilike', "%{$search}%")
-                      ->orWhere('phone_number', 'ilike', "%{$search}%"));
+                    ->orWhereHas('customer', fn ($c) => $c->where('full_name', 'ilike', "%{$search}%")
+                        ->orWhere('phone_number', 'ilike', "%{$search}%"));
             });
         }
 
@@ -90,14 +91,14 @@ class OrderController extends Controller
 
         $validated = $request->validate([
             'status' => 'required|string',
-            'notes'  => 'nullable|string',
+            'notes' => 'nullable|string',
         ]);
 
-        $newStatus     = $validated['status'];
-        $currentStatus = $order->status instanceof \App\Enums\OrderStatus
+        $newStatus = $validated['status'];
+        $currentStatus = $order->status instanceof OrderStatus
             ? $order->status->value
             : (string) $order->status;
-        $allowedNext   = self::VALID_TRANSITIONS[$currentStatus] ?? [];
+        $allowedNext = self::VALID_TRANSITIONS[$currentStatus] ?? [];
 
         if (! in_array($newStatus, $allowedNext)) {
             return response()->json([
@@ -109,8 +110,8 @@ class OrderController extends Controller
         $order->update(['status' => $newStatus]);
 
         return response()->json([
-            'message'    => 'Status pesanan berhasil diperbarui.',
-            'order_id'   => $order->id,
+            'message' => 'Status pesanan berhasil diperbarui.',
+            'order_id' => $order->id,
             'old_status' => $currentStatus,
             'new_status' => $newStatus,
         ]);
@@ -127,7 +128,7 @@ class OrderController extends Controller
             ->with(['items.product', 'customer'])
             ->findOrFail($id);
 
-        $orderStatusValue = $order->status instanceof \App\Enums\OrderStatus
+        $orderStatusValue = $order->status instanceof OrderStatus
             ? $order->status->value
             : (string) $order->status;
 
@@ -137,48 +138,60 @@ class OrderController extends Controller
             ], 422);
         }
 
-
         $validated = $request->validate([
-            'courier_code'    => 'required|string',
+            'courier_code' => 'required|string',
             'courier_service' => 'required|string',
         ]);
 
-        // Generate pengiriman via BiteshipService (dengan graceful dummy fallback)
-        $biteshipService = app(\App\Services\BiteshipService::class);
+        if ($order->shipment) {
+            return response()->json(['message' => 'Pengiriman untuk pesanan ini sudah dibuat.'], 409);
+        }
+
+        $biteshipService = app(BiteshipService::class);
         $isCod = $order->payment?->payment_method === 'COD';
 
-        $biteshipData = $biteshipService->createShippingOrder(
-            $order,
-            $store,
-            $validated['courier_code'],
-            $validated['courier_service'],
-            $isCod
-        );
+        try {
+            $biteshipData = $biteshipService->createShippingOrder(
+                $order,
+                $store,
+                $validated['courier_code'],
+                $validated['courier_service'],
+                $isCod
+            );
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json(['message' => 'Booking pengiriman gagal. Coba lagi.'], 503);
+        }
+
+        $waybillId = $biteshipData['waybill_id'] ?? ($biteshipData['courier']['waybill_id'] ?? null);
+        if (empty($biteshipData['id']) || empty($waybillId)) {
+            return response()->json(['message' => 'Provider tidak mengembalikan detail pengiriman yang valid.'], 502);
+        }
 
         $shipment = Shipment::create([
-            'tenant_id'          => $store->id,
-            'order_id'           => $order->id,
-            'biteship_order_id'  => $biteshipData['id'],
-            'courier_code'       => $validated['courier_code'],
-            'courier_service'    => $validated['courier_service'],
-            'waybill_id'         => $biteshipData['waybill_id'] ?? ($biteshipData['courier']['waybill_id'] ?? 'AWB'.strtoupper($validated['courier_code']).rand(10000000, 99999999)),
-            'tracking_status'    => $biteshipData['status'] ?? 'allocated',
+            'tenant_id' => $store->id,
+            'order_id' => $order->id,
+            'biteship_order_id' => $biteshipData['id'],
+            'courier_code' => $validated['courier_code'],
+            'courier_service' => $validated['courier_service'],
+            'waybill_id' => $waybillId,
+            'tracking_status' => $biteshipData['status'] ?? 'allocated',
             'shipping_label_url' => $biteshipData['label_url'] ?? ($biteshipData['courier']['link'] ?? null),
-            'is_cod'             => $isCod,
-            'cod_amount'         => $isCod ? $order->total_amount : 0,
+            'is_cod' => $isCod,
+            'cod_amount' => $isCod ? $order->total_amount : 0,
         ]);
 
         // Update order status ke shipped
         $order->update(['status' => 'shipped']);
 
         return response()->json([
-            'message'   => 'Pengiriman berhasil dibuat.',
-            'shipment'  => $shipment,
-            'waybill'   => $shipment->waybill_id,
+            'message' => 'Pengiriman berhasil dibuat.',
+            'shipment' => $shipment,
+            'waybill' => $shipment->waybill_id,
             'label_url' => $shipment->shipping_label_url,
         ], 201);
     }
-
 
     /**
      * GET /merchant/orders/{id}/label
@@ -186,8 +199,8 @@ class OrderController extends Controller
      */
     public function printLabel(Request $request, string $id): JsonResponse
     {
-        $store    = $request->attributes->get('current_store');
-        $order    = Order::where('tenant_id', $store->id)->findOrFail($id);
+        $store = $request->attributes->get('current_store');
+        $order = Order::where('tenant_id', $store->id)->findOrFail($id);
         $shipment = $order->shipment;
 
         if (! $shipment || ! $shipment->shipping_label_url) {
@@ -195,9 +208,9 @@ class OrderController extends Controller
         }
 
         return response()->json([
-            'label_url'  => $shipment->shipping_label_url,
+            'label_url' => $shipment->shipping_label_url,
             'waybill_id' => $shipment->waybill_id,
-            'courier'    => $shipment->courier_code,
+            'courier' => $shipment->courier_code,
         ]);
     }
 

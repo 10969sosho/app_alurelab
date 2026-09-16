@@ -289,6 +289,14 @@ function MockXenditInvoiceContent({
 }
 
 export default function MockXenditInvoicePage(props: { params: Promise<{ id: string }> }) {
+  if (process.env.NODE_ENV === 'production') {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 text-center">
+        <p className="text-sm text-slate-600">Halaman pembayaran simulasi tidak tersedia.</p>
+      </div>
+    );
+  }
+
   return (
     <Suspense
       fallback={
@@ -301,4 +309,3 @@ export default function MockXenditInvoicePage(props: { params: Promise<{ id: str
     </Suspense>
   );
 }
-

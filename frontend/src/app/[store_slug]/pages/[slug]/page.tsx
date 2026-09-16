@@ -12,6 +12,7 @@ import { useCartStore } from '@/store/cart-store';
 import { useBuyerStore } from '@/store/buyer-store';
 import BuyerLoginModal from '@/components/buyer/BuyerLoginModal';
 import { CmsPage, CmsSettings, CmsBranding, CmsNavigation } from '@/components/templates/types';
+import { fetchApi } from '@/lib/api-client';
 
 export default function StorefrontCustomPage({
   params,
@@ -29,36 +30,17 @@ export default function StorefrontCustomPage({
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // 1. Ambil data lokal preview jika ada
-    const localSaved = localStorage.getItem(`alurelab_cms_${storeSlug}`);
-    if (localSaved) {
-      try {
-        const parsed = JSON.parse(localSaved);
-        setCmsSettings(parsed);
-      } catch (e) {
-        console.error('Failed to parse local CMS data', e);
-      }
-    }
-
-    // 2. Fetch data toko dan settings dari server
     async function fetchStore() {
       try {
-        const res = await fetch(`/api/v1/store?slug=${storeSlug}`, {
-          headers: { 'X-Tenant-Slug': storeSlug },
-        });
-        if (res.ok) {
-          const json = await res.json();
-          const store = json.data || json;
-          setStoreData(store);
-          if (store.settings) {
-            setCmsSettings((prev) => ({
-              ...store.settings,
-              ...prev,
-            }));
-          }
+        const json = await fetchApi('/store', { tenantIdOrSlug: storeSlug });
+        const store = json.data;
+        setStoreData(store);
+        if (store?.settings) {
+          setCmsSettings(store.settings);
         }
-      } catch (e) {
-        console.warn('Using local fallback for custom page rendering', e);
+      } catch {
+        setStoreData(null);
+        setCmsSettings({});
       } finally {
         setIsLoading(false);
       }
@@ -90,30 +72,6 @@ export default function StorefrontCustomPage({
         (p) => p.slug.toLowerCase() === pageSlug.toLowerCase() && p.isPublished !== false
       );
       if (found) return found;
-    }
-
-    // Fallback default jika slug adalah 'about' dan belum dibuat manual oleh seller
-    if (pageSlug.toLowerCase() === 'about' || pageSlug.toLowerCase() === 'tentang-kami') {
-      return {
-        id: 'default-about',
-        slug: 'about',
-        title: `ABOUT ${storeName}`,
-        subtitle: 'CURATED ARCHIVE & STUDIO PHILOSOPHY',
-        bannerImage:
-          cmsSettings.hero?.bannerImage ||
-          'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=1600&auto=format&fit=crop&q=80',
-        content:
-          `${storeName} didirikan dengan dedikasi untuk menghadirkan kurasi pakaian dan perlengkapan modern dengan kenyamanan maksimal dan estetika visual yang abadi.\n\n` +
-          `Setiap koleksi dirancang dengan inspirasi dari galeri seni modern, arsitektur minimalis, dan kehangatan momen keseharian. Kami percaya bahwa gaya terbaik adalah paduan antara material lembut bernapas, siluet longgar yang fungsional, serta palet warna netral yang menenangkan.\n\n` +
-          `Kami mengawasi langsung pemilihan setiap bahan, potongan jahitan presisi, dan uji ketahanan untuk memastikan kenyamanan sepanjang hari di setiap rutinitas aktif Anda.`,
-        sideImage:
-          'https://images.unsplash.com/photo-1503944583220-79d8926ad5e2?w=1200&auto=format&fit=crop&q=80',
-        sideImagePosition: 'right',
-        quoteText:
-          'Kemurnian desain lahir saat semua elemen yang berlebihan dihilangkan, menyisakan kenyamanan murni dan keanggunan bentuk.',
-        quoteAuthor: 'ATELIER TEAM 2026',
-        isPublished: true,
-      };
     }
 
     return undefined;

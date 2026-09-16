@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { formatRupiah, formatDateTime } from '@/lib/utils';
+import { useBuyerStore } from '@/store/buyer-store';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
@@ -30,47 +31,21 @@ export default function BuyerOrderTrackingPage({
 }) {
   const { store_slug: storeSlug, id: orderId } = use(params);
   const [copied, setCopied] = useState(false);
+  const { token } = useBuyerStore();
 
   // Fetch order data
-  const { data: order, isLoading } = useQuery({
+  const { data: order, isLoading, isError } = useQuery({
     queryKey: ['buyer-order-tracking', storeSlug, orderId],
     queryFn: async () => {
-      try {
-        const res = await axios.get(`${API_BASE}/orders/${orderId}`, {
-          headers: { 'X-Store-Slug': storeSlug },
-        });
-        return res.data;
-      } catch {
-        // Fallback demo order jika dipanggil langsung
-        return {
-          id: orderId,
-          order_number: orderId.startsWith('ORD-') ? orderId : `ORD-20260914-${orderId.slice(0, 6).toUpperCase()}`,
-          created_at: new Date().toISOString(),
-          status: 'shipped',
-          items_subtotal: 149000,
-          shipping_cost: 15000,
-          total_amount: 164000,
-          shipping_recipient_name: 'Pelanggan Setia',
-          shipping_recipient_phone: '081234567890',
-          shipping_address_detail: 'Jl. Merdeka Raya No. 45, Jakarta Selatan',
-          shipment: {
-            courier_code: 'sicepat',
-            courier_service: 'reg',
-            waybill_id: '004289127819',
-          },
-          items: [
-            {
-              id: 'it-1',
-              product_title: 'Koleksi Eksklusif Toko',
-              variant_title: 'Warna Utama / All Size',
-              quantity: 1,
-              price: 149000,
-              subtotal: 149000,
-            },
-          ],
-        };
-      }
+      const res = await axios.get(`${API_BASE}/buyer/orders/${orderId}`, {
+        headers: {
+          'X-Store-Slug': storeSlug,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      return res.data.data;
     },
+    enabled: Boolean(token),
   });
 
   const handleCopyResi = (resi: string) => {
@@ -83,6 +58,18 @@ export default function BuyerOrderTrackingPage({
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
+      </div>
+    );
+  }
+
+  if (isError || !order) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 text-center">
+        <div>
+          <h1 className="text-xl font-bold">Pesanan tidak ditemukan</h1>
+          <p className="mt-2 text-sm text-slate-600">Login sebagai pemilik pesanan untuk melihat detailnya.</p>
+          <Link href={`/${storeSlug}/account`} className="inline-block mt-5 underline text-sm">Buka akun pembeli</Link>
+        </div>
       </div>
     );
   }

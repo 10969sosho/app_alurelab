@@ -35,4 +35,18 @@ return [
         ],
     ],
 
+    'xendit' => [
+        'secret_key' => env('XENDIT_SECRET_KEY', ''),
+        'public_key' => env('XENDIT_PUBLIC_KEY', ''),
+        'webhook_token' => env('XENDIT_WEBHOOK_TOKEN', ''),
+        'invoice_expiry_minutes' => (int) env('XENDIT_INVOICE_EXPIRY_MINUTES', 1440),
+    ],
+
+    'biteship' => [
+        'url' => env('BITESHIP_API_URL', 'https://api.biteship.com/v1'),
+        'key' => env('BITESHIP_API_KEY', ''),
+        'webhook_header' => env('BITESHIP_WEBHOOK_HEADER', 'X-Biteship-Webhook-Secret'),
+        'webhook_secret' => env('BITESHIP_WEBHOOK_SECRET', ''),
+    ],
+
 ];

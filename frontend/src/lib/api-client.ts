@@ -1,3 +1,5 @@
+import { useBuyerStore } from '@/store/buyer-store';
+
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||
   process.env.NEXT_PUBLIC_API_BASE_URL ||
@@ -27,6 +29,11 @@ export async function fetchApi<T = any>(
     defaultHeaders['x-tenant-id'] = tenantIdOrSlug;
   }
 
+  const buyerToken = useBuyerStore.getState().token;
+  if (buyerToken && !defaultHeaders.Authorization) {
+    defaultHeaders.Authorization = `Bearer ${buyerToken}`;
+  }
+
   const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 
   try {
@@ -35,13 +42,15 @@ export async function fetchApi<T = any>(
       headers: defaultHeaders,
     });
 
-    const data = await res.json();
+    const body = await res.text();
+    const data = body ? JSON.parse(body) : {};
+
+    if (!res.ok) {
+      throw new Error(data?.message || data?.error || `Request gagal (${res.status})`);
+    }
+
     return data;
   } catch (err: any) {
-    return {
-      success: false,
-      error: 'NETWORK_ERROR',
-      message: err?.message || 'Gagal tersambung ke backend ALURELAB.',
-    };
+    throw new Error(err?.message || 'Gagal tersambung ke backend ALURELAB.');
   }
 }

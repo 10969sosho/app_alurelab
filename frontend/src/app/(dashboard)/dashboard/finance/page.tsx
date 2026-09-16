@@ -31,7 +31,7 @@ export default function FinancePage() {
   const [accountHolder, setAccountHolder] = useState('');
 
   // Fetch finance overview
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['merchant-finance'],
     queryFn: async () => {
       const res = await api.get('/merchant/finance');
@@ -45,14 +45,14 @@ export default function FinancePage() {
     total_balance: 0,
   };
 
-  const bankAccount = data?.bank_account || {
-    bank_name: 'BCA',
-    account_number: '8830192831',
-    account_holder: 'Toko Alurelab',
-  };
+  const bankAccount = data?.bank_account;
 
   const payouts = data?.payouts || [];
   const transactions = data?.transactions || [];
+
+  if (isError) {
+    return <div className="p-6 text-sm text-slate-600">Data finance belum tersedia.</div>;
+  }
 
   // Withdraw mutation
   const withdrawMutation = useMutation({
@@ -106,10 +106,10 @@ export default function FinancePage() {
 
         <button
           type="button"
-          disabled={wallet.available_balance < 50000}
+           disabled={!bankAccount || wallet.available_balance < 50000}
           onClick={() => {
-            setAccountNumber(bankAccount.account_number);
-            setAccountHolder(bankAccount.account_holder);
+            setAccountNumber(bankAccount?.account_number || '');
+            setAccountHolder(bankAccount?.account_holder || '');
             setIsWithdrawOpen(true);
           }}
           className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#EE4D2D] hover:bg-[#d73f20] text-white text-xs font-semibold rounded-xs transition-colors shadow-2xs disabled:opacity-40 self-start sm:self-auto"
@@ -162,9 +162,9 @@ export default function FinancePage() {
               <span>Rekening Penarikan Utama</span>
             </div>
             <p className="text-xs font-semibold text-slate-900">
-              {bankAccount.bank_name} — {bankAccount.account_number}
+               {bankAccount ? `${bankAccount.bank_name} — ${bankAccount.account_number}` : 'Belum dikonfigurasi'}
             </p>
-            <p className="text-[10px] text-slate-500">a/n {bankAccount.account_holder}</p>
+             <p className="text-[10px] text-slate-500">{bankAccount ? `a/n ${bankAccount.account_holder}` : 'Tambahkan rekening di pengaturan toko'}</p>
           </div>
           <span className="text-[10px] text-slate-400 mt-2 block">
             Diproses instan via Xendit Disbursement
@@ -361,7 +361,7 @@ export default function FinancePage() {
                     type="text"
                     value={accountNumber}
                     onChange={(e) => setAccountNumber(e.target.value)}
-                    placeholder="8830192831"
+                    placeholder="Nomor rekening"
                     className="w-full px-3 py-1.5 border border-slate-300 rounded-xs outline-none focus:border-[#EE4D2D] font-mono"
                     required
                   />

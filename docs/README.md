@@ -19,6 +19,7 @@ Dokumentasi ini adalah panduan teknis, arsitektur, dan operasional resmi untuk m
 | **07** | [**07_PRODUCT_DOCS_BUYER_FRONTEND.md**](./07_PRODUCT_DOCS_BUYER_FRONTEND.md) | Spesifikasi lengkap Storefront Pembeli, Akun WhatsApp One-Click, Riwayat Pesanan Toko, dan Fast Checkout Auto-Fill. |
 | **08** | [**08_PRODUCT_DOCS_SELLER_DASHBOARD.md**](./08_PRODUCT_DOCS_SELLER_DASHBOARD.md) | Spesifikasi Portal Seller/Merchant, Manajemen Produk, Pemrosesan Pesanan, dan Analitik Keuangan. |
 | **09** | [**09_IMPLEMENTATION_PRIORITY.md**](./09_IMPLEMENTATION_PRIORITY.md) | Prioritas eksekusi fitur dan matriks kapabilitas modul sistem. |
+| **10** | [**10_PRODUCTION_READINESS_AUDIT.md**](./10_PRODUCTION_READINESS_AUDIT.md) | Audit A-Z kondisi nyata codebase, stop-ship risks, gap buyer/seller/CMS, benchmark SaaS marketplace, dan checklist menuju production. |
 
 ---
 

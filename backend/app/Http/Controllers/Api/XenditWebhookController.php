@@ -31,11 +31,11 @@ class XenditWebhookController extends Controller
     {
         $callbackToken = $request->header('x-callback-token');
 
-        if (!$this->xenditService->verifyWebhookSignature($callbackToken)) {
+        if (! $this->xenditService->verifyWebhookSignature($callbackToken)) {
             Log::warning('Percobaan Webhook Xendit Tidak Sah (Invalid Token)', [
                 'ip' => $request->ip(),
-                'token' => $callbackToken,
             ]);
+
             return response()->json(['error' => 'Unauthorized token'], 401);
         }
 
@@ -44,8 +44,12 @@ class XenditWebhookController extends Controller
         $status = $payload['status'] ?? null; // PAID, EXPIRED
         $invoiceId = $payload['id'] ?? null;
 
-        if (!$externalId) {
+        if (! $externalId) {
             return response()->json(['error' => 'Missing external_id'], 400);
+        }
+
+        if (! in_array($status, ['PAID', 'EXPIRED'], true) || ! $invoiceId) {
+            return response()->json(['error' => 'Unsupported webhook payload'], 422);
         }
 
         // External webhook needs system bypass to locate order by global external_id
@@ -54,12 +58,20 @@ class XenditWebhookController extends Controller
         }
 
         $order = Order::where('order_number', $externalId)->first();
-        if (!$order) {
+        if (! $order) {
             if (DB::getDriverName() === 'pgsql') {
                 DB::statement("SET app.is_system_bypass = 'off';");
             }
             Log::warning("Webhook Xendit: Order {$externalId} tidak ditemukan");
+
             return response()->json(['error' => 'Order not found'], 404);
+        }
+
+        $payment = Payment::where('order_id', $order->id)->first();
+        if (! $payment
+            || $payment->xendit_invoice_id !== $invoiceId
+            || (int) $payment->amount !== (int) ($payload['amount'] ?? -1)) {
+            return response()->json(['error' => 'Invoice identity or amount mismatch'], 422);
         }
 
         // Bind tenant session for order scope & reset bypass
@@ -69,16 +81,22 @@ class XenditWebhookController extends Controller
         }
 
         // Idempotency: Jika order sudah PAID, return success seketika
+        $idempotencyKey = "xendit_wh_{$invoiceId}";
+        if (WalletTransaction::where('idempotency_key', $idempotencyKey)->exists()) {
+            return response()->json(['status' => 'already_processed']);
+        }
+
         if ($status === 'PAID') {
             if ($order->status === OrderStatus::PAID_ESCROW || $order->status === OrderStatus::PROCESSING) {
                 return response()->json(['status' => 'already_processed']);
             }
 
-            DB::transaction(function () use ($order, $payload, $invoiceId) {
+            DB::transaction(function () use ($order, $payload, $idempotencyKey) {
                 // 1. Update Order Status
                 $order->update([
                     'status' => OrderStatus::PAID_ESCROW,
                 ]);
+                $this->inventoryService->consumeReservations($order->id);
 
                 // 2. Update Payment Record
                 Payment::where('order_id', $order->id)->update([
@@ -109,24 +127,21 @@ class XenditWebhookController extends Controller
                     'balance_before' => $balanceBefore,
                     'balance_after' => $balanceAfter,
                     'description' => "Dana escrow masuk untuk pesanan #{$order->order_number}",
-                    'idempotency_key' => "xendit_wh_{$invoiceId}",
+                    'idempotency_key' => $idempotencyKey,
                     'created_at' => now(),
                 ]);
 
                 Log::info("Pesanan #{$order->order_number} berhasil dibayar via Xendit", [
                     'amount' => $creditAmount,
-                    'tenant_id' => $order->tenant_id
+                    'tenant_id' => $order->tenant_id,
                 ]);
             });
         } elseif ($status === 'EXPIRED') {
             // Revert stok kembali jika pembayaran kadaluarsa
             if ($order->status === OrderStatus::PENDING_PAYMENT) {
                 $order->update(['status' => OrderStatus::CANCELLED]);
-
-                foreach ($order->items as $item) {
-                    $variantId = $item->variant_id ?? $item->product_id;
-                    $this->inventoryService->releaseStock($order->tenant_id, $variantId, $item->quantity);
-                }
+                Payment::where('order_id', $order->id)->update(['status' => PaymentStatus::EXPIRED]);
+                $this->inventoryService->releaseReservations($order->id);
             }
         }
 

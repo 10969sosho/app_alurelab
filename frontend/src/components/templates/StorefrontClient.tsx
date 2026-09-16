@@ -4,7 +4,6 @@ import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import {
   ShoppingBag,
-  Layers,
   ArrowRight,
   Minus,
   Plus,
@@ -28,54 +27,13 @@ export default function StorefrontClient({
   queryTemplate?: string;
 }) {
   const [store, setStore] = useState<StoreData>(initialStore);
-  const [localCms, setLocalCms] = useState<any>(null);
 
   // Sync state if initialStore changes
   useEffect(() => {
     setStore(initialStore);
   }, [initialStore]);
 
-  // Read local preview settings if seller edited in CMS Studio
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem(`alurelab_cms_${storeSlug}`);
-      if (cached) {
-        try {
-          setLocalCms(JSON.parse(cached));
-        } catch (e) {
-          console.warn('Failed to parse cached local CMS settings', e);
-        }
-      }
-    }
-  }, [storeSlug]);
-
-  const effectiveSettings = useMemo(() => {
-    return {
-      ...(store.settings || {}),
-      ...(localCms || {}),
-      branding: {
-        ...(store.settings?.branding || {}),
-        ...(localCms?.branding || {}),
-      },
-      hero: {
-        ...(store.settings?.hero || {}),
-        ...(localCms?.hero || {}),
-      },
-      navigation: {
-        ...(store.settings?.navigation || {}),
-        ...(localCms?.navigation || {}),
-      },
-      sections: {
-        ...(store.settings?.sections || {}),
-        ...(localCms?.sections || {}),
-      },
-      highlights: {
-        ...(store.settings?.highlights || {}),
-        ...(localCms?.highlights || {}),
-      },
-      pages: localCms?.pages || store.settings?.pages || [],
-    };
-  }, [store.settings, localCms]);
+  const effectiveSettings = useMemo(() => store.settings || {}, [store.settings]);
 
   const effectiveStore: StoreData = useMemo(() => {
     return {
@@ -93,7 +51,7 @@ export default function StorefrontClient({
   const activeTemplate =
     queryTemplate ||
     effectiveSettings.template ||
-    (storeSlug === 'kalmora' ? 'editorial' : 'modern');
+    'modern';
 
   const { items, addItem, removeItem, updateQuantity, getTotalItems, getSubtotal } = useCartStore();
   const { buyer } = useBuyerStore();
@@ -101,8 +59,8 @@ export default function StorefrontClient({
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isTrackOrderOpen, setIsTrackOrderOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [trackNumber, setTrackNumber] = useState('ORD-20260914-00192');
-  const [trackResult, setTrackResult] = useState<any>(null);
+  const [trackNumber, setTrackNumber] = useState('');
+  const [trackError, setTrackError] = useState('');
 
   const handleAddToCart = (product: Product, variant: ProductVariant) => {
     addItem({
@@ -118,19 +76,7 @@ export default function StorefrontClient({
 
   const handleTrackOrder = (e: React.FormEvent) => {
     e.preventDefault();
-    setTrackResult({
-      orderNumber: trackNumber,
-      courier: 'SiCepat Ekspres (REG)',
-      awb: '004289127819',
-      status: 'IN_TRANSIT',
-      statusText: 'Paket sedang dalam perjalanan ke alamat tujuan.',
-      timeline: [
-        { time: '14 Sep 2026, 14:15', desc: 'Pesanan terbayar via QRIS (Dana aman di Escrow Xendit)' },
-        { time: '14 Sep 2026, 15:30', desc: 'Resi AWB diterbitkan oleh Biteship' },
-        { time: '14 Sep 2026, 17:00', desc: 'Kurir SiCepat telah pick-up paket dari toko penjual' },
-        { time: '14 Sep 2026, 20:45', desc: 'Paket tiba di Hub Sortir Surabaya Timur' },
-      ],
-    });
+    setTrackError('Login diperlukan untuk membuka tracking order yang aman.');
   };
 
   return (
@@ -159,33 +105,6 @@ export default function StorefrontClient({
           getTotalItems={getTotalItems}
         />
       )}
-
-      {/* Floating Template Switcher Badge */}
-      <div className="fixed bottom-4 right-6 z-40 bg-black/85 backdrop-blur-md text-white text-[11px] font-medium py-1.5 px-3.5 rounded-full flex items-center gap-2 shadow-xl border border-white/20">
-        <Layers className="w-3.5 h-3.5 text-emerald-400" />
-        <span className="text-white/60">Template:</span>
-        <Link
-          href={`/${storeSlug}?template=editorial`}
-          className={`px-2.5 py-0.5 rounded-full transition-colors ${
-            activeTemplate === 'editorial'
-              ? 'bg-white text-black font-bold'
-              : 'text-white/70 hover:text-white'
-          }`}
-        >
-          L-Kids Editorial
-        </Link>
-        <span className="text-white/30">|</span>
-        <Link
-          href={`/${storeSlug}?template=modern`}
-          className={`px-2.5 py-0.5 rounded-full transition-colors ${
-            activeTemplate === 'modern'
-              ? 'bg-white text-black font-bold'
-              : 'text-white/70 hover:text-white'
-          }`}
-        >
-          Modern
-        </Link>
-      </div>
 
       {/* DRAWER 1: SLIDE-OVER KERANJANG BELANJA (CART) */}
       <SlideOver
@@ -299,39 +218,7 @@ export default function StorefrontClient({
             </div>
           </form>
 
-          {trackResult && (
-            <div className="space-y-4 pt-4 border-t border-slate-200">
-              <div className="bg-slate-100 p-4 rounded-xl space-y-2 text-xs">
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-500">Kurir:</span>
-                  <span className="font-bold text-slate-900">{trackResult.courier}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-500">Nomor AWB:</span>
-                  <span className="font-mono font-bold text-slate-900">{trackResult.awb}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-500">Status:</span>
-                  <span className="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-[10px]">
-                    {trackResult.status}
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <h4 className="text-xs font-bold text-slate-800 mb-3">Perjalanan Paket:</h4>
-                <div className="relative pl-5 border-l-2 border-slate-200 space-y-4 text-xs">
-                  {trackResult.timeline.map((event: any, i: number) => (
-                    <div key={i} className="relative">
-                      <div className="absolute -left-[25px] top-0 w-3 h-3 rounded-full bg-slate-900" />
-                      <div className="text-[10px] text-slate-400 font-mono">{event.time}</div>
-                      <div className="text-slate-700 font-medium mt-0.5">{event.desc}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+          <p className="text-xs text-slate-500">{trackError || 'Masuk ke akun pembeli untuk melihat status pesanan yang Anda miliki.'}</p>
         </div>
       </SlideOver>
 

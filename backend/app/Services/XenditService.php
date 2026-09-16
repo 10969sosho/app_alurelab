@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 class XenditService
 {
     protected string $secretKey;
+
     protected string $webhookToken;
 
     public function __construct()
@@ -23,10 +24,6 @@ class XenditService
      */
     public function verifyWebhookSignature(?string $incomingToken): bool
     {
-        if (str_starts_with($this->secretKey, 'xnd_development_dummy') || empty($this->secretKey) || $incomingToken === 'dummy-webhook-token') {
-            return true;
-        }
-
         if (empty($incomingToken) || empty($this->webhookToken)) {
             return false;
         }
@@ -39,6 +36,10 @@ class XenditService
      */
     public function createInvoice(Order $order, Store $store): array
     {
+        if ($this->secretKey === '' || str_starts_with($this->secretKey, 'xnd_development_dummy')) {
+            throw new \RuntimeException('Xendit secret key belum dikonfigurasi.');
+        }
+
         $platformFee = round($order->total_amount * ($order->platform_fee_percent / 100), 2);
 
         $payload = [
@@ -54,30 +55,19 @@ class XenditService
                 [
                     'type' => 'ALURELAB_PLATFORM_FEE',
                     'value' => (int) $platformFee,
-                ]
+                ],
             ],
-            'payment_methods' => ['QRIS', 'BCA', 'MANDIRI', 'BRI', 'BNI', 'OVO', 'DANA', 'SHOPEEPAY']
+            'payment_methods' => ['QRIS', 'BCA', 'MANDIRI', 'BRI', 'BNI', 'OVO', 'DANA', 'SHOPEEPAY'],
         ];
 
         // Jika mode live & sub-account terdaftar, pasang header XenPlatform for-user-id
         $headers = [
-            'Authorization' => 'Basic ' . base64_encode($this->secretKey . ':'),
+            'Authorization' => 'Basic '.base64_encode($this->secretKey.':'),
             'Content-Type' => 'application/json',
         ];
 
-        if (!empty($store->xendit_sub_account_id)) {
+        if (! empty($store->xendit_sub_account_id)) {
             $headers['for-user-id'] = $store->xendit_sub_account_id;
-        }
-
-        // Mock / Sandbox fallback jika key masih dummy
-        if (str_starts_with($this->secretKey, 'xnd_development_dummy') || empty($this->secretKey)) {
-            return [
-                'id' => 'mock_inv_' . bin2hex(random_bytes(8)),
-                'invoice_url' => 'https://checkout.xendit.co/web/' . bin2hex(random_bytes(10)),
-                'status' => 'PENDING',
-                'amount' => $payload['amount'],
-                'expiry_date' => now()->addMinutes(15)->toIso8601String(),
-            ];
         }
 
         $response = Http::withHeaders($headers)
@@ -85,7 +75,7 @@ class XenditService
 
         if ($response->failed()) {
             Log::error('Xendit Create Invoice Failed', ['body' => $response->body()]);
-            throw new \Exception('Gagal membuat invoice pembayaran Xendit: ' . $response->body());
+            throw new \Exception('Gagal membuat invoice pembayaran Xendit: '.$response->body());
         }
 
         return $response->json();

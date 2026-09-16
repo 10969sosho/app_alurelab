@@ -142,47 +142,30 @@ export default function ProductDetailPage({
   const [quantity, setQuantity] = useState(1);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
-  // Fetch product detail or fallback
-  const { data: product } = useQuery({
+  const { data: product, isError } = useQuery({
     queryKey: ['buyer-product', storeSlug, slug],
     queryFn: async () => {
-      try {
-        const res = await axios.get(`${API_BASE}/products/${slug}`, {
-          headers: { 'X-Store-Slug': storeSlug },
-        });
-        if (res.data?.data) return res.data.data;
-      } catch {
-        // Fallback demo matching slug
-      }
+      const res = await axios.get(`${API_BASE}/products/${slug}`, {
+        headers: { 'X-Store-Slug': storeSlug },
+      });
 
-      if (KALMORA_PRODUCTS[slug]) {
-        return KALMORA_PRODUCTS[slug];
-      }
+      if (!res.data?.data) throw new Error('Produk tidak ditemukan.');
 
-      return {
-        id: 'demo-' + slug,
-        title: slug.replace(/-/g, ' ').toUpperCase(),
-        category_name: 'CURATED ESSENTIALS',
-        season: 'SEASON 2026',
-        description:
-          'Produk kurasi resmi dirancang untuk kenyamanan, kelembutan, dan kesederhanaan abadi untuk aktivitas harian.',
-        details: [
-          'KUALITAS PREMIUM TERUJI',
-          'SILUET SANTAI & NYAMAN',
-          'MATERIAL BERNAPAS',
-          'GARANSI RETUR 100%',
-        ],
-        price: 149000,
-        compare_at_price: 199000,
-        images: [
-          'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=1600&auto=format&fit=crop&q=80',
-        ],
-        variants: [
-          { id: 'var-1', title: 'Standard', price: 149000, stock: 25 },
-        ],
-      };
+      return res.data.data;
     },
   });
+
+  if (isError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 text-center">
+        <div>
+          <h1 className="text-xl font-bold">Produk tidak ditemukan</h1>
+          <p className="mt-2 text-sm text-[#666666]">Produk tidak tersedia atau toko sedang mengalami gangguan.</p>
+          <Link href={`/${storeSlug}`} className="inline-block mt-5 underline text-sm">Kembali ke katalog</Link>
+        </div>
+      </div>
+    );
+  }
 
   const images = product?.images?.length ? product.images : ['https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=1600'];
   const variants = product?.variants && product.variants.length > 0

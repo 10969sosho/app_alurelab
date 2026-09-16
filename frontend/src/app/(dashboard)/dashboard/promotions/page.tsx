@@ -33,7 +33,7 @@ export default function PromotionsPage() {
   const [quota, setQuota] = useState(100);
 
   // Fetch promotions
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['merchant-promotions'],
     queryFn: async () => {
       const res = await api.get('/merchant/promotions');
@@ -77,6 +77,10 @@ export default function PromotionsPage() {
   });
 
   const promotions = data || [];
+
+  if (isError) {
+    return <div className="p-6 text-sm text-slate-600">Promosi sementara dinonaktifkan sampai voucher aman di checkout.</div>;
+  }
 
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();

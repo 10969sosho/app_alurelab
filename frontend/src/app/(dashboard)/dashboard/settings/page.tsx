@@ -45,8 +45,8 @@ export default function SettingsPage() {
 
   // Payment & Bank states
   const [allowCod, setAllowCod] = useState(true);
-  const [bankName, setBankName] = useState('BCA');
-  const [accountNumber, setAccountNumber] = useState('8830192831');
+  const [bankName, setBankName] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
   const [accountHolder, setAccountHolder] = useState('');
 
   // Fetch settings
@@ -69,9 +69,9 @@ export default function SettingsPage() {
         setContactName(s.origin_address.contact_name || '');
         setWarehousePhone(s.origin_address.phone || '');
         setAddress(s.origin_address.address || '');
-        setCity(s.origin_address.city || 'Surabaya');
-        setProvince(s.origin_address.province || 'Jawa Timur');
-        setPostalCode(s.origin_address.postal_code || '60271');
+        setCity(s.origin_address.city || '');
+        setProvince(s.origin_address.province || '');
+        setPostalCode(s.origin_address.postal_code || '');
       }
 
       if (s.couriers) {
@@ -83,7 +83,7 @@ export default function SettingsPage() {
       }
 
       if (s.bank_account) {
-        setBankName(s.bank_account.bank_name || 'BCA');
+        setBankName(s.bank_account.bank_name || '');
         setAccountNumber(s.bank_account.account_number || '');
         setAccountHolder(s.bank_account.account_holder || data.name || '');
       }

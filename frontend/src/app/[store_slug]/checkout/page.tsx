@@ -44,7 +44,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
   const [orderSuccess, setOrderSuccess] = useState<any>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const subtotal = getSubtotal() || 149000; // Fallback jika user langsung buka checkout
+  const subtotal = getSubtotal();
   const totalAmount = subtotal + form.shippingCost;
 
   const courierOptions = [
@@ -58,54 +58,43 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
     setLoading(true);
     setErrorMessage(null);
 
+    if (items.length === 0) {
+      setErrorMessage('Keranjang kosong. Tambahkan produk sebelum checkout.');
+      setLoading(false);
+      return;
+    }
+
     const payload = {
-      customer_name: form.name || 'Pelanggan ALURELAB',
-      customer_phone: form.phone || '081234567890',
+      customer_name: form.name,
+      customer_phone: form.phone,
       customer_email: form.email || null,
       destination_area_id: form.areaId,
-      address_detail: form.addressDetail || 'Alamat lengkap pengiriman',
+      address_detail: form.addressDetail,
       shipping_notes: form.notes,
       courier_code: form.courier,
       courier_service: form.courierService,
       shipping_cost: form.shippingCost,
       payment_method: form.paymentMethod,
-      items: items.length > 0
-        ? items.map((i) => ({
-            product_id: i.productId,
-            variant_id: i.variantId,
-            quantity: i.quantity,
-          }))
-        : [
-            {
-              product_id: 'prod-dummy-uuid',
-              variant_id: null,
-              quantity: 1,
-            },
-          ],
+      items: items.map((i) => ({
+        product_id: i.productId,
+        variant_id: i.variantId,
+        quantity: i.quantity,
+      })),
     };
 
-    const res = await fetchApi('/checkout', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-      tenantIdOrSlug: storeSlug,
-    });
+    try {
+      const res = await fetchApi('/checkout', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        tenantIdOrSlug: storeSlug,
+      });
 
-    setLoading(false);
-
-    if (res.success) {
       clearCart();
       setOrderSuccess(res);
-    } else {
-      // Jika backend Laravel belum online, tampilkan mode simulasi sukses
-      clearCart();
-      setOrderSuccess({
-        order_number: 'ORD-' + Math.floor(100000 + Math.random() * 900000),
-        total_amount: totalAmount,
-        payment: form.paymentMethod === 'ONLINE'
-          ? { invoice_url: 'https://checkout.xendit.co/web/simulated-invoice' }
-          : null,
-        is_mock: true,
-      });
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Checkout gagal. Coba lagi.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -138,10 +127,14 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
 
           {form.paymentMethod === 'ONLINE' && (
             <Link
-              href={`/mock/xendit-invoice/${orderSuccess.order_number}?store=${storeSlug}&amount=${totalAmount}&order=${orderSuccess.order_number}`}
+              href={orderSuccess.payment?.invoice_url || '#'}
+              aria-disabled={!orderSuccess.payment?.invoice_url}
+              onClick={(event) => {
+                if (!orderSuccess.payment?.invoice_url) event.preventDefault();
+              }}
               className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow mb-3 text-sm transition-all"
             >
-              Bayar Sekarang via Xendit (Simulasi QRIS / VA) →
+              Bayar Sekarang via Xendit →
             </Link>
           )}
 
@@ -396,7 +389,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
                 </div>
               ) : (
                 <div className="text-xs text-slate-500 italic py-2">
-                  (Simulasi pesanan default katalog)
+                  Keranjang kosong
                 </div>
               )}
 

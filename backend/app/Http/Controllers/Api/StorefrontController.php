@@ -13,6 +13,7 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Store;
 use App\Services\AntiRtsService;
+use App\Services\BiteshipService;
 use App\Services\InventoryService;
 use App\Services\XenditService;
 use Illuminate\Http\JsonResponse;
@@ -25,6 +26,7 @@ class StorefrontController extends Controller
     public function __construct(
         protected InventoryService $inventoryService,
         protected AntiRtsService $antiRtsService,
+        protected BiteshipService $biteshipService,
         protected XenditService $xenditService
     ) {}
 
@@ -35,6 +37,14 @@ class StorefrontController extends Controller
     {
         /** @var Store $store */
         $store = app('current_tenant');
+        $settings = $store->settings ?? [];
+        $publicSettings = array_intersect_key($settings, array_flip([
+            'branding',
+            'hero',
+            'navigation',
+            'pages',
+            'sections',
+        ]));
 
         return response()->json([
             'success' => true,
@@ -45,8 +55,8 @@ class StorefrontController extends Controller
                 'custom_domain' => $store->custom_domain,
                 'logo_url' => $store->logo_url,
                 'phone_number' => $store->phone_number,
-                'settings' => $store->settings,
-            ]
+                'settings' => $publicSettings,
+            ],
         ]);
     }
 
@@ -65,7 +75,7 @@ class StorefrontController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $products
+            'data' => $products,
         ]);
     }
 
@@ -81,12 +91,12 @@ class StorefrontController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $product
+            'data' => $product,
         ]);
     }
 
     /**
-     * Endpoint One-Page Checkout dengan Redis Concurrency Lock & Anti-Overselling.
+     * Endpoint one-page checkout with atomic inventory reservation.
      */
     public function checkout(Request $request): JsonResponse
     {
@@ -106,18 +116,84 @@ class StorefrontController extends Controller
             'payment_method' => 'required|string|in:ONLINE,COD',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|uuid',
-            'items.*.variant_id' => 'nullable|uuid',
+            'items.*.variant_id' => 'required|uuid',
             'items.*.quantity' => 'required|integer|min:1',
         ]);
 
-        // 1. Lock Stok di Redis (Atomic Concurrency Protection)
+        $rateItems = [];
+        foreach ($validated['items'] as $itemData) {
+            $product = Product::where('tenant_id', $store->id)
+                ->whereKey($itemData['product_id'])
+                ->where('is_active', true)
+                ->first();
+
+            $variant = ! empty($itemData['variant_id'])
+                ? ProductVariant::where('tenant_id', $store->id)
+                    ->where('product_id', $itemData['product_id'])
+                    ->whereKey($itemData['variant_id'])
+                    ->first()
+                : null;
+
+            if (! $product || ! $variant) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'INVALID_ITEM',
+                    'message' => 'Produk atau varian tidak tersedia di toko ini.',
+                ], 422);
+            }
+
+            $rateItems[] = [
+                'name' => $product->title.' ('.$variant->title.')',
+                'value' => (int) $variant->price,
+                'quantity' => $itemData['quantity'],
+                'weight' => max(1, (int) $product->weight_grams),
+            ];
+        }
+
+        if (! $store->address_area_id) {
+            return response()->json([
+                'success' => false,
+                'error' => 'STORE_ORIGIN_MISSING',
+                'message' => 'Alamat asal toko belum dikonfigurasi.',
+            ], 422);
+        }
+
+        try {
+            $rates = $this->biteshipService->calculateRates(
+                $store->address_area_id,
+                $validated['destination_area_id'],
+                $rateItems,
+            );
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'SHIPPING_PROVIDER_UNAVAILABLE',
+                'message' => 'Tarif pengiriman belum tersedia. Coba lagi.',
+            ], 503);
+        }
+
+        $selectedRate = collect($rates)->first(fn (array $rate): bool => ($rate['courier_code'] ?? null) === $validated['courier_code']
+            && ($rate['courier_service_code'] ?? null) === $validated['courier_service']
+        );
+
+        if (! $selectedRate || (int) $selectedRate['price'] !== (int) $validated['shipping_cost']) {
+            return response()->json([
+                'success' => false,
+                'error' => 'SHIPPING_QUOTE_EXPIRED',
+                'message' => 'Tarif pengiriman berubah. Ambil tarif terbaru lalu coba lagi.',
+            ], 409);
+        }
+
+        // Lock stock atomically only after product, tenant, variant, and shipping validation.
         $lockedItems = [];
         foreach ($validated['items'] as $itemData) {
-            $variantId = $itemData['variant_id'] ?? $itemData['product_id'];
+            $variantId = $itemData['variant_id'];
             $qty = $itemData['quantity'];
 
             $isLocked = $this->inventoryService->reserveStock($store->id, $variantId, $qty);
-            if (!$isLocked) {
+            if (! $isLocked) {
                 // Rollback item yang sempat terkunci sebelumnya
                 foreach ($lockedItems as $locked) {
                     $this->inventoryService->releaseStock($store->id, $locked['variant_id'], $locked['qty']);
@@ -134,11 +210,11 @@ class StorefrontController extends Controller
         }
 
         try {
-            return DB::transaction(function () use ($validated, $store) {
+            $response = DB::transaction(function () use ($validated, $store, $selectedRate, $lockedItems) {
                 // 2. Resolve / Create Profil Customer
                 $cleanPhone = preg_replace('/[^0-9]/', '', $validated['customer_phone']);
                 if (str_starts_with($cleanPhone, '0')) {
-                    $cleanPhone = '62' . substr($cleanPhone, 1);
+                    $cleanPhone = '62'.substr($cleanPhone, 1);
                 }
 
                 $customer = Customer::firstOrCreate(
@@ -149,14 +225,14 @@ class StorefrontController extends Controller
                         'default_address' => [
                             'area_id' => $validated['destination_area_id'],
                             'detail' => $validated['address_detail'],
-                        ]
+                        ],
                     ]
                 );
 
                 // 3. Cek Proteksi COD Anti-RTS jika memilih COD
                 if ($validated['payment_method'] === 'COD') {
                     $riskEvaluation = $this->antiRtsService->evaluateCustomerRisk($customer);
-                    if (!$riskEvaluation['allow_cod']) {
+                    if (! $riskEvaluation['allow_cod']) {
                         return response()->json([
                             'success' => false,
                             'error' => 'COD_REJECTED',
@@ -171,9 +247,15 @@ class StorefrontController extends Controller
                 $orderItemsData = [];
 
                 foreach ($validated['items'] as $itemData) {
-                    $product = Product::findOrFail($itemData['product_id']);
-                    $variant = !empty($itemData['variant_id'])
-                        ? ProductVariant::findOrFail($itemData['variant_id'])
+                    $product = Product::where('tenant_id', $store->id)
+                        ->whereKey($itemData['product_id'])
+                        ->where('is_active', true)
+                        ->firstOrFail();
+                    $variant = ! empty($itemData['variant_id'])
+                        ? ProductVariant::where('tenant_id', $store->id)
+                            ->where('product_id', $product->id)
+                            ->whereKey($itemData['variant_id'])
+                            ->firstOrFail()
                         : null;
 
                     $itemPrice = $variant ? $variant->price : $product->price;
@@ -192,7 +274,7 @@ class StorefrontController extends Controller
                     ];
                 }
 
-                $shippingCost = (float) $validated['shipping_cost'];
+                $shippingCost = (float) $selectedRate['price'];
                 $totalAmount = $subtotal + $shippingCost;
 
                 // Potongan Platform ALURELAB 1.5% dari nilai barang
@@ -200,7 +282,7 @@ class StorefrontController extends Controller
                 $platformFeeAmount = round($subtotal * ($platformFeePercent / 100), 2);
                 $merchantNetAmount = $totalAmount - $platformFeeAmount;
 
-                $orderNumber = 'ORD-' . date('Ymd') . '-' . strtoupper(Str::random(6));
+                $orderNumber = 'ORD-'.date('Ymd').'-'.strtoupper(Str::random(6));
 
                 // 5. Simpan Order
                 $order = Order::create([
@@ -253,12 +335,20 @@ class StorefrontController extends Controller
                     Payment::create([
                         'tenant_id' => $store->id,
                         'order_id' => $order->id,
-                        'xendit_invoice_id' => 'COD-' . $order->order_number,
+                        'xendit_invoice_id' => 'COD-'.$order->order_number,
                         'payment_method' => 'COD',
                         'amount' => $totalAmount,
                         'status' => PaymentStatus::PENDING,
                     ]);
                 }
+
+                $this->inventoryService->createReservations(
+                    $store->id,
+                    $order->id,
+                    $lockedItems,
+                    now()->addMinutes(config('services.xendit.invoice_expiry_minutes', 1440)),
+                    $validated['payment_method'] === 'COD',
+                );
 
                 return response()->json([
                     'success' => true,
@@ -267,6 +357,14 @@ class StorefrontController extends Controller
                     'payment' => $paymentResponse,
                 ], 201);
             });
+
+            if ($response->getStatusCode() >= 400) {
+                foreach ($lockedItems as $locked) {
+                    $this->inventoryService->releaseStock($store->id, $locked['variant_id'], $locked['qty']);
+                }
+            }
+
+            return $response;
         } catch (\Throwable $e) {
             // Revert stok jika gagal
             foreach ($lockedItems as $locked) {

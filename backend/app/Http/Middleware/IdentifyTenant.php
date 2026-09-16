@@ -2,11 +2,12 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Store;
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use App\Models\Store;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -32,6 +33,7 @@ class IdentifyTenant
                 if (Str::isUuid($explicitStoreId)) {
                     return Store::where('id', $explicitStoreId)->value('id');
                 }
+
                 return Store::where('slug', $explicitStoreId)->value('id');
             });
 
@@ -41,11 +43,11 @@ class IdentifyTenant
         }
 
         // Jika request dari user terautentikasi (misal di Dashboard) dan belum ada store
-        if (!$store && $request->user()) {
+        if (! $store && $request->user()) {
             $store = $request->user()->stores()->first();
         }
 
-        if (!$store) {
+        if (! $store) {
             // Resolusi Subdomain vs Custom Domain
             $cacheKey = "domain:{$host}";
             $storeId = Cache::get($cacheKey);
@@ -70,7 +72,17 @@ class IdentifyTenant
             }
         }
 
-        if (!$store) {
+        if ($store
+            && $request->user() instanceof User
+            && ! $request->user()->is_superadmin
+            && ! $request->user()->stores()->whereKey($store->id)->exists()) {
+            return response()->json([
+                'error' => 'TenantForbidden',
+                'message' => 'Anda tidak memiliki akses ke toko ini.',
+            ], 403);
+        }
+
+        if (! $store) {
             return response()->json([
                 'error' => 'TenantNotFound',
                 'message' => 'Toko tidak ditemukan atau domain belum dikonfigurasi.',

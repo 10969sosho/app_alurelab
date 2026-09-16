@@ -4,12 +4,14 @@ namespace App\Services;
 
 use App\Models\Order;
 use App\Models\Store;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class BiteshipService
 {
     protected string $apiUrl;
+
     protected string $apiKey;
 
     public function __construct()
@@ -18,24 +20,22 @@ class BiteshipService
         $this->apiKey = config('services.biteship.key', env('BITESHIP_API_KEY', ''));
     }
 
+    public function verifyWebhookSignature(Request $request): bool
+    {
+        $secret = (string) config('services.biteship.webhook_secret', '');
+        $header = (string) config('services.biteship.webhook_header', 'X-Biteship-Webhook-Secret');
+        $incomingSecret = (string) $request->header($header, '');
+
+        return $secret !== '' && $incomingSecret !== '' && hash_equals($secret, $incomingSecret);
+    }
+
     /**
      * Mencari standardisasi area kelurahan/kecamatan Biteship.
      */
     public function searchAreas(string $query): array
     {
-        if (str_starts_with($this->apiKey, 'biteship_test_dummy') || empty($this->apiKey)) {
-            return [
-                [
-                    'id' => 'ID_ID_3578_357807',
-                    'name' => 'Sukolilo, Surabaya, Jawa Timur',
-                    'postal_code' => 60111,
-                ],
-                [
-                    'id' => 'ID_ID_3171_317101',
-                    'name' => 'Kemang, Mampang Prapatan, Jakarta Selatan',
-                    'postal_code' => 12730,
-                ],
-            ];
+        if ($this->isUnconfigured()) {
+            throw new \RuntimeException('Biteship API key belum dikonfigurasi.');
         }
 
         $response = Http::withHeaders([
@@ -53,33 +53,8 @@ class BiteshipService
      */
     public function calculateRates(string $originAreaId, string $destinationAreaId, array $items): array
     {
-        if (str_starts_with($this->apiKey, 'biteship_test_dummy') || empty($this->apiKey)) {
-            return [
-                [
-                    'courier_name' => 'J&T Express',
-                    'courier_code' => 'jnt',
-                    'courier_service_name' => 'EZ (Reguler)',
-                    'courier_service_code' => 'ez',
-                    'duration' => '1 - 2 Hari',
-                    'price' => 18000,
-                ],
-                [
-                    'courier_name' => 'SiCepat Ekspres',
-                    'courier_code' => 'sicepat',
-                    'courier_service_name' => 'REG',
-                    'courier_service_code' => 'reg',
-                    'duration' => '1 - 2 Hari',
-                    'price' => 17000,
-                ],
-                [
-                    'courier_name' => 'JNE',
-                    'courier_code' => 'jne',
-                    'courier_service_name' => 'REG',
-                    'courier_service_code' => 'reg',
-                    'duration' => '2 - 3 Hari',
-                    'price' => 19000,
-                ],
-            ];
+        if ($this->isUnconfigured()) {
+            throw new \RuntimeException('Biteship API key belum dikonfigurasi.');
         }
 
         $response = Http::withHeaders([
@@ -92,6 +67,11 @@ class BiteshipService
             'items' => $items,
         ]);
 
+        if ($response->failed()) {
+            Log::error('Biteship Rate Lookup Failed', ['status' => $response->status()]);
+            throw new \RuntimeException('Biteship rate lookup failed.');
+        }
+
         return $response->json('pricing') ?? [];
     }
 
@@ -100,24 +80,13 @@ class BiteshipService
      */
     public function createShippingOrder(Order $order, Store $store, string $courierCode, string $courierService, bool $isCod = false): array
     {
-        if (str_starts_with($this->apiKey, 'biteship_test_dummy') || empty($this->apiKey)) {
-            $mockAwb = 'AWB' . strtoupper($courierCode) . rand(10000000, 99999999);
-            return [
-                'id' => 'biteship_ord_' . bin2hex(random_bytes(6)),
-                'waybill_id' => $mockAwb,
-                'courier' => [
-                    'company' => $courierCode,
-                    'type' => $courierService,
-                ],
-                'status' => 'allocated',
-                'label_url' => "https://api.biteship.com/v1/labels/{$mockAwb}.pdf",
-                'tracking_url' => "https://track.biteship.com/{$mockAwb}",
-            ];
+        if ($this->isUnconfigured()) {
+            throw new \RuntimeException('Biteship API key belum dikonfigurasi.');
         }
 
         $items = $order->items->map(function ($item) {
             return [
-                'name' => $item->product_title . ($item->variant_title ? " ({$item->variant_title})" : ''),
+                'name' => $item->product_title.($item->variant_title ? " ({$item->variant_title})" : ''),
                 'value' => (int) $item->price,
                 'quantity' => $item->quantity,
                 'weight' => 200,
@@ -152,9 +121,14 @@ class BiteshipService
 
         if ($response->failed()) {
             Log::error('Biteship Booking Order Failed', ['body' => $response->body()]);
-            throw new \Exception('Gagal booking kurir Biteship: ' . $response->body());
+            throw new \Exception('Gagal booking kurir Biteship: '.$response->body());
         }
 
         return $response->json();
+    }
+
+    private function isUnconfigured(): bool
+    {
+        return $this->apiKey === '' || str_starts_with($this->apiKey, 'biteship_test_dummy');
     }
 }
