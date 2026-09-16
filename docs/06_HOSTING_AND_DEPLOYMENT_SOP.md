@@ -169,29 +169,44 @@ cd ~/repositories/app_alurelab
 git pull origin main
 ```
 
-### Langkah 3: Salin File yang Berubah ke Direktori Domain
-Salin folder/file terbaru dari repositori ke direktori kerja domain tujuan:
+### Langkah 3: Salin File yang Berubah ke Direktori Domain (SOP Bebas Rsync)
+Karena utilitas `rsync` tidak terpasang secara default pada environment cPanel, gunakan pipeline stream `tar` (atau `cp -r`) agar file ter-sync secara presisi tanpa menimpa konfigurasi `.env`, `storage`, atau build `.next`:
 ```bash
-# Salin source frontend
-cp -r ~/repositories/app_alurelab/frontend/src /home/alurelab/app.alurelab.com/frontend/
+# Salin backend (kecualikan .env, storage, vendor, dan cache)
+cd ~/repositories/app_alurelab/backend
+tar --exclude="./.env" --exclude="./storage" --exclude="./vendor" --exclude="./bootstrap/cache/*.php" -cf - . | (cd ~/app.alurelab.com/backend && tar -xvf -)
 
-# (Jika ada perubahan backend)
-cp -r ~/repositories/app_alurelab/backend/app /home/alurelab/app.alurelab.com/backend/
+# Salin frontend (kecualikan .env*, .next, dan node_modules)
+cd ~/repositories/app_alurelab/frontend
+tar --exclude="./.env*" --exclude="./.next" --exclude="./node_modules" -cf - . | (cd ~/app.alurelab.com/frontend && tar -xvf -)
 ```
 
-### Langkah 4: Jalankan Build di Direktori Domain
-Masuk ke folder frontend domain dan kompilasi Next.js:
+### Langkah 4: Optimasi Backend Laravel & Database Migrations
+Masuk ke direktori backend domain dan jalankan migrasi serta optimasi cache:
+```bash
+cd /home/alurelab/app.alurelab.com/backend
+composer install --no-dev --optimize-autoloader --no-interaction
+php artisan migrate --force
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+php artisan config:cache
+php artisan route:cache
+```
+
+### Langkah 5: Build Frontend & Restart Service PM2
+Masuk ke direktori frontend domain, kompilasi Next.js, dan muat ulang process PM2:
 ```bash
 cd /home/alurelab/app.alurelab.com/frontend
 npm run build
-```
-*Pastikan output build menampilkan tanda centang hijau `✓ Compiled successfully`.*
-
-### Langkah 5: Restart Service PM2 & Simpan State
-Muat ulang proses Node.js tanpa downtime dan simpan konfigurasi PM2:
-```bash
-pm2 restart alurelab-frontend
+pm2 reload alurelab-frontend || pm2 restart alurelab-frontend
 pm2 save
+```
+
+### Langkah 6: Verifikasi Cron Scheduler Laravel
+Pastikan crontab server menjalankan scheduler Laravel setiap menit untuk memproses release inventori kedaluwarsa (`inventory:release-reservations`) dan antrean order:
+```bash
+* * * * * cd /home/alurelab/app.alurelab.com/backend && php artisan schedule:run >> /dev/null 2>&1
 ```
 
 ---
