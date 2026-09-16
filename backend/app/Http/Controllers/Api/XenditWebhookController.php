@@ -64,7 +64,7 @@ class XenditWebhookController extends Controller
             }
             Log::warning("Webhook Xendit: Order {$externalId} tidak ditemukan");
 
-            return response()->json(['error' => 'Order not found'], 404);
+            return response()->json(['status' => 'ignored']);
         }
 
         $payment = Payment::where('order_id', $order->id)->first();

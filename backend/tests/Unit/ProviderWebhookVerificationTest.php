@@ -41,4 +41,21 @@ class ProviderWebhookVerificationTest extends TestCase
             'HTTP_X_BITESHIP_SIGNATURE' => 'biteship-webhook-secret',
         ])));
     }
+
+    public function test_xendit_acknowledges_valid_unknown_test_order(): void
+    {
+        config([
+            'services.xendit.secret_key' => 'xnd_development_test',
+            'services.xendit.webhook_token' => 'xendit-webhook-secret',
+        ]);
+
+        $this->postJson('/api/v1/webhooks/xendit/invoice', [
+            'external_id' => 'XENDIT_TEST_ORDER_NOT_FOUND',
+            'status' => 'PAID',
+            'id' => 'xendit-test-invoice',
+            'amount' => 50000,
+        ], [
+            'X-Callback-Token' => 'xendit-webhook-secret',
+        ])->assertOk()->assertJson(['status' => 'ignored']);
+    }
 }
