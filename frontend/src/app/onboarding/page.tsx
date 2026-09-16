@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { signIn } from 'next-auth/react';
 import { ArrowLeft, Sparkles, Store, CheckCircle2, Rocket, ArrowRight } from 'lucide-react';
 import { fetchApi } from '@/lib/api-client';
 
@@ -55,6 +56,12 @@ export default function OnboardingPage() {
       setLoading(false);
 
       if (res?.success && res?.store) {
+        const authResult = await signIn('credentials', {
+          email: formData.ownerEmail,
+          password: formData.password,
+          redirect: false,
+        });
+
         const origin = typeof window !== 'undefined' ? window.location.origin : '';
         const storefrontUrl = res.store.storefront_url && !res.store.storefront_url.includes('localhost:3000')
           ? res.store.storefront_url
@@ -63,6 +70,7 @@ export default function OnboardingPage() {
         setCreatedStore({
           ...res.store,
           storefront_url: storefrontUrl,
+          autoLoginFailed: Boolean(authResult?.error),
         });
       } else {
         alert(res?.message || 'Gagal membuat toko. Pastikan email dan slug toko belum pernah terdaftar.');
@@ -104,10 +112,10 @@ export default function OnboardingPage() {
               Lihat Toko Sekarang <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
-              href="/dashboard"
+              href={createdStore.autoLoginFailed ? '/login' : '/dashboard'}
               className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium py-3 rounded-xl text-sm transition-all"
             >
-              Buka Merchant Dashboard
+              {createdStore.autoLoginFailed ? 'Login ke Merchant Dashboard' : 'Buka Merchant Dashboard'}
             </Link>
           </div>
         </div>
@@ -172,8 +180,8 @@ export default function OnboardingPage() {
                     onChange={(e) => handleSlugChange(e.target.value)}
                     className="w-full bg-slate-950 border border-slate-800 text-xs px-3.5 py-2.5 rounded-l-xl text-white focus:border-emerald-500 focus:outline-none font-mono"
                   />
-                  <span className="bg-slate-800 border border-l-0 border-slate-800 text-[11px] text-slate-400 px-3 py-2.5 rounded-r-xl select-none font-mono">
-                    .alurelab.shop
+                   <span className="bg-slate-800 border border-l-0 border-slate-800 text-[11px] text-slate-400 px-3 py-2.5 rounded-r-xl select-none font-mono">
+                     app.alurelab.com/
                   </span>
                 </div>
               </div>

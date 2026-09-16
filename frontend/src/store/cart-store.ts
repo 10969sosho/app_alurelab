@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 export interface CartItem {
   productId: string;
@@ -20,7 +21,7 @@ interface CartState {
   getSubtotal: () => number;
 }
 
-export const useCartStore = create<CartState>((set, get) => ({
+export const useCartStore = create<CartState>()(persist((set, get) => ({
   items: [],
   addItem: (newItem) => {
     set((state) => {
@@ -61,4 +62,6 @@ export const useCartStore = create<CartState>((set, get) => ({
   clearCart: () => set({ items: [] }),
   getTotalItems: () => get().items.reduce((acc, item) => acc + item.quantity, 0),
   getSubtotal: () => get().items.reduce((acc, item) => acc + item.price * item.quantity, 0),
+}), {
+  name: 'alurelab_cart_storage',
 }));

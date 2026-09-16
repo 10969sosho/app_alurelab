@@ -47,6 +47,7 @@ const navGroups = [
     title: 'Pengaturan',
     items: [
       { href: '/dashboard/settings', label: 'Pengaturan Toko' },
+      { href: '/dashboard/subscription', label: 'Paket Langganan' },
     ],
   },
 ];
@@ -157,4 +158,3 @@ export function Sidebar() {
     </aside>
   );
 }
-

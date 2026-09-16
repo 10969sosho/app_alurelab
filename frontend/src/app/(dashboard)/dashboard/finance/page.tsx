@@ -46,6 +46,9 @@ export default function FinancePage() {
   };
 
   const bankAccount = data?.bank_account;
+  const withdrawalDisabledReason = !bankAccount
+    ? 'Minimal saldo penarikan Rp 50.000 dan wajib menghubungkan nomor rekening di Pengaturan Toko.'
+    : 'Minimal saldo penarikan Rp 50.000.';
 
   const payouts = data?.payouts || [];
   const transactions = data?.transactions || [];
@@ -107,6 +110,7 @@ export default function FinancePage() {
         <button
           type="button"
            disabled={!bankAccount || wallet.available_balance < 50000}
+           title={!bankAccount || wallet.available_balance < 50000 ? withdrawalDisabledReason : undefined}
           onClick={() => {
             setAccountNumber(bankAccount?.account_number || '');
             setAccountHolder(bankAccount?.account_holder || '');
@@ -115,9 +119,14 @@ export default function FinancePage() {
           className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#EE4D2D] hover:bg-[#d73f20] text-white text-xs font-semibold rounded-xs transition-colors shadow-2xs disabled:opacity-40 self-start sm:self-auto"
         >
           <ArrowUpRight className="w-3.5 h-3.5 stroke-[2.5]" />
-          <span>Tarik Dana ke Rekening</span>
+           <span>Tarik Dana ke Rekening</span>
         </button>
       </div>
+      {(!bankAccount || wallet.available_balance < 50000) && (
+        <p className="text-[11px] text-slate-500 -mt-1">
+          {withdrawalDisabledReason}
+        </p>
+      )}
 
       {/* ─── 2. Wallet Balance & Bank Cards ─── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">

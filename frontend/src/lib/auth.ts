@@ -43,7 +43,6 @@ export const authConfig: NextAuthConfig = {
           }
           return null;
         } catch (error: any) {
-          // Backend validation error (422)
           const msg = error?.response?.data?.message ?? 'Email atau password salah.';
           throw new Error(msg);
         }

@@ -1,31 +1,29 @@
-/**
- * Next.js Middleware
- * Protect /dashboard/* routes — redirect ke /login jika tidak ada session.
- */
-import { auth } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export default auth((req) => {
+export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const session = req.auth;
 
-  // Protect semua route /dashboard/*
   if (pathname.startsWith('/dashboard')) {
-    if (!session) {
+    const sessionToken = req.cookies.get('__Secure-authjs.session-token')?.value
+      || req.cookies.get('authjs.session-token')?.value;
+    if (!sessionToken) {
       const loginUrl = new URL('/login', req.url);
       loginUrl.searchParams.set('callbackUrl', pathname);
       return NextResponse.redirect(loginUrl);
     }
   }
 
-  // Redirect dari /login ke /dashboard jika sudah login
-  if ((pathname === '/login' || pathname === '/register') && session) {
-    return NextResponse.redirect(new URL('/dashboard', req.url));
+  if (pathname === '/login' || pathname === '/register') {
+    const sessionToken = req.cookies.get('__Secure-authjs.session-token')?.value
+      || req.cookies.get('authjs.session-token')?.value;
+    if (sessionToken) {
+      return NextResponse.redirect(new URL('/dashboard', req.url));
+    }
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: ['/dashboard/:path*', '/login', '/register'],

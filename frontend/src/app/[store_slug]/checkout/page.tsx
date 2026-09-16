@@ -13,6 +13,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
 
   const { items, getSubtotal, clearCart } = useCartStore();
   const { buyer } = useBuyerStore();
+  const [isHydrated, setIsHydrated] = useState(false);
 
   const [form, setForm] = useState({
     name: '',
@@ -26,6 +27,10 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
     shippingCost: 17000,
     paymentMethod: 'ONLINE' as 'ONLINE' | 'COD',
   });
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   useEffect(() => {
     if (buyer) {
@@ -58,7 +63,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
     setLoading(true);
     setErrorMessage(null);
 
-    if (items.length === 0) {
+    if (!isHydrated || items.length === 0) {
       setErrorMessage('Keranjang kosong. Tambahkan produk sebelum checkout.');
       setLoading(false);
       return;
@@ -371,7 +376,9 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
                 Ringkasan Belanja
               </h3>
 
-              {items.length > 0 ? (
+              {!isHydrated ? (
+                <div className="text-xs text-slate-500 italic py-2">Memuat keranjang...</div>
+              ) : items.length > 0 ? (
                 <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                   {items.map((item, idx) => (
                     <div key={idx} className="flex justify-between text-xs py-1 border-b border-slate-50">
@@ -414,7 +421,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !isHydrated}
                 className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2"
               >
                 {loading ? 'Memproses Pesanan...' : `Selesaikan Pesanan (Rp ${totalAmount.toLocaleString('id-ID')})`}

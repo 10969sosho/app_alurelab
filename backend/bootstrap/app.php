@@ -18,8 +18,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('app:release-expired-reservations')->everyMinute();
     })
     ->withMiddleware(function (Middleware $middleware): void {
-        // CORS untuk Next.js frontend
-        $middleware->statefulApi();
         $middleware->alias(['store.role' => EnsureStoreRole::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
