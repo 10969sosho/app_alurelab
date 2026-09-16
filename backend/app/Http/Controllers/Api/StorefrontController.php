@@ -39,6 +39,7 @@ class StorefrontController extends Controller
         $store = app('current_tenant');
         $settings = $store->settings ?? [];
         $publicSettings = array_intersect_key($settings, array_flip([
+            'template',
             'branding',
             'hero',
             'navigation',
