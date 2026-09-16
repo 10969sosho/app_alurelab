@@ -204,7 +204,7 @@ pm2 save
 ```
 
 ### Langkah 6: Verifikasi Cron Scheduler Laravel
-Pastikan crontab server menjalankan scheduler Laravel setiap menit untuk memproses release inventori kedaluwarsa (`inventory:release-reservations`) dan antrean order:
+Pastikan crontab server menjalankan scheduler Laravel setiap menit untuk memproses release inventori kedaluwarsa (`app:release-expired-reservations`) dan antrean order:
 ```bash
 * * * * * cd /home/alurelab/app.alurelab.com/backend && php artisan schedule:run >> /dev/null 2>&1
 ```
