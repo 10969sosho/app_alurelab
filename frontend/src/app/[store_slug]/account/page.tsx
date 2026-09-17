@@ -20,6 +20,7 @@ import {
 import { useBuyerStore } from '@/store/buyer-store';
 import { fetchApi } from '@/lib/api-client';
 import BuyerLoginModal from '@/components/buyer/BuyerLoginModal';
+import { WilayahAddressFields, type WilayahAddressValue } from '@/components/address/WilayahAddressFields';
 
 export default function AccountPage({
   params,
@@ -37,8 +38,27 @@ export default function AccountPage({
   // Settings form state
   const [addressDetail, setAddressDetail] = useState(buyer?.defaultAddress?.detail || '');
   const [postalCode, setPostalCode] = useState(buyer?.defaultAddress?.postalCode || '');
+  const [wilayah, setWilayah] = useState<WilayahAddressValue>({});
   const [savingAddress, setSavingAddress] = useState(false);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState('');
+
+  useEffect(() => {
+    if (buyer?.defaultAddress) {
+      setWilayah({
+        provinceCode: buyer.defaultAddress.provinceCode,
+        provinceName: buyer.defaultAddress.provinceName,
+        regencyCode: buyer.defaultAddress.regencyCode,
+        regencyName: buyer.defaultAddress.regencyName,
+        districtCode: buyer.defaultAddress.districtCode,
+        districtName: buyer.defaultAddress.districtName,
+        villageCode: buyer.defaultAddress.villageCode,
+        villageName: buyer.defaultAddress.villageName,
+        areaId: buyer.defaultAddress.areaId,
+        areaName: buyer.defaultAddress.areaName,
+        postalCode: buyer.defaultAddress.postalCode,
+      });
+    }
+  }, [buyer]);
 
   const storeDisplayName = storeSlug.replace(/-/g, ' ').toUpperCase();
 
@@ -76,6 +96,7 @@ export default function AccountPage({
       const updated = {
         detail: addressDetail,
         postalCode: postalCode,
+        ...wilayah,
       };
       await fetchApi('/buyer/profile', {
         method: 'PUT',
@@ -97,7 +118,7 @@ export default function AccountPage({
   const pastOrders = orders.filter((o) => o.status === 'COMPLETED' || o.status === 'CANCELLED');
 
   return (
-    <div className="min-h-screen bg-[#F5F5F3] text-[#111111] font-sans antialiased selection:bg-[#111111] selection:text-[#F5F5F3] flex flex-col">
+     <div className="buyer-page min-h-screen bg-[#F5F5F3] text-[#111111] font-sans antialiased selection:bg-[#111111] selection:text-[#F5F5F3] flex flex-col">
       {/* ── Top Bar ────────────────────────────────────────── */}
       <header className="h-[80px] border-b border-[#DADADA] bg-[#F5F5F3] px-6 md:px-12 flex items-center justify-between sticky top-0 z-30">
         <Link
@@ -105,7 +126,7 @@ export default function AccountPage({
           className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.2em] uppercase text-[#666666] hover:text-[#111111] transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>KEMBALI KE TOKO</span>
+           <span>BACK TO SHOP</span>
         </Link>
 
         <Link href={`/${storeSlug}`} className="flex items-center gap-2.5">
@@ -145,17 +166,17 @@ export default function AccountPage({
             </div>
             <div className="space-y-2">
               <h1 className="font-bebas text-4xl uppercase tracking-wide text-[#111111]">
-                AKUN PEMBELI ALURELAB
+                 ACCOUNT
               </h1>
               <p className="text-xs text-[#666666] leading-relaxed">
-                Silakan masuk dengan nomor WhatsApp Anda untuk melihat status pesanan aktif, riwayat transaksi, dan mengelola alamat pengiriman.
+                 Masuk untuk melihat pesanan dan alamat.
               </p>
             </div>
             <button
               onClick={() => setIsLoginModalOpen(true)}
               className="bg-[#111111] text-[#F5F5F3] px-8 py-3.5 text-xs font-semibold uppercase tracking-[0.2em] hover:bg-black transition-all"
             >
-              MASUK KE AKUN SAYA
+               SIGN IN
             </button>
           </div>
         ) : (
@@ -169,7 +190,7 @@ export default function AccountPage({
                 </div>
                 <div className="space-y-1">
                   <div className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#666666]">
-                    TERVERIFIKASI ESCROW XENDIT
+                     ACCOUNT
                   </div>
                   <h2 className="font-bebas text-3xl tracking-wide uppercase text-[#111111]">
                     {buyer.fullName}
@@ -182,7 +203,7 @@ export default function AccountPage({
 
               <div className="flex sm:flex-col items-end justify-between gap-2 border-t sm:border-t-0 pt-3 sm:pt-0 border-[#DADADA]">
                 <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 border border-emerald-200">
-                  <ShieldCheck className="w-3.5 h-3.5" /> Skor Keamanan 98%
+                   <ShieldCheck className="w-3.5 h-3.5" /> Verified
                 </span>
                 <span className="text-[10px] uppercase tracking-wider text-[#666666]">
                   Toko: {storeDisplayName}
@@ -200,7 +221,7 @@ export default function AccountPage({
                     : 'text-[#666666] hover:text-[#111111]'
                 }`}
               >
-                Pesanan Saya ({activeOrders.length})
+                 Active ({activeOrders.length})
               </button>
 
               <button
@@ -211,7 +232,7 @@ export default function AccountPage({
                     : 'text-[#666666] hover:text-[#111111]'
                 }`}
               >
-                Riwayat Pesanan ({pastOrders.length})
+                 History ({pastOrders.length})
               </button>
 
               <button
@@ -222,7 +243,7 @@ export default function AccountPage({
                     : 'text-[#666666] hover:text-[#111111]'
                 }`}
               >
-                Pengaturan & Alamat
+                 Settings
               </button>
             </div>
 
@@ -236,13 +257,13 @@ export default function AccountPage({
                       Tidak ada pesanan yang sedang berlangsung.
                     </p>
                     <p className="text-xs text-[#666666]">
-                      Pesanan yang baru Anda buat akan tampil di sini lengkap dengan live tracking kurir.
+                       Pesanan baru akan tampil di sini.
                     </p>
                     <Link
                       href={`/${storeSlug}`}
                       className="inline-block pt-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#111111] underline"
                     >
-                      Beli Produk Sekarang →
+                       SHOP NOW →
                     </Link>
                   </div>
                 ) : (
@@ -336,7 +357,7 @@ export default function AccountPage({
                       Belum ada riwayat pesanan selesai.
                     </p>
                     <p className="text-xs text-[#666666]">
-                      Semua transaksi yang telah selesai atau tiba di alamat Anda akan terarsip di sini.
+                       Pesanan selesai akan tampil di sini.
                     </p>
                   </div>
                 ) : (
@@ -396,10 +417,10 @@ export default function AccountPage({
               <div className="border border-[#DADADA] bg-white p-6 sm:p-8 space-y-6">
                 <div>
                   <h3 className="font-bebas text-2xl tracking-wide uppercase text-[#111111]">
-                    PENGATURAN PROFIL & ALAMAT PENGIRIMAN
+                     SETTINGS
                   </h3>
                   <p className="text-xs text-[#666666]">
-                    Alamat ini akan otomatis digunakan saat Anda checkout agar proses pembelian berlangsung cepat.
+                     Alamat ini digunakan saat checkout.
                   </p>
                 </div>
 
@@ -411,6 +432,13 @@ export default function AccountPage({
                 )}
 
                 <form onSubmit={handleSaveSettings} className="space-y-5 text-xs">
+                  <div>
+                    <label className="block font-semibold uppercase tracking-[0.14em] text-[#111111] mb-1.5">
+                      Wilayah Pengiriman
+                    </label>
+                    <WilayahAddressFields value={wilayah} onChange={setWilayah} />
+                  </div>
+
                   <div>
                     <label className="block font-semibold uppercase tracking-[0.14em] text-[#111111] mb-1.5">
                       Nama Lengkap Pembeli
@@ -476,7 +504,7 @@ export default function AccountPage({
                       ) : (
                         <>
                           <Save className="w-4 h-4" />
-                          <span>SIMPAN PENGATURAN</span>
+                           <span>SAVE</span>
                         </>
                       )}
                     </button>
@@ -490,7 +518,7 @@ export default function AccountPage({
 
       {/* ── Footer ─────────────────────────────────────────── */}
       <footer className="border-t border-[#DADADA] bg-[#F5F5F3] py-8 px-6 text-center text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-        <div>© 2026 {storeDisplayName} • ALURELAB Escrow Buyer Portal</div>
+         <div>© 2026 {storeDisplayName}</div>
       </footer>
 
       {/* Login Popup Modal */}

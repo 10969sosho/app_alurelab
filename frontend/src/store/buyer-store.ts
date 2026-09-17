@@ -10,6 +10,14 @@ export interface BuyerProfile {
     detail?: string;
     areaId?: string;
     areaName?: string;
+    provinceCode?: string;
+    provinceName?: string;
+    regencyCode?: string;
+    regencyName?: string;
+    districtCode?: string;
+    districtName?: string;
+    villageCode?: string;
+    villageName?: string;
     postalCode?: string;
   } | null;
   riskScore?: string | number;

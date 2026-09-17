@@ -40,7 +40,7 @@ export default function ModernTemplate({
       {/* Top Banner Garansi */}
       {store.settings?.sections?.showAnnouncementBar !== false && (
         <div className="bg-slate-900 text-slate-200 text-xs py-2 px-4 text-center font-medium">
-          {store.settings?.highlights?.announcementText || '⚡ Garansi Pengiriman Cepat Multi-Kurir Biteship • Pembayaran Aman Berlisensi Xendit (PJP BI)'}
+           {store.settings?.highlights?.announcementText || store.storeName}
         </div>
       )}
 
@@ -57,7 +57,7 @@ export default function ModernTemplate({
                 {store.storeName}
               </h1>
               <span className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1 mt-0.5">
-                <ShieldCheck className="w-3 h-3" /> Toko Resmi Terverifikasi
+                 <ShieldCheck className="w-3 h-3" /> Toko resmi
               </span>
             </div>
           </Link>
@@ -70,7 +70,7 @@ export default function ModernTemplate({
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari produk di toko ini..."
+                 placeholder="Cari produk"
                 className="w-full text-xs pl-9 pr-4 py-2 rounded-xl bg-slate-100 border border-transparent focus:bg-white focus:border-emerald-500 focus:outline-none transition-all"
               />
             </div>
@@ -83,7 +83,7 @@ export default function ModernTemplate({
               className="text-xs font-semibold text-slate-600 hover:text-slate-900 hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-slate-100 transition-all"
             >
               <Truck className="w-4 h-4 text-emerald-600" />
-              <span>Lacak Pesanan</span>
+               <span>Lacak</span>
             </button>
 
             {buyer ? (
@@ -136,7 +136,7 @@ export default function ModernTemplate({
               {store.settings?.hero?.headline || store.tagline}
             </h2>
             <p className="text-xs text-slate-500 max-w-xl mx-auto">
-              {store.settings?.hero?.description || 'Nikmati belanja produk original dengan jaminan uang kembali, resi kurir real-time, dan pembayaran fleksibel QRIS atau Bayar di Tempat (COD).'}
+               {store.settings?.hero?.description || ''}
             </p>
           </div>
         </section>
@@ -162,7 +162,7 @@ export default function ModernTemplate({
             ))}
           </div>
           <div className="text-xs text-slate-500 font-medium">
-            Menampilkan <span className="font-bold text-slate-900">{filteredProducts.length}</span> produk
+             <span className="font-bold text-slate-900">{filteredProducts.length}</span> produk
           </div>
         </div>
 

@@ -6,6 +6,7 @@ import { ArrowLeft, ShieldCheck, Truck, CreditCard, Banknote, CheckCircle2, Aler
 import { useCartStore } from '@/store/cart-store';
 import { useBuyerStore } from '@/store/buyer-store';
 import { fetchApi } from '@/lib/api-client';
+import { WilayahAddressFields, type WilayahAddressValue } from '@/components/address/WilayahAddressFields';
 
 export default function CheckoutPage({ params }: { params: Promise<{ store_slug: string }> }) {
   const resolvedParams = use(params);
@@ -19,7 +20,8 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
     name: '',
     phone: '',
     email: '',
-    areaId: 'ID_ID_3578_357807',
+    areaId: '',
+    wilayah: {} as WilayahAddressValue,
     addressDetail: '',
     notes: '',
     courier: 'sicepat',
@@ -41,22 +43,69 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
         email: prev.email || buyer.email || '',
         addressDetail: prev.addressDetail || buyer.defaultAddress?.detail || '',
         areaId: buyer.defaultAddress?.areaId || prev.areaId,
+        wilayah: {
+          provinceCode: buyer.defaultAddress?.provinceCode,
+          provinceName: buyer.defaultAddress?.provinceName,
+          regencyCode: buyer.defaultAddress?.regencyCode,
+          regencyName: buyer.defaultAddress?.regencyName,
+          districtCode: buyer.defaultAddress?.districtCode,
+          districtName: buyer.defaultAddress?.districtName,
+          villageCode: buyer.defaultAddress?.villageCode,
+          villageName: buyer.defaultAddress?.villageName,
+          areaId: buyer.defaultAddress?.areaId,
+          areaName: buyer.defaultAddress?.areaName,
+          postalCode: buyer.defaultAddress?.postalCode,
+        },
       }));
     }
   }, [buyer]);
 
   const [loading, setLoading] = useState(false);
+  const [loadingRates, setLoadingRates] = useState(false);
+  const [shippingOptions, setShippingOptions] = useState<any[]>([]);
   const [orderSuccess, setOrderSuccess] = useState<any>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const subtotal = getSubtotal();
   const totalAmount = subtotal + form.shippingCost;
 
-  const courierOptions = [
-    { code: 'sicepat', service: 'reg', name: 'SiCepat REG (1-2 Hari)', price: 17000 },
-    { code: 'jnt', service: 'ez', name: 'J&T Express EZ (1-2 Hari)', price: 18000 },
-    { code: 'jne', service: 'reg', name: 'JNE Reguler (2-3 Hari)', price: 19000 },
-  ];
+  const loadShippingRates = async (destinationAreaId: string, wilayah: WilayahAddressValue) => {
+    setForm((prev) => ({ ...prev, wilayah, areaId: destinationAreaId }));
+    setShippingOptions([]);
+    if (!destinationAreaId) return;
+
+    setLoadingRates(true);
+    try {
+      const res = await fetchApi('/logistics/rates', {
+        method: 'POST',
+        tenantIdOrSlug: storeSlug,
+        body: JSON.stringify({
+          destination_area_id: destinationAreaId,
+          items: items.map((item) => ({
+            name: item.title,
+            value: item.price,
+            quantity: item.quantity,
+            weight: 200,
+          })),
+        }),
+      });
+      const rates = res.rates || [];
+      setShippingOptions(rates);
+      const first = rates[0];
+      if (first) {
+        setForm((prev) => ({
+          ...prev,
+          courier: first.courier_code,
+          courierService: first.courier_service_code,
+          shippingCost: Number(first.price),
+        }));
+      }
+    } catch (error: any) {
+      setErrorMessage(error?.message || 'Tarif pengiriman belum tersedia.');
+    } finally {
+      setLoadingRates(false);
+    }
+  };
 
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,6 +114,12 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
 
     if (!isHydrated || items.length === 0) {
       setErrorMessage('Keranjang kosong. Tambahkan produk sebelum checkout.');
+      setLoading(false);
+      return;
+    }
+
+    if (!form.areaId || shippingOptions.length === 0) {
+      setErrorMessage('Pilih alamat lengkap dan tunggu tarif Biteship tersedia.');
       setLoading(false);
       return;
     }
@@ -164,7 +219,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
 
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 pb-16">
+     <div className="buyer-page min-h-screen bg-[#F5F5F3] text-[#111111] pb-16">
       {/* Header */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
@@ -174,7 +229,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
           >
             <ArrowLeft className="w-4 h-4" /> Kembali
           </Link>
-          <span className="text-sm font-bold text-slate-900">1-Page Fast Checkout</span>
+           <span className="text-sm font-bold text-slate-900">Checkout</span>
           <div className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
             <ShieldCheck className="w-4 h-4" /> 100% Aman
           </div>
@@ -193,11 +248,11 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
           {/* Kolom Kiri: Form Identitas & Pengiriman */}
           <div className="md:col-span-3 space-y-6">
             {/* Step 1: Identitas Pembeli */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+             <div className="bg-white p-5 border border-slate-200 space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
                   <span className="w-5 h-5 bg-slate-900 text-white text-xs rounded-full flex items-center justify-center font-mono">1</span>
-                  Informasi Kontak Pembeli
+                   Contact
                 </h3>
                 {buyer && (
                   <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
@@ -255,24 +310,19 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
             </div>
 
             {/* Step 2: Alamat Pengiriman */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+             <div className="bg-white p-5 border border-slate-200 space-y-4">
               <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
                 <span className="w-5 h-5 bg-slate-900 text-white text-xs rounded-full flex items-center justify-center font-mono">2</span>
-                Alamat Tujuan Pengiriman (Biteship Standard)
+                 Delivery address
               </h3>
 
               <div className="space-y-3">
                 <div>
                   <label className="block text-xs font-medium text-slate-600 mb-1">Kecamatan / Kelurahan</label>
-                  <select
-                    value={form.areaId}
-                    onChange={(e) => setForm({ ...form, areaId: e.target.value })}
-                    className="w-full text-xs px-3 py-2.5 rounded-lg border border-slate-300 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  >
-                    <option value="ID_ID_3578_357807">Sukolilo, Surabaya, Jawa Timur (60111)</option>
-                    <option value="ID_ID_3171_317101">Kemang, Mampang Prapatan, Jakarta Selatan (12730)</option>
-                    <option value="ID_ID_3273_327301">Coblong, Dago, Bandung, Jawa Barat (40132)</option>
-                  </select>
+                  <WilayahAddressFields
+                    value={form.wilayah}
+                    onChange={(wilayah) => loadShippingRates(wilayah.areaId || '', wilayah)}
+                  />
                 </div>
 
                 <div>
@@ -290,18 +340,22 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
             </div>
 
             {/* Step 3: Kurir Ekspedisi */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+             <div className="bg-white p-5 border border-slate-200 space-y-4">
               <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
                 <span className="w-5 h-5 bg-slate-900 text-white text-xs rounded-full flex items-center justify-center font-mono">3</span>
-                Pilih Kurir Ekspedisi (Auto-AWB Resi)
+                 Delivery method
               </h3>
 
               <div className="space-y-2">
-                {courierOptions.map((c) => (
+                {loadingRates && <p className="text-xs text-slate-500">Mengambil tarif Biteship...</p>}
+                {!loadingRates && shippingOptions.length === 0 && (
+                  <p className="text-xs text-slate-500">Pilih kecamatan untuk melihat tarif pengiriman.</p>
+                )}
+                {shippingOptions.map((c) => (
                   <label
                     key={c.code}
                     className={`flex items-center justify-between p-3 rounded-xl border text-xs cursor-pointer transition-all ${
-                      form.courier === c.code
+                        form.courier === c.courier_code && form.courierService === c.courier_service_code
                         ? 'border-emerald-500 bg-emerald-50/50 font-medium'
                         : 'border-slate-200 hover:border-slate-300'
                     }`}
@@ -311,30 +365,30 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
                         type="radio"
                         name="courier"
                         checked={form.courier === c.code}
-                        onChange={() =>
-                          setForm({
-                            ...form,
-                            courier: c.code,
-                            courierService: c.service,
-                            shippingCost: c.price,
-                          })
+                         onChange={() =>
+                           setForm({
+                             ...form,
+                             courier: c.courier_code,
+                             courierService: c.courier_service_code,
+                             shippingCost: Number(c.price),
+                           })
                         }
                         className="text-emerald-600 focus:ring-emerald-500"
                       />
                       <Truck className="w-4 h-4 text-slate-500" />
-                      <span>{c.name}</span>
+                      <span>{c.courier_name} {c.courier_service_name}</span>
                     </div>
-                    <span className="font-bold text-slate-900">Rp {c.price.toLocaleString('id-ID')}</span>
+                    <span className="font-bold text-slate-900">Rp {Number(c.price).toLocaleString('id-ID')}</span>
                   </label>
                 ))}
               </div>
             </div>
 
             {/* Step 4: Metode Pembayaran */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+             <div className="bg-white p-5 border border-slate-200 space-y-4">
               <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
                 <span className="w-5 h-5 bg-slate-900 text-white text-xs rounded-full flex items-center justify-center font-mono">4</span>
-                Pilih Metode Pembayaran
+                 Payment
               </h3>
 
               <div className="grid grid-cols-2 gap-3">
@@ -371,7 +425,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
 
           {/* Kolom Kanan: Ringkasan & Submit */}
           <div className="md:col-span-2">
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm sticky top-20 space-y-4">
+             <div className="bg-white p-5 border border-slate-200 sticky top-20 space-y-4">
               <h3 className="font-bold text-sm text-slate-900 pb-3 border-b border-slate-100">
                 Ringkasan Belanja
               </h3>
@@ -410,8 +464,8 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
                   <span>Rp {form.shippingCost.toLocaleString('id-ID')}</span>
                 </div>
                 <div className="flex justify-between text-slate-600">
-                  <span>Biaya Layanan Platform</span>
-                  <span className="text-emerald-600 font-medium">Rp 0 (Gratis)</span>
+                 <span>Service fee</span>
+                 <span className="text-emerald-600 font-medium">Free</span>
                 </div>
                 <div className="flex justify-between text-sm font-extrabold text-slate-900 pt-2 border-t border-slate-200">
                   <span>Total Tagihan</span>
@@ -424,11 +478,11 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
                 disabled={loading || !isHydrated}
                 className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2"
               >
-                {loading ? 'Memproses Pesanan...' : `Selesaikan Pesanan (Rp ${totalAmount.toLocaleString('id-ID')})`}
+                 {loading ? 'Processing...' : `Place order · Rp ${totalAmount.toLocaleString('id-ID')}`}
               </button>
 
               <p className="text-[10px] text-slate-400 text-center leading-tight">
-                🔒 Data dilindungi dengan Enkripsi SSL 256-bit dan PostgreSQL RLS Multi-Tenant.
+                 Secure checkout
               </p>
             </div>
           </div>

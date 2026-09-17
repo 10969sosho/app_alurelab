@@ -212,7 +212,7 @@ export default function ProductDetailPage({
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F5F3] text-[#111111] font-sans antialiased selection:bg-[#111111] selection:text-[#F5F5F3] flex flex-col">
+       <div className="buyer-page min-h-screen bg-[#F5F5F3] text-[#111111] font-sans antialiased selection:bg-[#111111] selection:text-[#F5F5F3] flex flex-col">
       {/* ── Top Header Bar ──────────────────────────────────── */}
       <header className="h-[80px] border-b border-[#DADADA] bg-[#F5F5F3] px-6 md:px-12 flex items-center justify-between sticky top-0 z-30">
         <Link
@@ -220,7 +220,7 @@ export default function ProductDetailPage({
           className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.2em] uppercase text-[#666666] hover:text-[#111111] transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>KEMBALI KE KATALOG</span>
+           <span>BACK TO SHOP</span>
         </Link>
 
         {/* Monogram Brand */}
@@ -249,7 +249,7 @@ export default function ProductDetailPage({
               className="flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.2em] uppercase text-[#666666] hover:text-[#111111] transition-opacity"
             >
               <User className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">LOGIN</span>
+             <span className="hidden sm:inline">ACCOUNT</span>
             </button>
           )}
 
@@ -258,7 +258,7 @@ export default function ProductDetailPage({
             className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111111] hover:opacity-75 transition-opacity"
           >
             <ShoppingBag className="w-4 h-4" />
-            <span>BAG ({getTotalItems()})</span>
+             <span>BAG {getTotalItems() > 0 ? `(${getTotalItems()})` : ''}</span>
           </Link>
         </div>
       </header>
@@ -305,7 +305,7 @@ export default function ProductDetailPage({
             {/* Kicker & Title */}
             <div className="space-y-2 border-b border-[#DADADA] pb-6">
               <div className="text-[11px] font-semibold tracking-[0.24em] uppercase text-[#666666]">
-                {product?.category_name || 'COLLECTION'} — {product?.season || 'CURATED 2026'}
+                 {product?.category_name || 'COLLECTION'}
               </div>
 
               <h1 className="font-bebas text-4xl sm:text-5xl md:text-6xl tracking-tight uppercase text-[#111111] leading-[0.9]">
@@ -336,7 +336,7 @@ export default function ProductDetailPage({
               <div className="space-y-3 pt-4 border-t border-[#DADADA]">
                 <div className="flex justify-between items-center">
                   <span className="text-[11px] font-semibold tracking-[0.16em] uppercase text-[#111111]">
-                    PILIHAN VARIAN / UKURAN:
+                     SIZE / VARIANT
                   </span>
                   {activeVariant?.stock && (
                     <span className="text-[10px] uppercase text-[#666666] tracking-wider">
@@ -366,7 +366,7 @@ export default function ProductDetailPage({
             {/* Quantity Stepper */}
             <div className="flex items-center gap-4 pt-2">
               <span className="text-[11px] font-semibold tracking-[0.16em] uppercase text-[#111111]">
-                JUMLAH:
+                 QUANTITY
               </span>
               <div className="flex items-center border border-[#DADADA] bg-white text-xs">
                 <button
@@ -391,7 +391,7 @@ export default function ProductDetailPage({
                 onClick={handleAddToCartAndOpen}
                 className="w-full bg-[#111111] text-[#F5F5F3] py-4 text-xs font-semibold uppercase tracking-[0.2em] hover:bg-black transition-all flex items-center justify-center gap-2"
               >
-                <span>+ MASUKKAN KE KERANJANG</span>
+                 <span>ADD TO BAG</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
 
@@ -399,7 +399,7 @@ export default function ProductDetailPage({
                 onClick={handleBuyNow}
                 className="w-full bg-white text-[#111111] border border-[#111111] py-3.5 text-xs font-semibold uppercase tracking-[0.2em] hover:bg-stone-100 transition-all"
               >
-                BELI SEKARANG (FAST CHECKOUT)
+                 BUY NOW
               </button>
             </div>
 
@@ -407,7 +407,7 @@ export default function ProductDetailPage({
             {productDetails.length > 0 && (
               <div className="pt-6 border-t border-[#DADADA] space-y-3">
                 <span className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[#111111] block">
-                  SPESIFIKASI & DETAIL:
+                   DETAILS
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] tracking-wider uppercase text-[#666666]">
                   {productDetails.map((item: string, i: number) => (
@@ -424,11 +424,11 @@ export default function ProductDetailPage({
             <div className="pt-6 border-t border-[#DADADA] space-y-2 text-[11px] text-[#666666] uppercase tracking-wider">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span>Pembayaran Aman dengan Escrow Xendit</span>
+                 <span>Secure checkout</span>
               </div>
               <div className="flex items-center gap-2">
                 <Truck className="w-4 h-4 text-emerald-600" />
-                <span>Pengiriman Multi-Kurir Cepat via Biteship</span>
+                 <span>Delivery calculated at checkout</span>
               </div>
             </div>
           </div>
@@ -437,7 +437,7 @@ export default function ProductDetailPage({
 
       {/* ── Footer ─────────────────────────────────────────── */}
       <footer className="border-t border-[#DADADA] bg-[#F5F5F3] py-8 px-6 text-center text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-        <div>© 2026 {storeDisplayName} • Didukung oleh ALURELAB E-Commerce</div>
+         <div>© 2026 {storeDisplayName}</div>
       </footer>
 
       {/* Login Popup Modal */}

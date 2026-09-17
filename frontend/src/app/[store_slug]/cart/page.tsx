@@ -28,7 +28,7 @@ export default function CartPage({
   const storeDisplayName = storeSlug.replace(/-/g, ' ').toUpperCase();
 
   return (
-    <div className="min-h-screen bg-[#F5F5F3] text-[#111111] font-sans antialiased selection:bg-[#111111] selection:text-[#F5F5F3] flex flex-col">
+     <div className="buyer-page min-h-screen bg-[#F5F5F3] text-[#111111] font-sans antialiased selection:bg-[#111111] selection:text-[#F5F5F3] flex flex-col">
       {/* ── Top Bar ────────────────────────────────────────── */}
       <header className="h-[80px] border-b border-[#DADADA] bg-[#F5F5F3] px-6 md:px-12 flex items-center justify-between sticky top-0 z-30">
         <Link
@@ -36,7 +36,7 @@ export default function CartPage({
           className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.2em] uppercase text-[#666666] hover:text-[#111111] transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>KEMBALI KE KATALOG</span>
+           <span>BACK TO SHOP</span>
         </Link>
 
         <Link href={`/${storeSlug}`} className="flex items-center gap-2.5">
@@ -49,7 +49,7 @@ export default function CartPage({
         </Link>
 
         <div className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#666666]">
-          BAG ({totalItems})
+           BAG {totalItems > 0 ? `(${totalItems})` : ''}
         </div>
       </header>
 
@@ -58,10 +58,9 @@ export default function CartPage({
         <div className="pb-8 border-b border-[#DADADA] flex flex-col sm:flex-row sm:items-baseline justify-between gap-3">
           <div>
             <span className="text-[11px] font-semibold tracking-[0.24em] text-[#666666] uppercase block mb-1">
-              CURATED SELECTION
             </span>
             <h1 className="font-bebas text-5xl md:text-6xl tracking-wide uppercase text-[#111111]">
-              SHOPPING BAG
+               BAG
             </h1>
           </div>
           {items.length > 0 && (
@@ -82,17 +81,17 @@ export default function CartPage({
             </div>
             <div className="space-y-2">
               <h2 className="font-bebas text-3xl uppercase tracking-wide text-[#111111]">
-                KERANJANG ANDA MASIH KOSONG
+                 BAG IS EMPTY
               </h2>
               <p className="text-xs text-[#666666] leading-relaxed">
-                Jelajahi koleksi curated kami dan temukan potongan pakaian minimalis yang dirancang untuk kenyamanan sehari-hari.
+                 Pilih produk untuk mulai berbelanja.
               </p>
             </div>
             <Link
               href={`/${storeSlug}`}
               className="inline-flex items-center gap-3 bg-[#111111] text-[#F5F5F3] px-8 py-3.5 text-xs font-semibold uppercase tracking-[0.2em] hover:bg-black transition-all"
             >
-              <span>JELAJAHI KOLEKSI</span>
+               <span>SHOP PRODUCTS</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -187,7 +186,7 @@ export default function CartPage({
                   href={`/${storeSlug}`}
                   className="editorial-link text-[11px]"
                 >
-                  ← LANJUTKAN MEMILIH PRODUK LAIN
+                   ← CONTINUE SHOPPING
                 </Link>
               </div>
             </div>
@@ -220,7 +219,7 @@ export default function CartPage({
 
                   <div className="pt-4 border-t border-[#DADADA] flex justify-between items-baseline">
                     <span className="text-xs font-bold uppercase tracking-[0.14em] text-[#111111]">
-                      ESTIMASI SUBTITLED
+                       TOTAL
                     </span>
                     <span className="text-xl font-bold text-[#111111]">
                       Rp {subtotal.toLocaleString('id-ID')}
@@ -233,7 +232,7 @@ export default function CartPage({
                   href={`/${storeSlug}/checkout`}
                   className="w-full bg-[#111111] text-[#F5F5F3] py-4 text-xs font-semibold uppercase tracking-[0.2em] hover:bg-black transition-all flex items-center justify-center gap-2"
                 >
-                  <span>LANJUT KE CHECKOUT</span>
+                   <span>CHECKOUT</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
 
@@ -241,11 +240,11 @@ export default function CartPage({
                 <div className="space-y-2 pt-4 border-t border-[#DADADA] text-[10px] text-[#666666] uppercase tracking-wider">
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Jaminan Escrow Xendit Aman</span>
+                     <span>Secure payment</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Truck className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Multi-Kurir Terintegrasi Biteship</span>
+                     <span>Delivery at checkout</span>
                   </div>
                 </div>
               </div>
@@ -256,7 +255,7 @@ export default function CartPage({
 
       {/* ── Footer ─────────────────────────────────────────── */}
       <footer className="border-t border-[#DADADA] bg-[#F5F5F3] py-8 px-6 text-center text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-        <div>© 2026 {storeDisplayName} • Didukung oleh Infrastruktur ALURELAB</div>
+         <div>© 2026 {storeDisplayName}</div>
       </footer>
     </div>
   );

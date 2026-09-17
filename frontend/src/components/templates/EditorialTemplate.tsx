@@ -108,6 +108,7 @@ export default function EditorialTemplate({
   const navigation: CmsNavigation = cms.navigation || { menuItems: [] };
   const sections: CmsSections = cms.sections || {};
   const highlights: CmsHighlights = cms.highlights || {};
+  const valuePillars = highlights.valuePillars || [];
 
   const bgColor = branding.backgroundColor || '#F5F5F3';
   const textColor = branding.textColor || '#111111';
@@ -194,7 +195,7 @@ export default function EditorialTemplate({
           className="fixed top-0 left-0 right-0 z-50 text-[11px] font-medium py-1.5 px-4 text-center tracking-wider transition-all"
           style={{ backgroundColor: textColor, color: bgColor }}
         >
-          {highlights.announcementText || '⚡ Garansi Pengiriman Cepat Multi-Kurir Biteship • Pembayaran Aman Berlisensi Xendit (PJP BI)'}
+           {highlights.announcementText || store.storeName}
         </div>
       )}
 
@@ -394,7 +395,7 @@ export default function EditorialTemplate({
             
             {/* Small badge at bottom left of banner */}
             <div className="absolute bottom-6 left-6 md:left-12 text-white/90 text-[11px] uppercase tracking-[0.24em] font-medium z-30">
-              {hero.badgeText || 'EDITORIAL / CURATED SELECTION 2026'}
+               {hero.badgeText || store.storeName}
             </div>
 
             {/* Carousel Controls (Prev/Next & Slide Dots) if multiple slides */}
@@ -443,7 +444,7 @@ export default function EditorialTemplate({
           {/* Hero Title & Editorial Statement Block */}
           <div className="max-w-4xl mx-auto px-6 pt-12 pb-16 text-center">
             <div className="text-[12px] font-semibold tracking-[0.28em] uppercase mb-4 opacity-60">
-              {hero.badgeText || 'MINIMAL / MODERN / COMFORT / EDITORIAL'}
+               {hero.badgeText || 'NEW COLLECTION'}
             </div>
 
             <h1 className={`${fontHeadingClass} text-[68px] sm:text-[104px] md:text-[148px] lg:text-[180px] leading-[0.8] tracking-tight uppercase my-2`}>
@@ -455,9 +456,7 @@ export default function EditorialTemplate({
             </p>
 
             <p className="text-xs md:text-sm max-w-2xl mx-auto leading-relaxed opacity-70">
-              {hero.description || (
-                'A calm everyday wardrobe designed with comfort, softness, and timeless simplicity. Every collection focuses on clean silhouettes, neutral palettes, breathable materials, and effortless styling for everyday wear.'
-              )}
+              {hero.description || ''}
             </p>
 
             <div className="flex items-center justify-center gap-8 mt-8 flex-wrap">
@@ -465,7 +464,7 @@ export default function EditorialTemplate({
                 {hero.ctaText || 'VIEW COLLECTIONS →'}
               </a>
               <a href="#lookbook" className="editorial-link">
-                EXPLORE LOOKBOOK →
+                LOOKBOOK →
               </a>
             </div>
           </div>
@@ -480,7 +479,7 @@ export default function EditorialTemplate({
               COLLECTIONS
             </h2>
             <p className="text-xs md:text-sm opacity-60 max-w-md leading-relaxed">
-              Curated collections inspired by minimal childhood moments, modern silhouettes, and calm everyday styling.
+               {highlights.aboutSubheading || ''}
             </p>
           </div>
 
@@ -532,14 +531,14 @@ export default function EditorialTemplate({
           <div className="flex flex-col md:flex-row md:items-baseline justify-between gap-4 pb-6">
             <div>
               <span className="text-[11px] font-semibold tracking-[0.22em] opacity-60 uppercase block mb-1">
-                CURATED CATALOG
+                 SHOP
               </span>
               <h2 className={`${fontHeadingClass} text-5xl md:text-6xl tracking-wide uppercase`}>
-                PIECES & PRODUCTS
+                 PRODUCTS
               </h2>
             </div>
             <p className="text-xs opacity-60">
-              Menampilkan <span className="font-bold opacity-100">{filteredProducts.length}</span> item terkurasi
+               <span className="font-bold opacity-100">{filteredProducts.length}</span> products
             </p>
           </div>
 
@@ -628,13 +627,13 @@ export default function EditorialTemplate({
                     href={`/${storeSlug}/products/${product.slug}`}
                     className="editorial-link text-[11px]"
                   >
-                    VIEW PIECE →
+                     VIEW →
                   </Link>
                   <button
                     onClick={() => onAddToCart(product, product.variants[0])}
                     className="text-[11px] uppercase tracking-[0.14em] font-semibold hover:underline"
                   >
-                    + ADD TO BAG
+                     ADD TO BAG
                   </button>
                 </div>
               </div>
@@ -704,50 +703,19 @@ export default function EditorialTemplate({
           </div>
 
           {/* 4 Value Pillars Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-10 border-t border-[#DADADA]">
-            <div className="space-y-2">
-              <h4 className={`${fontHeadingClass} text-2xl tracking-wide uppercase`}>
-                TIMELESS DESIGN
-              </h4>
-              <p className="text-xs opacity-60 leading-relaxed">
-                Simple silhouettes and neutral colors designed to stay wearable across seasons.
-              </p>
+          {valuePillars.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-10 border-t border-[#DADADA]">
+              {valuePillars.map((pillar) => (
+                <div key={pillar.title} className="space-y-2">
+                  <h4 className={`${fontHeadingClass} text-2xl tracking-wide uppercase`}>
+                    {pillar.title}
+                  </h4>
+                  <p className="text-xs opacity-60 leading-relaxed">{pillar.description}</p>
+                </div>
+              ))}
             </div>
-            <div className="space-y-2">
-              <h4 className={`${fontHeadingClass} text-2xl tracking-wide uppercase`}>
-                COMFORT FIRST
-              </h4>
-              <p className="text-xs opacity-60 leading-relaxed">
-                Soft breathable materials selected for movement, comfort, and everyday use.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <h4 className={`${fontHeadingClass} text-2xl tracking-wide uppercase`}>
-                EDITORIAL PRESENTATION
-              </h4>
-              <p className="text-xs opacity-60 leading-relaxed">
-                Collections displayed through clean visual storytelling inspired by modern fashion galleries.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <h4 className={`${fontHeadingClass} text-2xl tracking-wide uppercase`}>
-                CURATED SELECTION
-              </h4>
-              <p className="text-xs opacity-60 leading-relaxed">
-                Only selected pieces and collections are presented inside the catalog.
-              </p>
-            </div>
-          </div>
+          )}
 
-          {/* Ending punchlines */}
-          <div className="pt-12 mt-10 border-t border-[#DADADA] space-y-1">
-            <div className={`${fontHeadingClass} text-3xl sm:text-4xl uppercase tracking-wide`}>
-              Modern essentials for everyday living.
-            </div>
-            <div className={`${fontHeadingClass} text-3xl sm:text-4xl uppercase tracking-wide opacity-60`}>
-              Minimal pieces designed for calm everyday moments.
-            </div>
-          </div>
         </section>
       )}
 

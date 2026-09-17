@@ -83,3 +83,26 @@ body {
   color: #111111;
   opacity: 0.8;
 }
+
+.buyer-page {
+  --buyer-border: #deddd8;
+  --buyer-muted: #73736d;
+}
+
+.buyer-page input,
+.buyer-page textarea,
+.buyer-page select {
+  border-radius: 0.25rem;
+}
+
+.buyer-page button,
+.buyer-page a {
+  transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease, opacity 180ms ease;
+}
+
+@media (max-width: 640px) {
+  .buyer-page main {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
+}
