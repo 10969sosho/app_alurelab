@@ -5,7 +5,8 @@ export async function GET(
   { params }: { params: Promise<{ path: string[] }> },
 ) {
   const { path } = await params;
-  const upstream = await fetch(`https://wilayah.id/api/${path.join('/')}.json`, {
+  const endpoint = path.join('/').replace(/\.json$/, '');
+  const upstream = await fetch(`https://wilayah.id/api/${endpoint}.json`, {
     next: { revalidate: 86400 },
   });
 
