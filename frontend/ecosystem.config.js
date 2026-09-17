@@ -4,6 +4,7 @@ module.exports = {
       name: 'alurelab-frontend',
       script: 'node_modules/next/dist/bin/next',
       args: 'start -p 3040',
+      cwd: '/home/alurelab/app.alurelab.com/frontend',
       env: {
         NODE_ENV: 'production',
         PORT: 3040,
