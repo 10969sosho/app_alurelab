@@ -318,39 +318,46 @@ class ShowcaseSeeder extends Seeder
             $qty = rand(1, 3);
             $subtotal = $product->price * $qty;
             $shippingCost = 15000;
+            $platformFee = $subtotal * 0.015;
+
+            $customerName = $customerNames[array_rand($customerNames)];
+            $customerPhone = '0812' . rand(10000000, 99999999);
+
+            $customer = \App\Models\Customer::firstOrCreate(
+                ['phone_number' => $customerPhone],
+                ['full_name' => $customerName, 'email' => 'customer' . $i . '@example.com']
+            );
 
             $order = Order::create([
                 'tenant_id' => $storeId,
                 'order_number' => 'ORD-' . strtoupper(Str::random(8)),
+                'customer_id' => $customer->id,
                 'status' => $statuses[array_rand($statuses)],
-                'total_amount' => $subtotal + $shippingCost,
-                'shipping_cost' => $shippingCost,
+                
                 'items_subtotal' => $subtotal,
-                'payment_method' => 'ONLINE',
-                'shipping_courier' => 'jnt',
-                'shipping_service' => 'ez',
-                'customer_name' => $customerNames[array_rand($customerNames)],
-                'customer_email' => 'customer' . $i . '@example.com',
-                'customer_phone' => '0812' . rand(10000000, 99999999),
-                'shipping_address' => json_encode([
-                    'name' => 'Rumah',
-                    'address' => 'Jl. Sudirman No ' . rand(1, 100),
-                    'city' => 'Jakarta Selatan',
-                    'province' => 'DKI Jakarta',
-                    'postal_code' => '12190'
-                ])
+                'shipping_cost' => $shippingCost,
+                'total_amount' => $subtotal + $shippingCost,
+                
+                'platform_fee_percent' => 1.5,
+                'platform_fee_amount' => $platformFee,
+                'merchant_net_amount' => $subtotal - $platformFee,
+
+                'shipping_recipient_name' => $customerName,
+                'shipping_recipient_phone' => $customerPhone,
+                'shipping_destination_area_id' => 'IDN-JKT-12190',
+                'shipping_address_detail' => 'Jl. Sudirman No ' . rand(1, 100) . ', Jakarta Selatan',
             ]);
 
             OrderItem::create([
-                'order_id' => $order->id,
                 'tenant_id' => $storeId,
+                'order_id' => $order->id,
                 'product_id' => $product->id,
                 'variant_id' => $variant ? $variant->id : null,
-                'product_name' => $product->title,
-                'variant_name' => $variant ? $variant->title : null,
+                'product_title' => $product->title,
+                'variant_title' => $variant ? $variant->title : null,
                 'quantity' => $qty,
                 'price' => $product->price,
-                'total' => $subtotal
+                'subtotal' => $subtotal
             ]);
         }
     }
