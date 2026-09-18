@@ -4,14 +4,17 @@ namespace App\Http\Controllers\Api;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Enums\WalletTxType;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\MerchantWallet;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Store;
+use App\Models\WalletTransaction;
 use App\Services\AntiRtsService;
 use App\Services\BiteshipService;
 use App\Services\InventoryService;
@@ -45,6 +48,8 @@ class StorefrontController extends Controller
             'navigation',
             'pages',
             'sections',
+            'highlights',
+            'buyerCopy',
         ]));
 
         return response()->json([
@@ -69,7 +74,8 @@ class StorefrontController extends Controller
         /** @var Store $store */
         $store = app('current_tenant');
 
-        $products = Product::where('is_active', true)
+        $products = Product::where('tenant_id', $store->id)
+            ->where('is_active', true)
             ->with(['variants'])
             ->latest()
             ->paginate(24);
@@ -85,7 +91,10 @@ class StorefrontController extends Controller
      */
     public function getProduct(Request $request, string $slug): JsonResponse
     {
-        $product = Product::where('slug', $slug)
+        $store = app('current_tenant');
+
+        $product = Product::where('tenant_id', $store->id)
+            ->where('slug', $slug)
             ->where('is_active', true)
             ->with(['variants'])
             ->firstOrFail();
@@ -159,11 +168,20 @@ class StorefrontController extends Controller
             ], 422);
         }
 
+        if ($validated['payment_method'] === 'ONLINE' && ! $this->isQaSimulationEnabled($store) && ! $this->xenditService->isConfigured()) {
+            return response()->json([
+                'success' => false,
+                'error' => 'PAYMENT_UNAVAILABLE',
+                'message' => 'Pembayaran online belum tersedia saat ini.',
+            ], 503);
+        }
+
         try {
             $rates = $this->biteshipService->calculateRates(
                 $store->address_area_id,
                 $validated['destination_area_id'],
                 $rateItems,
+                $store,
             );
         } catch (\Throwable $e) {
             report($e);
@@ -351,6 +369,38 @@ class StorefrontController extends Controller
                     $validated['payment_method'] === 'COD',
                 );
 
+                if ($validated['payment_method'] === 'ONLINE' && $this->isQaSimulationEnabled($store)) {
+                    $order->update(['status' => OrderStatus::PAID_ESCROW]);
+                    $this->inventoryService->consumeReservations($order->id);
+
+                    Payment::where('order_id', $order->id)->update([
+                        'status' => PaymentStatus::PAID,
+                        'paid_at' => now(),
+                        'payment_channel' => 'QA_SIMULATION',
+                    ]);
+
+                    $wallet = MerchantWallet::firstOrCreate(
+                        ['store_id' => $store->id],
+                        ['available_balance' => 0, 'escrow_held_balance' => 0]
+                    );
+                    $balanceBefore = $wallet->escrow_held_balance;
+                    $creditAmount = $order->merchant_net_amount;
+                    $wallet->increment('escrow_held_balance', $creditAmount);
+
+                    WalletTransaction::create([
+                        'tenant_id' => $store->id,
+                        'wallet_id' => $wallet->id,
+                        'order_id' => $order->id,
+                        'type' => WalletTxType::ORDER_ESCROW_CREDIT,
+                        'amount' => $creditAmount,
+                        'balance_before' => $balanceBefore,
+                        'balance_after' => $balanceBefore + $creditAmount,
+                        'description' => "QA payment simulated untuk pesanan #{$order->order_number}",
+                        'idempotency_key' => 'qa_payment_'.$order->order_number,
+                        'created_at' => now(),
+                    ]);
+                }
+
                 return response()->json([
                     'success' => true,
                     'order_number' => $order->order_number,
@@ -373,5 +423,11 @@ class StorefrontController extends Controller
             }
             throw $e;
         }
+    }
+
+    private function isQaSimulationEnabled(Store $store): bool
+    {
+        return (bool) config('services.qa_simulation.enabled')
+            && str_starts_with($store->slug, (string) config('services.qa_simulation.store_slug'));
     }
 }

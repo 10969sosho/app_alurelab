@@ -22,6 +22,11 @@ class XenditService
     /**
      * Memvalidasi token webhook kriptografis dari Xendit.
      */
+    public function isConfigured(): bool
+    {
+        return $this->secretKey !== '' && ! str_starts_with($this->secretKey, 'xnd_development_dummy');
+    }
+
     public function verifyWebhookSignature(?string $incomingToken): bool
     {
         if (empty($incomingToken) || empty($this->webhookToken)) {
@@ -36,6 +41,14 @@ class XenditService
      */
     public function createInvoice(Order $order, Store $store): array
     {
+        if ($this->isQaSimulationEnabled($store)) {
+            return [
+                'id' => 'QA-INVOICE-'.$order->order_number,
+                'invoice_url' => null,
+                'expiry_date' => now()->addDay()->toIso8601String(),
+            ];
+        }
+
         if ($this->secretKey === '' || str_starts_with($this->secretKey, 'xnd_development_dummy')) {
             throw new \RuntimeException('Xendit secret key belum dikonfigurasi.');
         }
@@ -79,5 +92,11 @@ class XenditService
         }
 
         return $response->json();
+    }
+
+    private function isQaSimulationEnabled(Store $store): bool
+    {
+        return (bool) config('services.qa_simulation.enabled')
+            && str_starts_with($store->slug, (string) config('services.qa_simulation.store_slug'));
     }
 }
