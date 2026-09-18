@@ -36,8 +36,12 @@ class ShowcaseSeeder extends Seeder
             ]
         );
 
-        if (!$store1->users()->where('user_id', $user1->id)->exists()) {
-            $store1->users()->attach($user1->id, ['role' => 'owner']);
+        if (!\App\Models\StoreUser::where('store_id', $store1->id)->where('user_id', $user1->id)->exists()) {
+            \App\Models\StoreUser::create([
+                'store_id' => $store1->id,
+                'user_id' => $user1->id,
+                'role' => 'owner'
+            ]);
         }
 
         $this->seedFashionProducts($store1->id);
@@ -62,8 +66,12 @@ class ShowcaseSeeder extends Seeder
             ]
         );
 
-        if (!$store2->users()->where('user_id', $user2->id)->exists()) {
-            $store2->users()->attach($user2->id, ['role' => 'owner']);
+        if (!\App\Models\StoreUser::where('store_id', $store2->id)->where('user_id', $user2->id)->exists()) {
+            \App\Models\StoreUser::create([
+                'store_id' => $store2->id,
+                'user_id' => $user2->id,
+                'role' => 'owner'
+            ]);
         }
 
         $this->seedGadgetProducts($store2->id);
