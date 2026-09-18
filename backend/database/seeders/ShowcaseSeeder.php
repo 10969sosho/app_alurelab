@@ -325,7 +325,7 @@ class ShowcaseSeeder extends Seeder
                 'status' => $statuses[array_rand($statuses)],
                 'total_amount' => $subtotal + $shippingCost,
                 'shipping_cost' => $shippingCost,
-                'subtotal' => $subtotal,
+                'items_subtotal' => $subtotal,
                 'payment_method' => 'ONLINE',
                 'shipping_courier' => 'jnt',
                 'shipping_service' => 'ez',
