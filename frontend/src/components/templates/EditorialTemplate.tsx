@@ -88,11 +88,16 @@ export default function EditorialTemplate({
     item.enabled && (
       item.url === '#top' ||
       item.url === '#shop' ||
+      item.url === '/cart' ||
+      item.url === '/account' ||
       item.url === `/${storeSlug}/cart` ||
       item.url === `/${storeSlug}/account` ||
       item.isExternal
     )
-  );
+  ).map((item) => ({
+    ...item,
+    url: item.url === '/cart' ? `/${storeSlug}/cart` : item.url === '/account' ? `/${storeSlug}/account` : item.url,
+  }));
   const visibleNavMenuItems = navMenuItems?.length ? navMenuItems : defaultNavMenuItems;
 
   // Hero Banner Carousel

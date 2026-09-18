@@ -27,15 +27,6 @@ export interface NavMenuItem {
   isExternal?: boolean;
 }
 
-export interface CollectionCardSetting {
-  id: string;
-  title: string;
-  subtitle: string;
-  category: string;
-  image: string;
-  link: string;
-}
-
 export interface CmsBranding {
   storeName?: string;
   tagline?: string;
@@ -71,25 +62,15 @@ export interface CmsNavigation {
 export interface CmsSections {
   showAnnouncementBar?: boolean;
   showHero?: boolean;
-  showCollections?: boolean;
   showFeaturedProducts?: boolean;
   showAbout?: boolean;
-  showLookbook?: boolean;
-  showTrustGuarantee?: boolean;
 }
 
 export interface CmsHighlights {
   announcementText?: string;
   featuredCategory?: string;
-  collections?: CollectionCardSetting[];
   aboutHeading?: string;
-  aboutSubheading?: string;
   aboutStory?: string;
-  aboutImage?: string;
-  founderQuote?: string;
-  valuePillars?: { title: string; description: string }[];
-  lookbookHeading?: string;
-  lookbookImages?: string[];
 }
 
 export interface CmsPage {

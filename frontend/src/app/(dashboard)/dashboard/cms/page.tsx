@@ -35,7 +35,6 @@ import api from "@/lib/api";
 import {
   CmsSettings,
   NavMenuItem,
-  CollectionCardSetting,
   CmsPage,
 } from "@/components/templates/types";
 
@@ -64,18 +63,15 @@ const DEFAULT_EDITORIAL_CMS: CmsSettings = {
     ],
     autoPlay: true,
     autoPlayInterval: 5,
-    ctaText: "DISCOVER COLLECTION",
-    ctaLink: "#catalog",
+     ctaText: "SHOP PRODUCTS",
+     ctaLink: "#shop",
   },
   navigation: {
-    menuItems: [
-      { id: "m1", label: "HOME", url: "#top", enabled: true },
-      { id: "m2", label: "COLLECTIONS", url: "#collections", enabled: true },
-      { id: "m3", label: "CATALOG & PIECES", url: "#catalog", enabled: true },
-      { id: "m4", label: "ABOUT THE CURATION", url: "/pages/about", enabled: true },
-      { id: "m5", label: "LOOKBOOK", url: "#lookbook", enabled: true },
-      { id: "m6", label: "LACAK PESANAN", url: "?track=true", enabled: true },
-      { id: "m7", label: "SHOPPING BAG", url: "/cart", enabled: true },
+       menuItems: [
+         { id: "m1", label: "HOME", url: "#top", enabled: true },
+       { id: "m2", label: "SHOP", url: "#shop", enabled: true },
+       { id: "m3", label: "BAG", url: "/cart", enabled: true },
+       { id: "m4", label: "ACCOUNT", url: "/account", enabled: true },
     ],
     socialLinks: {
       instagram: "https://instagram.com/alurelab",
@@ -86,59 +82,16 @@ const DEFAULT_EDITORIAL_CMS: CmsSettings = {
   sections: {
     showAnnouncementBar: true,
     showHero: true,
-    showCollections: true,
-    showFeaturedProducts: true,
-    showAbout: true,
-    showLookbook: true,
-    showTrustGuarantee: true,
+     showFeaturedProducts: true,
+     showAbout: true,
   },
   highlights: {
     announcementText:
       "⚡ Garansi Pengiriman Cepat Multi-Kurir Biteship • Pembayaran Aman Berlisensi Xendit (PJP BI)",
     featuredCategory: "Semua",
-    collections: [
-      {
-        id: "col-1",
-        title: "ESSENTIALS",
-        subtitle: "Clean everyday staples",
-        category: "ESSENTIALS",
-        image:
-          "https://images.unsplash.com/photo-1503944583220-79d8926ad5e2?w=800&auto=format&fit=crop&q=80",
-        link: "#catalog",
-      },
-      {
-        id: "col-2",
-        title: "MONO SERIES",
-        subtitle: "Monochrome minimalist sets",
-        category: "MONO SERIES",
-        image:
-          "https://images.unsplash.com/photo-1519457431-44ccd64a579b?w=800&auto=format&fit=crop&q=80",
-        link: "#catalog",
-      },
-      {
-        id: "col-3",
-        title: "SOFT DAILYWEAR",
-        subtitle: "Breathable lightweight knitwear",
-        category: "SOFT DAILYWEAR",
-        image:
-          "https://images.unsplash.com/photo-1514090458221-65bb69cf63e6?w=800&auto=format&fit=crop&q=80",
-        link: "#catalog",
-      },
-    ],
-    aboutHeading: "CURATED COMFORT FOR CURIOUS MINDS",
-    aboutSubheading: "A calm everyday wardrobe designed with comfort and timeless simplicity.",
-    aboutStory:
-      "Kami percaya gaya berpakaian anak tidak harus penuh motif berisik. Melalui siluet santai, tone warna natural, dan material katun bernapas, kami menghadirkan koleksi yang tenang, estetik, dan awet dipakai bertahun-tahun.\n\nSetiap busana dirancang untuk menemani gerak lincah dan kenyamanan seharian si kecil tanpa batasan gerak.",
-    aboutImage:
-      "https://images.unsplash.com/photo-1503944583220-79d8926ad5e2?w=1200&auto=format&fit=crop&q=80",
-    founderQuote:
-      "Pakaian anak yang baik adalah yang memberi ruang gerak bebas, material bernapas, dan estetika yang menenangkan.",
-    lookbookHeading: "EDITORIAL AUTUMN / WINTER ARCHIVE",
-    lookbookImages: [
-      "https://images.unsplash.com/photo-1519238327474-7104db5765b8?w=800",
-      "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=800",
-      "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800",
-    ],
+     aboutHeading: "CURATED COMFORT FOR CURIOUS MINDS",
+     aboutStory:
+       "Kami percaya gaya berpakaian anak tidak harus penuh motif berisik. Melalui siluet santai, tone warna natural, dan material katun bernapas, kami menghadirkan koleksi yang tenang, estetik, dan awet dipakai bertahun-tahun.\n\nSetiap busana dirancang untuk menemani gerak lincah dan kenyamanan seharian si kecil tanpa batasan gerak.",
   },
   pages: [
     {
@@ -161,6 +114,30 @@ const DEFAULT_EDITORIAL_CMS: CmsSettings = {
     },
   ],
 };
+
+function normalizeCmsSettings(settings: CmsSettings, storeSlug: string): CmsSettings {
+  const { showCollections, showLookbook, showTrustGuarantee, ...sections } = settings.sections || {};
+  const { collections, aboutSubheading, aboutImage, founderQuote, valuePillars, lookbookHeading, lookbookImages, ...highlights } = settings.highlights || {};
+  const validMenuItems = (settings.navigation?.menuItems || []).filter((item) =>
+    item.url === "#top" ||
+    item.url === "#shop" ||
+    item.url === "/cart" ||
+    item.url === "/account" ||
+    item.url === `/${storeSlug}/cart` ||
+    item.url === `/${storeSlug}/account` ||
+    item.isExternal
+  );
+
+  return {
+    ...settings,
+    sections,
+    highlights,
+    navigation: {
+      ...settings.navigation,
+      menuItems: validMenuItems.length > 0 ? validMenuItems : DEFAULT_EDITORIAL_CMS.navigation!.menuItems,
+    },
+  };
+}
 
 const COLOR_PRESETS = [
   {
@@ -215,7 +192,6 @@ export default function StorefrontCmsPage() {
 
   // Upload States
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
-  const [isUploadingAbout, setIsUploadingAbout] = useState(false);
   const [isUploadingPageBanner, setIsUploadingPageBanner] = useState(false);
   const [isUploadingPageSide, setIsUploadingPageSide] = useState(false);
 
@@ -242,7 +218,7 @@ export default function StorefrontCmsPage() {
       if (cached) {
         try {
           const parsed = JSON.parse(cached);
-          setCms((prev) => ({ ...prev, ...parsed }));
+           setCms((prev) => normalizeCmsSettings({ ...prev, ...parsed }, storeSlug));
         } catch (e) {
           console.error(e);
         }
@@ -256,16 +232,16 @@ export default function StorefrontCmsPage() {
         if (res.data?.success && res.data?.data?.settings) {
           const backendSettings = res.data.data.settings;
           if (Object.keys(backendSettings).length > 0) {
-            setCms((prev) => ({
-              ...prev,
-              ...backendSettings,
-              branding: { ...prev.branding, ...backendSettings.branding },
-              hero: { ...prev.hero, ...backendSettings.hero },
-              navigation: { ...prev.navigation, ...backendSettings.navigation },
-              sections: { ...prev.sections, ...backendSettings.sections },
-              highlights: { ...prev.highlights, ...backendSettings.highlights },
-              pages: backendSettings.pages || prev.pages,
-            }));
+             setCms((prev) => normalizeCmsSettings({
+               ...prev,
+               ...backendSettings,
+               branding: { ...prev.branding, ...backendSettings.branding },
+               hero: { ...prev.hero, ...backendSettings.hero },
+               navigation: { ...prev.navigation, ...backendSettings.navigation },
+               sections: { ...prev.sections, ...backendSettings.sections },
+               highlights: { ...prev.highlights, ...backendSettings.highlights },
+               pages: backendSettings.pages || prev.pages,
+             }, storeSlug));
           }
         }
       } catch (e) {
@@ -300,13 +276,15 @@ export default function StorefrontCmsPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      if (typeof window !== "undefined") {
-        localStorage.setItem(`alurelab_cms_${storeSlug}`, JSON.stringify(cms));
-      }
+       const cleanCms = normalizeCmsSettings(cms, storeSlug);
+       setCms(cleanCms);
+       if (typeof window !== "undefined") {
+         localStorage.setItem(`alurelab_cms_${storeSlug}`, JSON.stringify(cleanCms));
+       }
 
-      await api.put("/merchant/cms/settings", {
-        settings: cms,
-      });
+       await api.put("/merchant/cms/settings", {
+         settings: cleanCms,
+       });
 
       toast.success("Konfigurasi tampilan toko berhasil disimpan & dipublikasikan!", {
         description: "Storefront pembeli dan halaman kustom langsung terupdate.",
@@ -469,60 +447,7 @@ export default function StorefrontCmsPage() {
     }
   };
 
-  const handleAddPageToMenu = (page: CmsPage) => {
-    const targetUrl = `/${storeSlug}/pages/${page.slug}`;
-    const alreadyExists = (cms.navigation?.menuItems || []).some(
-      (m) => m.url === targetUrl || m.url === `/pages/${page.slug}`
-    );
-    if (alreadyExists) {
-      toast.info("Halaman ini sudah ada di daftar menu sidebar");
-      return;
-    }
-
-    const newItem: NavMenuItem = {
-      id: "menu-page-" + page.slug,
-      label: page.title.toUpperCase(),
-      url: targetUrl,
-      enabled: true,
-    };
-
-    setCms({
-      ...cms,
-      navigation: {
-        ...cms.navigation!,
-        menuItems: [...(cms.navigation?.menuItems || []), newItem],
-      },
-    });
-    toast.success(`Menu "${newItem.label}" berhasil ditambahkan ke sidebar drawer toko`);
-  };
-
-  // Menu Handlers
-  const addMenuItem = () => {
-    const newItem: NavMenuItem = {
-      id: "menu-" + Date.now(),
-      label: "MENU BARU",
-      url: "#catalog",
-      enabled: true,
-    };
-    setCms({
-      ...cms,
-      navigation: {
-        ...cms.navigation!,
-        menuItems: [...(cms.navigation?.menuItems || []), newItem],
-      },
-    });
-  };
-
-  const removeMenuItem = (id: string) => {
-    setCms({
-      ...cms,
-      navigation: {
-        ...cms.navigation!,
-        menuItems: (cms.navigation?.menuItems || []).filter((m) => m.id !== id),
-      },
-    });
-  };
-
+  // Menu labels and enabled states remain editable; destinations are fixed to buyer routes.
   const updateMenuItem = (id: string, field: keyof NavMenuItem, value: any) => {
     setCms({
       ...cms,
@@ -949,16 +874,14 @@ export default function StorefrontCmsPage() {
                     />
                   </div>
                   <div>
-                    <label className="font-semibold text-slate-700 block mb-1">Tujuan Tombol Aksi (Anchor/Link):</label>
-                    <input
-                      type="text"
-                      value={cms.hero?.ctaLink || ""}
-                      onChange={(e) =>
-                        setCms({ ...cms, hero: { ...cms.hero, ctaLink: e.target.value } })
-                      }
-                      placeholder="#collections atau #catalog"
-                      className="w-full text-xs px-2.5 py-1.5 rounded-xs border border-slate-300 focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D] font-mono"
-                    />
+                       <label className="font-semibold text-slate-700 block mb-1">Tujuan Tombol Aksi:</label>
+                       <input
+                         type="text"
+                         value="#shop"
+                         readOnly
+                         aria-label="Tujuan tombol aksi"
+                         className="w-full text-xs px-2.5 py-1.5 rounded-xs border border-slate-300 bg-slate-100 text-slate-500 font-mono"
+                       />
                   </div>
                 </div>
               </div>
@@ -993,7 +916,7 @@ export default function StorefrontCmsPage() {
                 </div>
 
                 <div>
-                  <label className="font-semibold text-slate-700 block mb-1">Narasi Cerita Lengkap (Paragraf):</label>
+                  <label className="font-semibold text-slate-700 block mb-1">Deskripsi About:</label>
                   <textarea
                     rows={5}
                     value={cms.highlights?.aboutStory || ""}
@@ -1003,97 +926,11 @@ export default function StorefrontCmsPage() {
                         highlights: { ...cms.highlights, aboutStory: e.target.value },
                       })
                     }
-                    placeholder="Ceritakan latar belakang brand Anda. Gunakan enter dua kali untuk memisahkan paragraf..."
+                     placeholder="Tulis deskripsi singkat tentang brand Anda..."
                     className="w-full text-xs p-2.5 rounded-xs border border-slate-300 focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D] leading-relaxed font-sans"
                   />
-                  <span className="text-[10px] text-slate-400 mt-1 block">
-                    Gunakan spasi baris kosong (enter 2x) untuk membuat paragraf baru.
-                  </span>
                 </div>
 
-                {/* Studio Portrait Image */}
-                <div className="pt-2 border-t border-slate-200 space-y-2.5">
-                  <label className="font-semibold text-slate-700 block">Foto Studio / Atelier / Founder:</label>
-                  <div className="flex flex-col sm:flex-row gap-3 items-start">
-                    {cms.highlights?.aboutImage && (
-                      <div className="w-24 aspect-[3/4] rounded-xs overflow-hidden border border-slate-300 bg-slate-100 shrink-0 relative group">
-                        <img src={cms.highlights.aboutImage} alt="About Studio" className="w-full h-full object-cover" />
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setCms({
-                              ...cms,
-                              highlights: { ...cms.highlights, aboutImage: "" },
-                            })
-                          }
-                          className="absolute top-1 right-1 p-1 bg-red-600 text-white rounded-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
-                    )}
-
-                    <div className="flex-1 space-y-2 w-full">
-                      <label className={`block border-2 border-dashed rounded-xs p-3 text-center cursor-pointer transition-all ${
-                        isUploadingAbout ? "bg-orange-50 border-[#EE4D2D]" : "hover:bg-orange-50/20 border-slate-300 hover:border-[#EE4D2D]"
-                      }`}>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={async (e) => {
-                            if (!e.target.files?.[0]) return;
-                            setIsUploadingAbout(true);
-                            const url = await uploadFile(e.target.files[0], "branding");
-                            if (url) {
-                              setCms({
-                                ...cms,
-                                highlights: { ...cms.highlights, aboutImage: url },
-                              });
-                              toast.success("Foto studio berhasil diunggah");
-                            }
-                            setIsUploadingAbout(false);
-                            e.target.value = "";
-                          }}
-                          className="sr-only"
-                        />
-                        <div className="flex items-center justify-center gap-2 text-slate-600 text-xs">
-                          {isUploadingAbout ? <Loader2 className="w-4 h-4 animate-spin text-[#EE4D2D]" /> : <Upload className="w-4 h-4 text-[#EE4D2D]" />}
-                          <span className="font-medium">{isUploadingAbout ? "Mengunggah foto..." : "Pilih / Upload Foto Studio"}</span>
-                        </div>
-                      </label>
-
-                      <input
-                        type="url"
-                        value={cms.highlights?.aboutImage || ""}
-                        onChange={(e) =>
-                          setCms({
-                            ...cms,
-                            highlights: { ...cms.highlights, aboutImage: e.target.value },
-                          })
-                        }
-                        placeholder="Atau tempel URL gambar studio..."
-                        className="w-full text-xs px-2.5 py-1.5 rounded-xs border border-slate-300 focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D] font-mono"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Founder Quote */}
-                <div>
-                  <label className="font-semibold text-slate-700 block mb-1">Kutipan Inspirasi / Quote Pendiri:</label>
-                  <input
-                    type="text"
-                    value={cms.highlights?.founderQuote || ""}
-                    onChange={(e) =>
-                      setCms({
-                        ...cms,
-                        highlights: { ...cms.highlights, founderQuote: e.target.value },
-                      })
-                    }
-                    placeholder="Contoh: Pakaian terbaik adalah yang membiarkan anak bebas bereksplorasi."
-                    className="w-full text-xs px-2.5 py-1.5 rounded-xs border border-slate-300 focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D] italic font-serif"
-                  />
-                </div>
               </div>
             </div>
           )}
@@ -1346,16 +1183,6 @@ export default function StorefrontCmsPage() {
                         </div>
 
                         <div className="flex items-center gap-1.5 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => handleAddPageToMenu(p)}
-                            className="px-2.5 py-1 border border-slate-300 hover:border-slate-400 text-slate-700 text-[11px] font-medium rounded-xs flex items-center gap-1 transition-colors"
-                            title="Tambahkan link halaman ini ke sidebar drawer toko"
-                          >
-                            <Compass className="w-3 h-3 text-[#EE4D2D]" />
-                            + Ke Menu
-                          </button>
-
                           <Link
                             href={`/${storeSlug}/pages/${p.slug}`}
                             target="_blank"
@@ -1394,18 +1221,11 @@ export default function StorefrontCmsPage() {
             <div className="bg-white p-4 rounded-xs border border-slate-200 space-y-4 shadow-2xs">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-xs font-bold text-slate-800">Menu Drawer Sidebar</h3>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    Menu yang muncul saat pembeli menekan tombol &ldquo;MENU&rdquo; di kiri atas.
+                    <h3 className="text-xs font-bold text-slate-800">Menu Buyer</h3>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                     Atur label dan tampil/sembunyi. Tujuan link dikunci ke halaman buyer yang tersedia.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={addMenuItem}
-                  className="px-3 py-1.5 bg-[#EE4D2D] hover:bg-[#d73f20] text-white text-xs font-semibold rounded-xs flex items-center gap-1.5 transition-colors shadow-2xs"
-                >
-                  <Plus className="w-3.5 h-3.5 stroke-[2.5]" /> Tambah Menu
-                </button>
               </div>
 
               {/* Menu items list */}
@@ -1434,17 +1254,11 @@ export default function StorefrontCmsPage() {
                       type="text"
                       value={item.url}
                       onChange={(e) => updateMenuItem(item.id, "url", e.target.value)}
-                      placeholder="#collections atau /cart"
-                      className="flex-1 text-xs px-2.5 py-1 rounded-xs border border-slate-300 bg-white font-mono focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D]"
+                      readOnly
+                      aria-label="Tujuan menu"
+                      className="flex-1 text-xs px-2.5 py-1 rounded-xs border border-slate-300 bg-slate-100 text-slate-500 font-mono"
                     />
 
-                    <button
-                      type="button"
-                      onClick={() => removeMenuItem(item.id)}
-                      className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xs transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
                   </div>
                 ))}
               </div>
