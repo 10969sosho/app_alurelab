@@ -11,7 +11,10 @@ use App\Http\Controllers\Api\StorefrontController;
 use App\Http\Controllers\Api\UploadController;
 use App\Http\Controllers\Api\XenditWebhookController;
 use App\Http\Middleware\IdentifyTenant;
+use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\URL;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,6 +30,28 @@ Route::prefix('v1')->group(function () {
     Route::prefix('auth')->group(function () {
         Route::post('/register', [AuthController::class, 'register']);
         Route::post('/login', [AuthController::class, 'login']);
+        Route::get('/email/verify/{id}/{hash}', function (Request $request, string $id, string $hash) {
+            $validSignature = URL::hasValidSignature($request);
+
+            if (! $validSignature && $request->query('expires') && $request->query('signature')) {
+                $legacyUrl = $request->getSchemeAndHttpHost()
+                    .'/email/verify/'.$id.'/'.$hash
+                    .'?expires='.$request->query('expires')
+                    .'&signature='.$request->query('signature');
+                $validSignature = URL::hasValidSignature(Request::create($legacyUrl));
+            }
+
+            abort_unless($validSignature, 403);
+
+            $user = User::findOrFail($id);
+            abort_unless(hash_equals(sha1($user->getEmailForVerification()), $hash), 403);
+
+            if (! $user->hasVerifiedEmail()) {
+                $user->markEmailAsVerified();
+            }
+
+            return redirect(env('FRONTEND_URL', 'https://app.alurelab.com').'/login?verified=1');
+        })->middleware('throttle:6,1')->name('verification.verify');
 
         // Protected auth routes
         Route::middleware('auth:sanctum')->group(function () {
@@ -77,6 +102,8 @@ Route::prefix('v1')->group(function () {
             // Overview
             Route::get('/dashboard', [MerchantController::class, 'getDashboardOverview']);
             Route::get('/orders/stats', [OrderController::class, 'stats']);
+            Route::get('/categories', [MerchantController::class, 'getCategories'])->middleware('store.role:owner,manager');
+            Route::put('/categories', [MerchantController::class, 'updateCategories'])->middleware('store.role:owner,manager');
 
             // ── Produk ──────────────────────────────────────────────────────
             Route::apiResource('/products', ProductController::class)->middleware('store.role:owner,manager');

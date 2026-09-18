@@ -21,6 +21,7 @@ import {
 import axios from 'axios';
 import { formatRupiah, formatDateTime } from '@/lib/utils';
 import { useBuyerStore } from '@/store/buyer-store';
+import { BuyerNavbar, BuyerThemeFrame } from '@/components/buyer/BuyerTheme';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
@@ -78,22 +79,8 @@ export default function BuyerOrderTrackingPage({
   const statusStr = typeof order?.status === 'object' ? order?.status?.value : order?.status || 'processing';
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 pb-16">
-      {/* Navbar */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
-        <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link
-            href={`/${storeSlug}`}
-            className="flex items-center gap-2 text-sm font-medium text-slate-700 hover:text-emerald-600 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Kembali ke Beranda</span>
-          </Link>
-          <span className="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg">
-            Pelacakan Pesanan
-          </span>
-        </div>
-      </header>
+     <BuyerThemeFrame storeSlug={storeSlug} className="pb-16">
+       <BuyerNavbar storeSlug={storeSlug} />
 
       <main className="max-w-3xl mx-auto px-4 py-8 space-y-6">
         {/* Status Card Banner */}
@@ -105,7 +92,7 @@ export default function BuyerOrderTrackingPage({
             <span className="text-xs text-emerald-100">
               {formatDateTime(order.created_at)}
             </span>
-          </div>
+             </div>
 
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
             {statusStr === 'shipped' && '🚚 Paket Sedang Dikirim'}
@@ -257,7 +244,7 @@ export default function BuyerOrderTrackingPage({
             Belanja Lagi di Toko Ini
           </Link>
         </div>
-      </main>
-    </div>
+       </main>
+     </BuyerThemeFrame>
   );
 }

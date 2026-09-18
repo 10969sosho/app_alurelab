@@ -21,6 +21,8 @@ import { useBuyerStore } from '@/store/buyer-store';
 import { fetchApi } from '@/lib/api-client';
 import BuyerLoginModal from '@/components/buyer/BuyerLoginModal';
 import { WilayahAddressFields, type WilayahAddressValue } from '@/components/address/WilayahAddressFields';
+import { useBuyerCms } from '@/components/buyer/useBuyerCms';
+import { BuyerNavbar, BuyerThemeFrame } from '@/components/buyer/BuyerTheme';
 
 export default function AccountPage({
   params,
@@ -29,6 +31,7 @@ export default function AccountPage({
 }) {
   const { store_slug: storeSlug } = use(params);
   const { buyer, logout, updateAddress } = useBuyerStore();
+  const copy = useBuyerCms(storeSlug);
 
   const [activeTab, setActiveTab] = useState<'active' | 'history' | 'settings'>('active');
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -118,43 +121,8 @@ export default function AccountPage({
   const pastOrders = orders.filter((o) => o.status === 'COMPLETED' || o.status === 'CANCELLED');
 
   return (
-     <div className="buyer-page min-h-screen bg-[#F5F5F3] text-[#111111] font-sans antialiased selection:bg-[#111111] selection:text-[#F5F5F3] flex flex-col">
-      {/* ── Top Bar ────────────────────────────────────────── */}
-      <header className="h-[80px] border-b border-[#DADADA] bg-[#F5F5F3] px-6 md:px-12 flex items-center justify-between sticky top-0 z-30">
-        <Link
-          href={`/${storeSlug}`}
-          className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.2em] uppercase text-[#666666] hover:text-[#111111] transition-colors"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-           <span>BACK TO SHOP</span>
-        </Link>
-
-        <Link href={`/${storeSlug}`} className="flex items-center gap-2.5">
-          <div className="w-7 h-7 border border-[#111111] flex items-center justify-center font-bebas text-lg leading-none">
-            {storeDisplayName.charAt(0)}
-          </div>
-          <span className="text-[12px] font-bold tracking-[0.22em] uppercase hidden sm:inline">
-            {storeDisplayName}
-          </span>
-        </Link>
-
-        {buyer ? (
-          <button
-            onClick={logout}
-            className="flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.16em] uppercase text-[#666666] hover:text-rose-600 transition-colors"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">KELUAR</span>
-          </button>
-        ) : (
-          <button
-            onClick={() => setIsLoginModalOpen(true)}
-            className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111111] hover:underline"
-          >
-            MASUK
-          </button>
-        )}
-      </header>
+     <BuyerThemeFrame storeSlug={storeSlug} className="text-[#111111] font-sans antialiased flex flex-col">
+       <BuyerNavbar storeSlug={storeSlug} storeName={storeDisplayName} />
 
       {/* ── Main Content ────────────────────────────────────── */}
       <main className="max-w-5xl mx-auto w-full px-6 md:px-10 py-12 flex-1">
@@ -163,15 +131,15 @@ export default function AccountPage({
           <div className="py-20 text-center space-y-6 max-w-md mx-auto">
             <div className="w-16 h-16 border border-[#DADADA] flex items-center justify-center mx-auto text-[#666666]">
               <User className="w-7 h-7 stroke-[1.4]" />
-            </div>
+             </div>
             <div className="space-y-2">
               <h1 className="font-bebas text-4xl uppercase tracking-wide text-[#111111]">
-                 ACCOUNT
+                  {copy.accountTitle}
               </h1>
               <p className="text-xs text-[#666666] leading-relaxed">
-                 Masuk untuk melihat pesanan dan alamat.
-              </p>
-            </div>
+                  {copy.accountSignIn}
+               </p>
+             </div>
             <button
               onClick={() => setIsLoginModalOpen(true)}
               className="bg-[#111111] text-[#F5F5F3] px-8 py-3.5 text-xs font-semibold uppercase tracking-[0.2em] hover:bg-black transition-all"
@@ -221,7 +189,7 @@ export default function AccountPage({
                     : 'text-[#666666] hover:text-[#111111]'
                 }`}
               >
-                 Active ({activeOrders.length})
+                  {copy.accountActiveOrders} ({activeOrders.length})
               </button>
 
               <button
@@ -232,7 +200,7 @@ export default function AccountPage({
                     : 'text-[#666666] hover:text-[#111111]'
                 }`}
               >
-                 History ({pastOrders.length})
+                  {copy.accountOrderHistory} ({pastOrders.length})
               </button>
 
               <button
@@ -243,7 +211,7 @@ export default function AccountPage({
                     : 'text-[#666666] hover:text-[#111111]'
                 }`}
               >
-                 Settings
+                  {copy.accountSettings}
               </button>
             </div>
 
@@ -447,9 +415,9 @@ export default function AccountPage({
                       type="text"
                       disabled
                       value={buyer.fullName}
-                      className="w-full bg-stone-100 p-3 border border-[#DADADA] text-[#666666] cursor-not-allowed"
-                    />
-                  </div>
+                       className="w-full bg-stone-100 p-3 border border-[#DADADA] text-[#666666] cursor-not-allowed"
+                     />
+                   </div>
 
                   <div>
                     <label className="block font-semibold uppercase tracking-[0.14em] text-[#111111] mb-1.5">
@@ -524,10 +492,10 @@ export default function AccountPage({
       {/* Login Popup Modal */}
       <BuyerLoginModal
         isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
+       onClose={() => setIsLoginModalOpen(false)}
         storeSlug={storeSlug}
         storeName={storeDisplayName}
       />
-    </div>
+     </BuyerThemeFrame>
   );
 }

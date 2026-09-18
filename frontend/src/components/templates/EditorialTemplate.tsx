@@ -80,14 +80,15 @@ export default function EditorialTemplate({
 
   const defaultNavMenuItems = [
     { id: 'm1', label: 'HOME', url: '#top' },
-    { id: 'm2', label: 'SHOP', url: '#shop' },
+     { id: 'm2', label: 'SHOP', url: '/shop' },
     { id: 'm3', label: 'BAG', url: `/${storeSlug}/cart` },
     { id: 'm4', label: buyer ? 'ACCOUNT' : 'LOGIN', url: buyer ? `/${storeSlug}/account` : '#login' },
   ];
   const navMenuItems = navigation?.menuItems?.filter((item) =>
     item.enabled && (
       item.url === '#top' ||
-      item.url === '#shop' ||
+       item.url === '#shop' ||
+       item.url === '/shop' ||
       item.url === '/cart' ||
       item.url === '/account' ||
       item.url === `/${storeSlug}/cart` ||
@@ -96,9 +97,10 @@ export default function EditorialTemplate({
     )
   ).map((item) => ({
     ...item,
-    url: item.url === '/cart' ? `/${storeSlug}/cart` : item.url === '/account' ? `/${storeSlug}/account` : item.url,
+     url: item.url === '/cart' ? `/${storeSlug}/cart` : item.url === '/checkout' ? `/${storeSlug}/checkout` : item.url === '/account' ? `/${storeSlug}/account` : item.url === '/shop' ? `/${storeSlug}/shop` : item.url,
   }));
   const visibleNavMenuItems = navMenuItems?.length ? navMenuItems : defaultNavMenuItems;
+  const heroCtaLink = hero.ctaLink === '#shop' || hero.ctaLink === '/shop' ? `/${storeSlug}/shop` : (hero.ctaLink || `/${storeSlug}/shop`);
 
   // Hero Banner Carousel
   const bannerSlides: string[] = useMemo(() => {
@@ -145,7 +147,7 @@ export default function EditorialTemplate({
 
       {/* ── 1. FIXED TOP NAVIGATION BAR (90px) ─────────────────────────── */}
       <header
-        className={`fixed ${sections.showAnnouncementBar !== false ? 'top-[28px]' : 'top-0'} left-0 right-0 h-[90px] z-40 transition-all duration-500 flex items-center px-6 md:px-12 ${
+        className={`template-internal-navbar fixed ${sections.showAnnouncementBar !== false ? 'top-[28px]' : 'top-0'} left-0 right-0 h-[90px] z-40 transition-all duration-500 flex items-center px-6 md:px-12 ${
           isScrolled
             ? 'backdrop-blur-md border-b border-[#DADADA] shadow-xs'
             : 'bg-gradient-to-b from-black/80 via-black/35 to-transparent text-white border-b border-white/10'
@@ -390,7 +392,7 @@ export default function EditorialTemplate({
             </p>
 
             <div className="flex items-center justify-center gap-8 mt-8 flex-wrap">
-               <a href={hero.ctaLink || '#shop'} className="editorial-link">
+               <a href={heroCtaLink} className="editorial-link">
                 {hero.ctaText || 'SHOP PRODUCTS →'}
               </a>
             </div>

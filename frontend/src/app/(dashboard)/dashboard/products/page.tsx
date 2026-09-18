@@ -7,7 +7,6 @@ import { toast } from 'sonner';
 import {
   Plus,
   Search,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Loader2,
@@ -159,24 +158,6 @@ export default function ProductsPage() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          {/* Dropdown: Pengaturan Produk */}
-          <button
-            type="button"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-medium rounded-xs transition-colors shadow-2xs"
-          >
-            <span>Pengaturan Produk</span>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-          </button>
-
-          {/* Dropdown: Pengaturan Massal */}
-          <button
-            type="button"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-medium rounded-xs transition-colors shadow-2xs"
-          >
-            <span>Pengaturan Massal</span>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-          </button>
-
           {/* Orange Button: + Tambah Produk Baru */}
           <Link
             href="/dashboard/products/new"

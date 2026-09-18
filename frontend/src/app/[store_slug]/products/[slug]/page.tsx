@@ -20,7 +20,8 @@ import {
 import axios from 'axios';
 import { useCartStore } from '@/store/cart-store';
 import { useBuyerStore } from '@/store/buyer-store';
-import BuyerLoginModal from '@/components/buyer/BuyerLoginModal';
+import { useBuyerCms } from '@/components/buyer/useBuyerCms';
+import { BuyerNavbar, BuyerThemeFrame } from '@/components/buyer/BuyerTheme';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
@@ -136,11 +137,11 @@ export default function ProductDetailPage({
 
   const { addItem, getTotalItems } = useCartStore();
   const { buyer } = useBuyerStore();
+  const copy = useBuyerCms(storeSlug);
 
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   const { data: product, isError } = useQuery({
     queryKey: ['buyer-product', storeSlug, slug],
@@ -202,66 +203,20 @@ export default function ProductDetailPage({
   };
 
   const handleAddToCartAndOpen = () => {
+    if (!product) return;
     handleAddToCart();
     router.push(`/${storeSlug}/cart`);
   };
 
   const handleBuyNow = () => {
+    if (!product) return;
     handleAddToCart();
     router.push(`/${storeSlug}/checkout`);
   };
 
   return (
-       <div className="buyer-page min-h-screen bg-[#F5F5F3] text-[#111111] font-sans antialiased selection:bg-[#111111] selection:text-[#F5F5F3] flex flex-col">
-      {/* ── Top Header Bar ──────────────────────────────────── */}
-      <header className="h-[80px] border-b border-[#DADADA] bg-[#F5F5F3] px-6 md:px-12 flex items-center justify-between sticky top-0 z-30">
-        <Link
-          href={`/${storeSlug}`}
-          className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.2em] uppercase text-[#666666] hover:text-[#111111] transition-colors"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-           <span>BACK TO SHOP</span>
-        </Link>
-
-        {/* Monogram Brand */}
-        <Link href={`/${storeSlug}`} className="flex items-center gap-2.5">
-          <div className="w-7 h-7 border border-[#111111] flex items-center justify-center font-bebas text-lg leading-none">
-            {storeDisplayName.charAt(0)}
-          </div>
-          <span className="text-[12px] font-bold tracking-[0.22em] uppercase hidden sm:inline">
-            {storeDisplayName}
-          </span>
-        </Link>
-
-        {/* Right Nav: Login/Account & Cart Bag */}
-        <div className="flex items-center gap-6">
-          {buyer ? (
-            <Link
-              href={`/${storeSlug}/account`}
-              className="flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111111] hover:opacity-75 transition-opacity"
-            >
-              <User className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{buyer.fullName.split(' ')[0]}</span>
-            </Link>
-          ) : (
-            <button
-              onClick={() => setIsLoginModalOpen(true)}
-              className="flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.2em] uppercase text-[#666666] hover:text-[#111111] transition-opacity"
-            >
-              <User className="w-3.5 h-3.5" />
-             <span className="hidden sm:inline">ACCOUNT</span>
-            </button>
-          )}
-
-          <Link
-            href={`/${storeSlug}/cart`}
-            className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111111] hover:opacity-75 transition-opacity"
-          >
-            <ShoppingBag className="w-4 h-4" />
-             <span>BAG {getTotalItems() > 0 ? `(${getTotalItems()})` : ''}</span>
-          </Link>
-        </div>
-      </header>
+       <BuyerThemeFrame storeSlug={storeSlug} className="text-[#111111] font-sans antialiased flex flex-col">
+       <BuyerNavbar storeSlug={storeSlug} storeName={storeDisplayName} />
 
       {/* ── Product Detail 2-Column Section ────────────────── */}
       <main className="max-w-6xl mx-auto w-full px-6 md:px-10 py-12 flex-1">
@@ -274,7 +229,7 @@ export default function ProductDetailPage({
                 alt={product?.title || 'Product'}
                 className="w-full h-full object-cover object-center filter contrast-[1.04] saturate-[0.94]"
               />
-            </div>
+             </div>
 
             {/* Thumbnail switcher if multiple images */}
             {images.length > 1 && (
@@ -296,7 +251,7 @@ export default function ProductDetailPage({
                     />
                   </button>
                 ))}
-              </div>
+               </div>
             )}
           </div>
 
@@ -389,17 +344,19 @@ export default function ProductDetailPage({
             <div className="space-y-3 pt-6 border-t border-[#DADADA]">
               <button
                 onClick={handleAddToCartAndOpen}
+                disabled={!product}
                 className="w-full bg-[#111111] text-[#F5F5F3] py-4 text-xs font-semibold uppercase tracking-[0.2em] hover:bg-black transition-all flex items-center justify-center gap-2"
               >
-                 <span>ADD TO BAG</span>
+                 <span>{copy.productAddToCart}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
 
               <button
                 onClick={handleBuyNow}
+                disabled={!product}
                 className="w-full bg-white text-[#111111] border border-[#111111] py-3.5 text-xs font-semibold uppercase tracking-[0.2em] hover:bg-stone-100 transition-all"
               >
-                 BUY NOW
+                 {copy.productBuyNow}
               </button>
             </div>
 
@@ -407,7 +364,7 @@ export default function ProductDetailPage({
             {productDetails.length > 0 && (
               <div className="pt-6 border-t border-[#DADADA] space-y-3">
                 <span className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[#111111] block">
-                   DETAILS
+                    {copy.productDetails}
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] tracking-wider uppercase text-[#666666]">
                   {productDetails.map((item: string, i: number) => (
@@ -440,13 +397,6 @@ export default function ProductDetailPage({
          <div>© 2026 {storeDisplayName}</div>
       </footer>
 
-      {/* Login Popup Modal */}
-      <BuyerLoginModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-        storeSlug={storeSlug}
-        storeName={storeDisplayName}
-      />
-    </div>
+     </BuyerThemeFrame>
   );
 }

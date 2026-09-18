@@ -14,8 +14,10 @@ import { useBuyerStore } from '@/store/buyer-store';
 import SlideOver from '@/components/SlideOver';
 import ModernTemplate from '@/components/templates/ModernTemplate';
 import EditorialTemplate from '@/components/templates/EditorialTemplate';
+import { BrutalistTemplate, MarketplaceTemplate, SplitTemplate } from '@/components/templates/AdditionalTemplates';
 import BuyerLoginModal from '@/components/buyer/BuyerLoginModal';
 import { Product, ProductVariant, StoreData } from '@/components/templates/types';
+import { BuyerNavbar } from '@/components/buyer/BuyerTheme';
 
 export default function StorefrontClient({
   storeSlug,
@@ -44,10 +46,7 @@ export default function StorefrontClient({
     };
   }, [store, effectiveSettings]);
 
-  // Active template:
-  // 1. URL query param ?template=editorial / modern
-  // 2. CMS setting
-  // 3. Fallback: editorial for kalmora, modern for others
+  // URL preview wins over the saved CMS choice.
   const activeTemplate =
     queryTemplate ||
     effectiveSettings.template ||
@@ -79,32 +78,26 @@ export default function StorefrontClient({
     setTrackError('Login diperlukan untuk membuka tracking order yang aman.');
   };
 
+  const templateProps = {
+    storeSlug,
+    store: effectiveStore,
+    buyer,
+    onOpenCart: () => setIsCartOpen(true),
+    onOpenProfile: () => setIsLoginModalOpen(true),
+    onOpenTrackOrder: () => setIsTrackOrderOpen(true),
+    onAddToCart: handleAddToCart,
+    getTotalItems,
+  };
+
   return (
     <>
+      <BuyerNavbar storeSlug={storeSlug} storeName={effectiveStore.storeName} onLogin={() => setIsLoginModalOpen(true)} />
       {/* Dynamic Template Switcher */}
-      {activeTemplate === 'editorial' ? (
-        <EditorialTemplate
-          storeSlug={storeSlug}
-          store={effectiveStore}
-          buyer={buyer}
-          onOpenCart={() => setIsCartOpen(true)}
-          onOpenProfile={() => setIsLoginModalOpen(true)}
-          onOpenTrackOrder={() => setIsTrackOrderOpen(true)}
-          onAddToCart={handleAddToCart}
-          getTotalItems={getTotalItems}
-        />
-      ) : (
-        <ModernTemplate
-          storeSlug={storeSlug}
-          store={effectiveStore}
-          buyer={buyer}
-          onOpenCart={() => setIsCartOpen(true)}
-          onOpenProfile={() => setIsLoginModalOpen(true)}
-          onOpenTrackOrder={() => setIsTrackOrderOpen(true)}
-          onAddToCart={handleAddToCart}
-          getTotalItems={getTotalItems}
-        />
-      )}
+      {activeTemplate === 'editorial' && <EditorialTemplate {...templateProps} />}
+      {activeTemplate === 'modern' && <ModernTemplate {...templateProps} />}
+      {activeTemplate === 'marketplace' && <MarketplaceTemplate {...templateProps} />}
+      {activeTemplate === 'split' && <SplitTemplate {...templateProps} />}
+      {activeTemplate === 'brutalist' && <BrutalistTemplate {...templateProps} />}
 
       {/* DRAWER 1: SLIDE-OVER KERANJANG BELANJA (CART) */}
       <SlideOver

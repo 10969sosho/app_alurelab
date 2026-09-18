@@ -6,13 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\MerchantWallet;
 use App\Models\Order;
 use App\Models\Payout;
-use App\Models\Product;
-use App\Models\ProductVariant;
 use App\Models\Store;
 use App\Models\StoreUser;
 use App\Models\User;
 use App\Models\WalletTransaction;
 use Carbon\Carbon;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -34,7 +33,6 @@ class MerchantController extends Controller
             'owner_email' => 'required|email|max:255|unique:users,email',
             'owner_phone' => 'required|string|max:30|unique:users,phone_number',
             'password' => 'required|string|min:8',
-            'sample_products' => 'nullable|array',
         ]);
 
         return DB::transaction(function () use ($validated, $request) {
@@ -68,6 +66,8 @@ class MerchantController extends Controller
                 'role' => 'owner',
             ]);
 
+            event(new Registered($user));
+
             // 4. Inisialisasi Dompet Escrow Toko
             MerchantWallet::create([
                 'store_id' => $store->id,
@@ -75,38 +75,10 @@ class MerchantController extends Controller
                 'escrow_held_balance' => 0.00,
             ]);
 
-            // 5. Set RLS tenant context & buat Sampel Produk Awal jika ada
+            // 5. Set RLS tenant context
             if (DB::getDriverName() === 'pgsql') {
                 DB::statement("SET app.current_tenant_id = '{$store->id}';");
             }
-
-            if (! empty($validated['sample_products'])) {
-                foreach ($validated['sample_products'] as $prod) {
-                    $product = Product::create([
-                        'tenant_id' => $store->id,
-                        'title' => $prod['title'],
-                        'slug' => Str::slug($prod['title']).'-'.Str::random(4),
-                        'description' => $prod['description'] ?? 'Produk unggulan dengan kualitas terbaik.',
-                        'category_name' => $prod['category'] ?? 'Umum',
-                        'price' => $prod['price'] ?? 100000,
-                        'compare_at_price' => $prod['compare_at_price'] ?? null,
-                        'weight_grams' => $prod['weight'] ?? 200,
-                        'images' => $prod['images'] ?? [],
-                        'is_active' => true,
-                    ]);
-
-                    ProductVariant::create([
-                        'tenant_id' => $store->id,
-                        'product_id' => $product->id,
-                        'sku' => strtoupper(Str::random(8)),
-                        'title' => 'Standard',
-                        'price' => $prod['price'] ?? 100000,
-                        'stock' => $prod['stock'] ?? 50,
-                    ]);
-                }
-            }
-
-            $token = $user->createToken('merchant-auth')->plainTextToken;
 
             $proto = $request->header('x-forwarded-proto') ?: $request->getScheme();
             $host = $request->header('x-forwarded-host') ?: $request->getHost();
@@ -126,7 +98,6 @@ class MerchantController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                 ],
-                'token' => $token,
             ], 201);
         });
     }
@@ -429,12 +400,58 @@ class MerchantController extends Controller
 
         $current = $store->settings ?? [];
         $store->settings = array_merge($current, $validated['settings']);
+
+        $origin = $validated['settings']['origin_address'] ?? [];
+        if (array_key_exists('area_id', $origin)) {
+            $store->address_area_id = $origin['area_id'] ?: null;
+        }
+        if (array_key_exists('address', $origin)) {
+            $store->address_detail = $origin['address'] ?: null;
+        }
         $store->save();
 
         return response()->json([
             'success' => true,
             'message' => 'Pengaturan toko berhasil diperbarui.',
             'store' => $store->fresh(),
+        ]);
+    }
+
+    public function getCategories(Request $request): JsonResponse
+    {
+        /** @var Store $store */
+        $store = app('current_tenant') ?? $request->attributes->get('current_store');
+        $categories = $store->settings['categories'] ?? [];
+
+        if ($categories === []) {
+            $categories = $store->products()
+                ->whereNotNull('category_name')
+                ->distinct()
+                ->pluck('category_name')
+                ->values()
+                ->all();
+        }
+
+        return response()->json(['data' => $categories]);
+    }
+
+    public function updateCategories(Request $request): JsonResponse
+    {
+        /** @var Store $store */
+        $store = app('current_tenant') ?? $request->attributes->get('current_store');
+        $validated = $request->validate([
+            'categories' => 'required|array|max:100',
+            'categories.*' => 'required|string|max:100|distinct',
+        ]);
+
+        $settings = $store->settings ?? [];
+        $settings['categories'] = array_values(array_unique(array_map('trim', $validated['categories'])));
+        $store->settings = $settings;
+        $store->save();
+
+        return response()->json([
+            'message' => 'Master kategori berhasil diperbarui.',
+            'data' => $settings['categories'],
         ]);
     }
 

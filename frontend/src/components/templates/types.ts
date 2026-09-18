@@ -73,6 +73,28 @@ export interface CmsHighlights {
   aboutStory?: string;
 }
 
+export interface CmsBuyerCopy {
+  productBack?: string;
+  productAddToCart?: string;
+  productBuyNow?: string;
+  productDetails?: string;
+  cartTitle?: string;
+  cartEmptyTitle?: string;
+  cartEmptyDescription?: string;
+  cartContinueShopping?: string;
+  cartCheckout?: string;
+  checkoutTitle?: string;
+  checkoutSubmit?: string;
+  checkoutSuccessTitle?: string;
+  checkoutSuccessDescription?: string;
+  accountTitle?: string;
+  accountSignIn?: string;
+  accountActiveOrders?: string;
+  accountOrderHistory?: string;
+  accountSettings?: string;
+  footerNote?: string;
+}
+
 export interface CmsPage {
   id: string;
   slug: string;
@@ -89,12 +111,13 @@ export interface CmsPage {
 }
 
 export interface CmsSettings {
-  template?: 'editorial' | 'modern';
+  template?: 'editorial' | 'modern' | 'marketplace' | 'split' | 'brutalist';
   branding?: CmsBranding;
   hero?: CmsHero;
   navigation?: CmsNavigation;
   sections?: CmsSections;
   highlights?: CmsHighlights;
+  buyerCopy?: CmsBuyerCopy;
   pages?: CmsPage[];
   [key: string]: any;
 }

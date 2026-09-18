@@ -6,8 +6,6 @@ import { signOut, useSession } from 'next-auth/react';
 import {
   ChevronDown,
   LogOut,
-  ExternalLink,
-  Store,
   Crown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -17,7 +15,6 @@ const navGroups = [
     title: 'Pesanan',
     items: [
       { href: '/dashboard/orders', label: 'Pesanan Saya', exact: true },
-      { href: '/dashboard/shipping', label: 'Pengiriman Massal' },
       { href: '/dashboard/orders?tab=return', label: 'Pengembalian/Pembatalan' },
     ],
   },
@@ -26,6 +23,7 @@ const navGroups = [
     items: [
       { href: '/dashboard/products', label: 'Produk Saya', exact: true },
       { href: '/dashboard/products/new', label: 'Tambah Produk Baru' },
+      { href: '/dashboard/categories', label: 'Master Kategori' },
       { href: '/dashboard/cms', label: 'Tampilan Toko (CMS)' },
     ],
   },
@@ -74,9 +72,6 @@ export function Sidebar() {
           <div className="min-w-0">
             <p className="font-bold text-slate-900 text-xs leading-tight truncate">
               {store?.name ?? 'ALURELAB Store'}
-            </p>
-            <p className="text-[10px] text-slate-400 font-mono truncate">
-              {store?.slug ? `${store.slug}.shop` : 'Official Seller'}
             </p>
           </div>
         </div>
@@ -138,7 +133,7 @@ export function Sidebar() {
           <div className="px-2 py-1 text-[10px] text-slate-500 flex items-center justify-between">
             <span className="flex items-center gap-1 font-medium">
               <Crown className="w-3 h-3 text-amber-500" />
-              Paket {store.plan_tier ?? 'Starter'}
+              Paket {store.plan_tier && store.plan_tier !== 'starter' ? store.plan_tier : 'Free'}
             </span>
             <span className="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.2 rounded">
               Aktif

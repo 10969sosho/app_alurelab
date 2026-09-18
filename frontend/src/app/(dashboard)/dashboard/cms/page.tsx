@@ -64,14 +64,15 @@ const DEFAULT_EDITORIAL_CMS: CmsSettings = {
     autoPlay: true,
     autoPlayInterval: 5,
      ctaText: "SHOP PRODUCTS",
-     ctaLink: "#shop",
+     ctaLink: "/shop",
   },
   navigation: {
-       menuItems: [
-         { id: "m1", label: "HOME", url: "#top", enabled: true },
-       { id: "m2", label: "SHOP", url: "#shop", enabled: true },
-       { id: "m3", label: "BAG", url: "/cart", enabled: true },
-       { id: "m4", label: "ACCOUNT", url: "/account", enabled: true },
+        menuItems: [
+          { id: "home", label: "HOME", url: "#top", enabled: true },
+          { id: "shop", label: "SHOP", url: "/shop", enabled: true },
+          { id: "cart", label: "BAG", url: "/cart", enabled: true },
+          { id: "checkout", label: "CHECKOUT", url: "/checkout", enabled: true },
+          { id: "account", label: "ACCOUNT", url: "/account", enabled: true },
     ],
     socialLinks: {
       instagram: "https://instagram.com/alurelab",
@@ -92,6 +93,27 @@ const DEFAULT_EDITORIAL_CMS: CmsSettings = {
      aboutHeading: "CURATED COMFORT FOR CURIOUS MINDS",
      aboutStory:
        "Kami percaya gaya berpakaian anak tidak harus penuh motif berisik. Melalui siluet santai, tone warna natural, dan material katun bernapas, kami menghadirkan koleksi yang tenang, estetik, dan awet dipakai bertahun-tahun.\n\nSetiap busana dirancang untuk menemani gerak lincah dan kenyamanan seharian si kecil tanpa batasan gerak.",
+  },
+  buyerCopy: {
+    productBack: "Kembali ke katalog",
+    productAddToCart: "Tambah ke keranjang",
+    productBuyNow: "Beli sekarang",
+    productDetails: "Detail produk",
+    cartTitle: "Keranjang belanja",
+    cartEmptyTitle: "Keranjang masih kosong",
+    cartEmptyDescription: "Pilih produk untuk mulai berbelanja.",
+    cartContinueShopping: "Lanjut belanja",
+    cartCheckout: "Lanjut checkout",
+    checkoutTitle: "Checkout",
+    checkoutSubmit: "Buat pesanan",
+    checkoutSuccessTitle: "Pesanan diterima",
+    checkoutSuccessDescription: "Pesanan Anda sudah tercatat.",
+    accountTitle: "Akun saya",
+    accountSignIn: "Masuk untuk melihat pesanan dan alamat.",
+    accountActiveOrders: "Pesanan aktif",
+    accountOrderHistory: "Riwayat pesanan",
+    accountSettings: "Pengaturan",
+    footerNote: "Belanja aman dengan pembayaran dan pengiriman terpercaya.",
   },
   pages: [
     {
@@ -128,11 +150,15 @@ function normalizeCmsSettings(settings: CmsSettings, storeSlug: string): CmsSett
   ) as CmsSettings["highlights"];
   const validMenuItems = (settings.navigation?.menuItems || []).filter((item) =>
     item.url === "#top" ||
-    item.url === "#shop" ||
-    item.url === "/cart" ||
-    item.url === "/account" ||
-    item.url === `/${storeSlug}/cart` ||
-    item.url === `/${storeSlug}/account` ||
+     item.url === "#shop" ||
+     item.url === "/shop" ||
+     item.url === "/cart" ||
+     item.url === "/checkout" ||
+     item.url === "/account" ||
+     item.url === "/pages/about" ||
+     item.url === `/${storeSlug}/cart` ||
+     item.url === `/${storeSlug}/checkout` ||
+     item.url === `/${storeSlug}/account` ||
     item.isExternal
   );
 
@@ -190,7 +216,7 @@ export default function StorefrontCmsPage() {
   const storeSlug = (session as any)?.store?.slug || "kalmora";
 
   const [activeTab, setActiveTab] = useState<
-    "template" | "hero" | "about" | "pages" | "navigation" | "styling"
+    "template" | "hero" | "about" | "pages" | "navigation" | "styling" | "buyer"
   >("template");
 
   const [cms, setCms] = useState<CmsSettings>(DEFAULT_EDITORIAL_CMS);
@@ -247,7 +273,8 @@ export default function StorefrontCmsPage() {
                hero: { ...prev.hero, ...backendSettings.hero },
                navigation: { ...prev.navigation, ...backendSettings.navigation },
                sections: { ...prev.sections, ...backendSettings.sections },
-               highlights: { ...prev.highlights, ...backendSettings.highlights },
+                highlights: { ...prev.highlights, ...backendSettings.highlights },
+                buyerCopy: { ...prev.buyerCopy, ...backendSettings.buyerCopy },
                pages: backendSettings.pages || prev.pages,
              }, storeSlug));
           }
@@ -531,8 +558,9 @@ export default function StorefrontCmsPage() {
           >
             <Save className="w-3.5 h-3.5 stroke-[2.5]" />
             {saving ? "Menyimpan..." : "Simpan & Publikasikan"}
-          </button>
-        </div>
+             </button>
+
+           </div>
       </div>
 
       {/* Main Grid: Left Control Tabs, Right Live Preview */}
@@ -611,6 +639,14 @@ export default function StorefrontCmsPage() {
             >
               <Palette className="w-3.5 h-3.5" />
               6. Warna & Tipografi
+            </button>
+
+            <button
+              onClick={() => setActiveTab("buyer")}
+              className={`flex items-center gap-1.5 py-2.5 px-2 font-medium border-b-2 whitespace-nowrap transition-colors shrink-0 ${activeTab === "buyer" ? "border-[#EE4D2D] text-[#EE4D2D] font-bold" : "border-transparent text-slate-600 hover:text-slate-900"}`}
+            >
+              <Type className="w-3.5 h-3.5" />
+              7. Teks Buyer
             </button>
           </div>
 
@@ -692,6 +728,38 @@ export default function StorefrontCmsPage() {
                     </div>
                   </div>
                 </div>
+
+                {([
+                  ["marketplace", "Marketplace Pulse", "Grid padat, pencarian cepat, dan kartu produk untuk katalog besar."],
+                  ["split", "Split Editorial", "Layout dua dunia: narasi brand di kiri, katalog kurasi di kanan."],
+                  ["brutalist", "Brutalist Signal", "Tipografi besar, kontras tinggi, dan CTA tegas untuk brand berani."],
+                ] as const).map(([id, title, description]) => (
+                  <div key={id} onClick={() => setCms({ ...cms, template: id })} className={`cursor-pointer p-4 rounded-xs border-2 transition-all relative ${cms.template === id ? "border-[#EE4D2D] bg-orange-50/20 shadow-2xs ring-1 ring-[#EE4D2D]" : "border-slate-200 hover:border-slate-300"}`}>
+                    {cms.template === id && <span className="absolute top-3 right-3 flex items-center gap-1 text-[10px] font-bold bg-[#EE4D2D] text-white px-2 py-0.5 rounded-xs"><Check className="w-3 h-3" /> Aktif</span>}
+                    <div className="h-28 rounded-xs bg-slate-950 text-white border border-slate-200 flex items-center justify-center p-3 text-center font-bold text-lg">{title}</div>
+                    <h4 className="mt-3 font-bold text-slate-800 text-xs">{title}</h4>
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">{description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === "buyer" && (
+            <div className="bg-white p-4 rounded-xs border border-slate-200 space-y-4 shadow-2xs">
+              <div>
+                <h3 className="text-xs font-bold text-slate-800">Teks Semua Halaman Buyer</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Satu kontrak copy dipakai oleh kelima template dan halaman produk, keranjang, checkout, serta akun.</p>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-3 text-xs">
+                {([
+                  ["productBack", "Produk: kembali"], ["productAddToCart", "Produk: tambah ke keranjang"], ["productBuyNow", "Produk: beli sekarang"], ["productDetails", "Produk: detail"],
+                  ["cartTitle", "Keranjang: judul"], ["cartEmptyTitle", "Keranjang: kosong"], ["cartEmptyDescription", "Keranjang: deskripsi kosong"], ["cartContinueShopping", "Keranjang: lanjut belanja"], ["cartCheckout", "Keranjang: checkout"],
+                  ["checkoutTitle", "Checkout: judul"], ["checkoutSubmit", "Checkout: tombol"], ["checkoutSuccessTitle", "Checkout: sukses"], ["checkoutSuccessDescription", "Checkout: deskripsi sukses"],
+                  ["accountTitle", "Akun: judul"], ["accountSignIn", "Akun: belum login"], ["accountActiveOrders", "Akun: pesanan aktif"], ["accountOrderHistory", "Akun: riwayat"], ["accountSettings", "Akun: pengaturan"], ["footerNote", "Footer: catatan"],
+                ] as const).map(([field, label]) => (
+                  <label key={field} className="font-semibold text-slate-700">{label}<input value={(cms.buyerCopy as any)?.[field] || ""} onChange={(e) => setCms({ ...cms, buyerCopy: { ...cms.buyerCopy, [field]: e.target.value } })} className="mt-1 w-full text-xs px-2.5 py-1.5 rounded-xs border border-slate-300 font-normal" /></label>
+                ))}
               </div>
             </div>
           )}
@@ -885,7 +953,7 @@ export default function StorefrontCmsPage() {
                        <label className="font-semibold text-slate-700 block mb-1">Tujuan Tombol Aksi:</label>
                        <input
                          type="text"
-                         value="#shop"
+                          value="/shop"
                          readOnly
                          aria-label="Tujuan tombol aksi"
                          className="w-full text-xs px-2.5 py-1.5 rounded-xs border border-slate-300 bg-slate-100 text-slate-500 font-mono"

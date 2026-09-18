@@ -4,13 +4,8 @@ import { useSession } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
-  Bell,
-  Menu,
   ShoppingBag,
   ExternalLink,
-  Download,
-  LayoutGrid,
-  BookOpen,
 } from 'lucide-react';
 
 export function DashboardHeader() {
@@ -22,7 +17,7 @@ export function DashboardHeader() {
     if (pathname.includes('/products/new')) return 'Tambah Produk Baru';
     if (pathname.includes('/products')) return 'Produk Saya';
     if (pathname.includes('/cms')) return 'Tampilan Toko (CMS)';
-    if (pathname.includes('/shipping')) return 'Pengiriman Massal';
+    if (pathname.includes('/categories')) return 'Master Kategori';
     if (pathname.includes('/orders')) return 'Pesanan Saya';
     if (pathname.includes('/promotions')) return 'Pusat Promosi';
     if (pathname.includes('/customers')) return 'Pelanggan & Member';
@@ -59,34 +54,6 @@ export function DashboardHeader() {
 
       {/* Right: Quick Tools, Notification & Profile */}
       <div className="flex items-center gap-4">
-        {/* Utilities icons */}
-        <div className="hidden sm:flex items-center gap-2.5 text-slate-400">
-          <button
-            type="button"
-            className="p-1 hover:text-slate-700 hover:bg-slate-100 rounded-sm transition-colors"
-            title="Download Data"
-          >
-            <Download className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            className="p-1 hover:text-slate-700 hover:bg-slate-100 rounded-sm transition-colors"
-            title="Aplikasi & Integrasi"
-          >
-            <LayoutGrid className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            className="p-1 hover:text-slate-700 hover:bg-slate-100 rounded-sm transition-colors"
-            title="Panduan Penjual"
-          >
-            <BookOpen className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Divider */}
-        <div className="hidden sm:block h-3.5 w-px bg-slate-200" />
-
         {/* Link to live storefront */}
         {store?.slug && (
           <Link
@@ -98,18 +65,6 @@ export function DashboardHeader() {
             <span>Lihat Toko</span>
           </Link>
         )}
-
-        {/* Notification bell with badge */}
-        <button
-          type="button"
-          className="relative p-1.5 text-slate-600 hover:text-slate-900 transition-colors"
-          title="Notifikasi"
-        >
-          <Bell className="w-4 h-4" />
-          <span className="absolute -top-1 -right-1.5 min-w-[15px] h-[15px] bg-[#EE4D2D] text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5 leading-none shadow-xs">
-            21
-          </span>
-        </button>
 
         {/* User profile pill */}
         <div className="flex items-center gap-2 pl-1">
@@ -124,4 +79,3 @@ export function DashboardHeader() {
     </header>
   );
 }
-

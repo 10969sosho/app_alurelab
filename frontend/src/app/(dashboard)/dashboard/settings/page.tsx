@@ -16,6 +16,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import api from '@/lib/api';
+import { WilayahAddressFields, type WilayahAddressValue } from '@/components/address/WilayahAddressFields';
 
 export default function SettingsPage() {
   const queryClient = useQueryClient();
@@ -30,8 +31,7 @@ export default function SettingsPage() {
   const [contactName, setContactName] = useState('');
   const [warehousePhone, setWarehousePhone] = useState('');
   const [address, setAddress] = useState('');
-  const [city, setCity] = useState('Surabaya');
-  const [province, setProvince] = useState('Jawa Timur');
+  const [wilayah, setWilayah] = useState<WilayahAddressValue>({});
   const [postalCode, setPostalCode] = useState('60271');
 
   // Couriers states
@@ -69,9 +69,19 @@ export default function SettingsPage() {
         setContactName(s.origin_address.contact_name || '');
         setWarehousePhone(s.origin_address.phone || '');
         setAddress(s.origin_address.address || '');
-        setCity(s.origin_address.city || '');
-        setProvince(s.origin_address.province || '');
-        setPostalCode(s.origin_address.postal_code || '');
+        setWilayah({
+          provinceCode: s.origin_address.province_code || '',
+          provinceName: s.origin_address.province || '',
+          regencyCode: s.origin_address.regency_code || '',
+          regencyName: s.origin_address.city || '',
+          districtCode: s.origin_address.district_code || '',
+          districtName: s.origin_address.district || '',
+          villageCode: s.origin_address.village_code || '',
+          villageName: s.origin_address.village || '',
+          areaId: s.origin_address.area_id || '',
+          areaName: s.origin_address.area_name || '',
+          postalCode: s.origin_address.postal_code || '',
+        });
       }
 
       if (s.couriers) {
@@ -117,9 +127,17 @@ export default function SettingsPage() {
           contact_name: contactName,
           phone: warehousePhone,
           address,
-          city,
-          province,
-          postal_code: postalCode,
+          city: wilayah.regencyName || '',
+          province: wilayah.provinceName || '',
+          district: wilayah.districtName || '',
+          village: wilayah.villageName || '',
+          province_code: wilayah.provinceCode || '',
+          regency_code: wilayah.regencyCode || '',
+          district_code: wilayah.districtCode || '',
+          village_code: wilayah.villageCode || '',
+          area_id: wilayah.areaId || '',
+          area_name: wilayah.areaName || '',
+          postal_code: postalCode || wilayah.postalCode || '',
         },
         couriers,
         allow_cod: allowCod,
@@ -305,34 +323,17 @@ export default function SettingsPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-3 gap-2.5">
-                  <div>
-                    <label className="block font-medium text-slate-700 mb-1">Kota / Kab</label>
-                    <input
-                      type="text"
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      className="w-full px-3 py-1.5 border border-slate-300 rounded-xs outline-none focus:border-[#EE4D2D]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block font-medium text-slate-700 mb-1">Provinsi</label>
-                    <input
-                      type="text"
-                      value={province}
-                      onChange={(e) => setProvince(e.target.value)}
-                      className="w-full px-3 py-1.5 border border-slate-300 rounded-xs outline-none focus:border-[#EE4D2D]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block font-medium text-slate-700 mb-1">Kode Pos</label>
-                    <input
-                      type="text"
-                      value={postalCode}
-                      onChange={(e) => setPostalCode(e.target.value)}
-                      className="w-full px-3 py-1.5 border border-slate-300 rounded-xs outline-none focus:border-[#EE4D2D] font-mono"
-                    />
-                  </div>
+                <WilayahAddressFields value={wilayah} onChange={setWilayah} />
+
+                <div>
+                  <label className="block font-medium text-slate-700 mb-1">Kode Pos</label>
+                  <input
+                    type="text"
+                    value={postalCode}
+                    onChange={(e) => setPostalCode(e.target.value)}
+                    placeholder="Contoh: 60271"
+                    className="w-full px-3 py-1.5 border border-slate-300 rounded-xs outline-none focus:border-[#EE4D2D] font-mono"
+                  />
                 </div>
               </div>
             )}

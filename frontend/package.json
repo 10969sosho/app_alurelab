@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "qa:buyer": "playwright test qa/buyer-smoke.spec.ts",
+    "qa:seller": "playwright test qa/seller-smoke.spec.ts",
+    "qa:smoke": "playwright test qa/buyer-smoke.spec.ts qa/seller-smoke.spec.ts",
+    "qa:loop": "playwright test qa/semi-production-loop.spec.ts",
+    "qa:ui": "playwright test --ui"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -35,6 +40,7 @@
     "@types/react-dom": "^19.0.0",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.49",
+    "@playwright/test": "^1.55.0",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.3"
   }

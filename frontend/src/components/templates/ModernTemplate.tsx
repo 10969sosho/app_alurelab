@@ -45,7 +45,7 @@ export default function ModernTemplate({
       )}
 
       {/* Main Navbar */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
+      <header className="template-internal-navbar sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
           {/* Brand */}
           <Link href={`/${storeSlug}`} className="flex items-center gap-2 shrink-0">

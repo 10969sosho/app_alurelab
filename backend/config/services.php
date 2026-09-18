@@ -49,4 +49,9 @@ return [
         'webhook_secret' => env('BITESHIP_WEBHOOK_SECRET', ''),
     ],
 
+    'qa_simulation' => [
+        'enabled' => (bool) env('QA_SIMULATION_ENABLED', false),
+        'store_slug' => env('QA_SIMULATION_STORE_SLUG', ''),
+    ],
+
 ];

@@ -57,7 +57,7 @@ class LogisticsController extends Controller
 
         $originAreaId = $store->address_area_id;
 
-        $rates = $this->biteshipService->calculateRates($originAreaId, $destinationAreaId, $items);
+        $rates = $this->biteshipService->calculateRates($originAreaId, $destinationAreaId, $items, $store);
 
         return response()->json([
             'success' => true,

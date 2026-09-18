@@ -58,6 +58,13 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
   const [newImageUrl, setNewImageUrl] = useState('');
   const [hasVariants, setHasVariants] = useState(Boolean(initialData?.variants?.length));
   const [isUploading, setIsUploading] = useState(false);
+  const [categories, setCategories] = useState<string[]>([]);
+
+  useEffect(() => {
+    api.get('/merchant/categories')
+      .then((response) => setCategories(response.data?.data || []))
+      .catch(() => setCategories([]));
+  }, []);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -286,9 +293,13 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
             </label>
             <input
               {...register('category_name')}
-              placeholder="Contoh: Pakaian, Sepatu, Aksesoris"
+              list="product-categories"
+              placeholder="Cari kategori..."
               className="w-full px-3 py-1.5 rounded-xs border border-slate-300 text-xs outline-none focus:border-[#EE4D2D]"
             />
+            <datalist id="product-categories">
+              {categories.map((category) => <option key={category} value={category} />)}
+            </datalist>
           </div>
 
           <div>

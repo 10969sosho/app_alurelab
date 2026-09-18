@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { signIn } from 'next-auth/react';
 import { ArrowLeft, Sparkles, Store, CheckCircle2, Rocket, ArrowRight } from 'lucide-react';
 import { fetchApi } from '@/lib/api-client';
 
@@ -14,8 +13,6 @@ export default function OnboardingPage() {
     ownerEmail: '',
     ownerPhone: '',
     password: '',
-    productName: '',
-    productPrice: 150000,
   });
 
   const [loading, setLoading] = useState(false);
@@ -37,14 +34,6 @@ export default function OnboardingPage() {
       owner_email: formData.ownerEmail,
       owner_phone: formData.ownerPhone,
       password: formData.password,
-      sample_products: formData.productName
-        ? [
-            {
-              title: formData.productName,
-              price: formData.productPrice,
-            },
-          ]
-        : [],
     };
 
     try {
@@ -56,12 +45,6 @@ export default function OnboardingPage() {
       setLoading(false);
 
       if (res?.success && res?.store) {
-        const authResult = await signIn('credentials', {
-          email: formData.ownerEmail,
-          password: formData.password,
-          redirect: false,
-        });
-
         const origin = typeof window !== 'undefined' ? window.location.origin : '';
         const storefrontUrl = res.store.storefront_url && !res.store.storefront_url.includes('localhost:3000')
           ? res.store.storefront_url
@@ -70,7 +53,7 @@ export default function OnboardingPage() {
         setCreatedStore({
           ...res.store,
           storefront_url: storefrontUrl,
-          autoLoginFailed: Boolean(authResult?.error),
+          ownerEmail: formData.ownerEmail,
         });
       } else {
         alert(res?.message || 'Gagal membuat toko. Pastikan email dan slug toko belum pernah terdaftar.');
@@ -89,9 +72,9 @@ export default function OnboardingPage() {
             <Rocket className="w-10 h-10" />
           </div>
 
-          <h2 className="text-3xl font-extrabold mb-2">Toko Anda Siap Digunakan!</h2>
+          <h2 className="text-3xl font-extrabold mb-2">Cek Email Anda</h2>
           <p className="text-slate-400 text-sm mb-6">
-            Selamat, toko online <span className="text-emerald-400 font-semibold">{createdStore.name}</span> berhasil dibangun dalam waktu kurang dari 60 detik.
+            Toko <span className="text-emerald-400 font-semibold">{createdStore.name}</span> berhasil dibuat. Buka link verifikasi yang dikirim ke <span className="text-white font-semibold">{createdStore.ownerEmail}</span>, lalu login untuk masuk ke dashboard seller.
           </p>
 
           <div className="bg-slate-950/80 border border-slate-800 p-4 rounded-xl text-left text-xs space-y-2 mb-8 font-mono">
@@ -111,12 +94,12 @@ export default function OnboardingPage() {
             >
               Lihat Toko Sekarang <ArrowRight className="w-4 h-4" />
             </Link>
-            <Link
-              href={createdStore.autoLoginFailed ? '/login' : '/dashboard'}
-              className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium py-3 rounded-xl text-sm transition-all"
-            >
-              {createdStore.autoLoginFailed ? 'Login ke Merchant Dashboard' : 'Buka Merchant Dashboard'}
-            </Link>
+             <Link
+               href="/login"
+               className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium py-3 rounded-xl text-sm transition-all"
+             >
+               Login ke Dashboard Seller
+             </Link>
           </div>
         </div>
       </div>
@@ -239,36 +222,6 @@ export default function OnboardingPage() {
                   placeholder="Minimal 8 karakter"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-800 text-xs px-3.5 py-2.5 rounded-xl text-white focus:border-emerald-500 focus:outline-none"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-4 pt-4 border-t border-slate-800">
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider text-emerald-400">
-              3. Produk Pertama Anda (Opsional)
-            </h2>
-
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs text-slate-400 mb-1">Nama Produk</label>
-                <input
-                  type="text"
-                  placeholder="Contoh: Biji Kopi Arabika 250gr"
-                  value={formData.productName}
-                  onChange={(e) => setFormData({ ...formData, productName: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-800 text-xs px-3.5 py-2.5 rounded-xl text-white focus:border-emerald-500 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs text-slate-400 mb-1">Harga Produk (Rp)</label>
-                <input
-                  type="number"
-                  placeholder="150000"
-                  value={formData.productPrice}
-                  onChange={(e) => setFormData({ ...formData, productPrice: Number(e.target.value) })}
                   className="w-full bg-slate-950 border border-slate-800 text-xs px-3.5 py-2.5 rounded-xl text-white focus:border-emerald-500 focus:outline-none"
                 />
               </div>

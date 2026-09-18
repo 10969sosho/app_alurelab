@@ -41,10 +41,11 @@ backend/bootstrap/cache/*
 # Testing
 .phpunit.result.cache
 coverage/
+frontend/test-results/
+frontend/qa-report/
 
 # Local backups
 *.bak
 *.bak*
 backend.bak/
 *.tsbuildinfo
-

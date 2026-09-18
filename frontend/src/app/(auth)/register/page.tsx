@@ -9,7 +9,6 @@ import { z } from 'zod';
 import { toast } from 'sonner';
 import { Eye, EyeOff, Loader2, Store, ArrowLeft } from 'lucide-react';
 import api from '@/lib/api';
-import { signIn } from 'next-auth/react';
 
 const registerSchema = z.object({
   name:             z.string().min(2, 'Nama minimal 2 karakter'),
@@ -41,20 +40,8 @@ export default function RegisterPage() {
       // Register ke backend
       await api.post('/auth/register', data);
 
-      // Auto-login setelah register berhasil
-      const result = await signIn('credentials', {
-        email:    data.email,
-        password: data.password,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        toast.error('Akun dibuat, tapi login gagal. Silakan login manual.');
-        router.push('/login');
-      } else {
-        toast.success('Akun berhasil dibuat! Selamat datang di ALURELAB.');
-        router.push('/onboarding');
-      }
+      toast.success('Akun berhasil dibuat. Cek email untuk verifikasi.');
+      router.push('/login?registered=1');
     } catch (error: any) {
       const msg = error?.response?.data?.message ?? 'Gagal membuat akun. Coba lagi.';
       toast.error(msg);

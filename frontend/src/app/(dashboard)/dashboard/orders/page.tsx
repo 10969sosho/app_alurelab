@@ -82,7 +82,7 @@ function OrdersContent() {
 
   return (
     <div className="space-y-2.5 select-none font-sans pb-10">
-      {/* ─── 1. Header Bar: Title + Shipping Shortcut ─── */}
+      {/* ─── 1. Header Bar ─── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
         <div>
           <h1 className="text-base sm:text-lg font-bold text-slate-800 leading-tight">
@@ -93,15 +93,6 @@ function OrdersContent() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <Link
-            href="/dashboard/shipping"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-medium rounded-xs transition-colors shadow-2xs"
-          >
-            <Truck className="w-3.5 h-3.5 text-[#EE4D2D]" />
-            <span>Pengiriman Massal</span>
-          </Link>
-        </div>
       </div>
 
       {/* ─── 2. Top Tabs (Underline Tabs) ─── */}

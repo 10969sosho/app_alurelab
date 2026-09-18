@@ -14,6 +14,8 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { useCartStore } from '@/store/cart-store';
+import { useBuyerCms } from '@/components/buyer/useBuyerCms';
+import { BuyerNavbar, BuyerThemeFrame } from '@/components/buyer/BuyerTheme';
 
 export default function CartPage({
   params,
@@ -22,36 +24,15 @@ export default function CartPage({
 }) {
   const { store_slug: storeSlug } = use(params);
   const { items, updateQuantity, removeItem, clearCart, getSubtotal, getTotalItems } = useCartStore();
+  const copy = useBuyerCms(storeSlug);
 
   const subtotal = getSubtotal();
   const totalItems = getTotalItems();
   const storeDisplayName = storeSlug.replace(/-/g, ' ').toUpperCase();
 
   return (
-     <div className="buyer-page min-h-screen bg-[#F5F5F3] text-[#111111] font-sans antialiased selection:bg-[#111111] selection:text-[#F5F5F3] flex flex-col">
-      {/* ── Top Bar ────────────────────────────────────────── */}
-      <header className="h-[80px] border-b border-[#DADADA] bg-[#F5F5F3] px-6 md:px-12 flex items-center justify-between sticky top-0 z-30">
-        <Link
-          href={`/${storeSlug}`}
-          className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.2em] uppercase text-[#666666] hover:text-[#111111] transition-colors"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-           <span>BACK TO SHOP</span>
-        </Link>
-
-        <Link href={`/${storeSlug}`} className="flex items-center gap-2.5">
-          <div className="w-7 h-7 border border-[#111111] flex items-center justify-center font-bebas text-lg leading-none">
-            {storeDisplayName.charAt(0)}
-          </div>
-          <span className="text-[12px] font-bold tracking-[0.22em] uppercase hidden sm:inline">
-            {storeDisplayName}
-          </span>
-        </Link>
-
-        <div className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#666666]">
-           BAG {totalItems > 0 ? `(${totalItems})` : ''}
-        </div>
-      </header>
+     <BuyerThemeFrame storeSlug={storeSlug} className="text-[#111111] font-sans antialiased flex flex-col">
+       <BuyerNavbar storeSlug={storeSlug} storeName={storeDisplayName} />
 
       {/* ── Main Cart Content ───────────────────────────────── */}
       <main className="max-w-6xl mx-auto w-full px-6 md:px-10 py-12 flex-1">
@@ -60,9 +41,9 @@ export default function CartPage({
             <span className="text-[11px] font-semibold tracking-[0.24em] text-[#666666] uppercase block mb-1">
             </span>
             <h1 className="font-bebas text-5xl md:text-6xl tracking-wide uppercase text-[#111111]">
-               BAG
+               {copy.cartTitle}
             </h1>
-          </div>
+             </div>
           {items.length > 0 && (
             <button
               onClick={clearCart}
@@ -70,8 +51,8 @@ export default function CartPage({
             >
               Kosongkan Keranjang
             </button>
-          )}
-        </div>
+           )}
+         </div>
 
         {items.length === 0 ? (
           /* Empty Bag State */
@@ -81,17 +62,17 @@ export default function CartPage({
             </div>
             <div className="space-y-2">
               <h2 className="font-bebas text-3xl uppercase tracking-wide text-[#111111]">
-                 BAG IS EMPTY
+                 {copy.cartEmptyTitle}
               </h2>
               <p className="text-xs text-[#666666] leading-relaxed">
-                 Pilih produk untuk mulai berbelanja.
+                 {copy.cartEmptyDescription}
               </p>
             </div>
             <Link
               href={`/${storeSlug}`}
               className="inline-flex items-center gap-3 bg-[#111111] text-[#F5F5F3] px-8 py-3.5 text-xs font-semibold uppercase tracking-[0.2em] hover:bg-black transition-all"
             >
-               <span>SHOP PRODUCTS</span>
+                <span>{copy.cartContinueShopping}</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -186,7 +167,7 @@ export default function CartPage({
                   href={`/${storeSlug}`}
                   className="editorial-link text-[11px]"
                 >
-                   ← CONTINUE SHOPPING
+                    ← {copy.cartContinueShopping}
                 </Link>
               </div>
             </div>
@@ -232,7 +213,7 @@ export default function CartPage({
                   href={`/${storeSlug}/checkout`}
                   className="w-full bg-[#111111] text-[#F5F5F3] py-4 text-xs font-semibold uppercase tracking-[0.2em] hover:bg-black transition-all flex items-center justify-center gap-2"
                 >
-                   <span>CHECKOUT</span>
+                    <span>{copy.cartCheckout}</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
 
@@ -254,9 +235,9 @@ export default function CartPage({
       </main>
 
       {/* ── Footer ─────────────────────────────────────────── */}
-      <footer className="border-t border-[#DADADA] bg-[#F5F5F3] py-8 px-6 text-center text-[11px] uppercase tracking-[0.14em] text-[#666666]">
+       <footer className="border-t border-[#DADADA] bg-[#F5F5F3] py-8 px-6 text-center text-[11px] uppercase tracking-[0.14em] text-[#666666]">
          <div>© 2026 {storeDisplayName}</div>
-      </footer>
-    </div>
+       </footer>
+     </BuyerThemeFrame>
   );
 }

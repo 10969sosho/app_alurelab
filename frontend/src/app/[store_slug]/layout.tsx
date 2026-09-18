@@ -1,4 +1,5 @@
 import { getStoreData } from '@/lib/store';
+import { BuyerThemeProvider } from '@/components/buyer/BuyerTheme';
 
 export default async function StorefrontLayout({
   children,
@@ -12,7 +13,7 @@ export default async function StorefrontLayout({
   // Validasi toko di tingkat layout SSR.
   // Jika storeSlug bukan nama toko yang valid di database, getStoreData langsung memicu notFound() (HTTP 404).
   // Melindungi seluruh sub-rute (/, /cart, /checkout, /products/[slug], /account, dll).
-  await getStoreData(storeSlug);
+  const store = await getStoreData(storeSlug);
 
-  return <>{children}</>;
+  return <BuyerThemeProvider settings={store.settings || {}}>{children}</BuyerThemeProvider>;
 }

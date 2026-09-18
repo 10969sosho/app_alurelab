@@ -7,6 +7,8 @@ import { useCartStore } from '@/store/cart-store';
 import { useBuyerStore } from '@/store/buyer-store';
 import { fetchApi } from '@/lib/api-client';
 import { WilayahAddressFields, type WilayahAddressValue } from '@/components/address/WilayahAddressFields';
+import { useBuyerCms } from '@/components/buyer/useBuyerCms';
+import { BuyerNavbar, BuyerThemeFrame } from '@/components/buyer/BuyerTheme';
 
 export default function CheckoutPage({ params }: { params: Promise<{ store_slug: string }> }) {
   const resolvedParams = use(params);
@@ -14,6 +16,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
 
   const { items, getSubtotal, clearCart } = useCartStore();
   const { buyer } = useBuyerStore();
+  const copy = useBuyerCms(storeSlug);
   const [isHydrated, setIsHydrated] = useState(false);
 
   const [form, setForm] = useState({
@@ -107,6 +110,27 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
     }
   };
 
+  useEffect(() => {
+    const savedAreaId = buyer?.defaultAddress?.areaId;
+    if (!isHydrated || !savedAreaId || form.areaId !== savedAreaId || items.length === 0 || shippingOptions.length > 0) {
+      return;
+    }
+
+    loadShippingRates(savedAreaId, {
+      provinceCode: buyer?.defaultAddress?.provinceCode,
+      provinceName: buyer?.defaultAddress?.provinceName,
+      regencyCode: buyer?.defaultAddress?.regencyCode,
+      regencyName: buyer?.defaultAddress?.regencyName,
+      districtCode: buyer?.defaultAddress?.districtCode,
+      districtName: buyer?.defaultAddress?.districtName,
+      villageCode: buyer?.defaultAddress?.villageCode,
+      villageName: buyer?.defaultAddress?.villageName,
+      areaId: savedAreaId,
+      areaName: buyer?.defaultAddress?.areaName,
+      postalCode: buyer?.defaultAddress?.postalCode,
+    });
+  }, [buyer, form.areaId, isHydrated, items.length, shippingOptions.length]);
+
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -165,9 +189,9 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
           <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle2 className="w-10 h-10" />
           </div>
-          <h2 className="text-2xl font-black text-slate-900 mb-2">Pesanan Diterima!</h2>
+          <h2 className="text-2xl font-black text-slate-900 mb-2">{copy.checkoutSuccessTitle}</h2>
           <p className="text-sm text-slate-600 mb-6">
-            Nomor Pesanan: <span className="font-mono font-bold text-slate-900">{orderSuccess.order_number}</span>
+             {copy.checkoutSuccessDescription} <span className="font-mono font-bold text-slate-900">{orderSuccess.order_number}</span>
           </p>
 
           <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 text-left text-xs space-y-2 mb-6">
@@ -219,29 +243,15 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
 
 
   return (
-     <div className="buyer-page min-h-screen bg-[#F5F5F3] text-[#111111] pb-16">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
-          <Link
-            href={`/${storeSlug}`}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900"
-          >
-            <ArrowLeft className="w-4 h-4" /> Kembali
-          </Link>
-           <span className="text-sm font-bold text-slate-900">Checkout</span>
-          <div className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
-            <ShieldCheck className="w-4 h-4" /> 100% Aman
-          </div>
-        </div>
-      </header>
+     <BuyerThemeFrame storeSlug={storeSlug} className="text-[#111111] pb-16">
+       <BuyerNavbar storeSlug={storeSlug} />
 
       <main className="max-w-4xl mx-auto px-4 py-8">
         {errorMessage && (
           <div className="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{errorMessage}</span>
-          </div>
+           </div>
         )}
 
         <form onSubmit={handleSubmitOrder} className="grid md:grid-cols-5 gap-8">
@@ -259,7 +269,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
                     <Sparkles className="w-3.5 h-3.5" /> Terhubung
                   </span>
                 )}
-              </div>
+                 </div>
 
               {buyer && (
                 <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center gap-2.5">
@@ -353,7 +363,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
                 )}
                 {shippingOptions.map((c) => (
                   <label
-                    key={c.code}
+                     key={`${c.courier_code}-${c.courier_service_code}`}
                     className={`flex items-center justify-between p-3 rounded-xl border text-xs cursor-pointer transition-all ${
                         form.courier === c.courier_code && form.courierService === c.courier_service_code
                         ? 'border-emerald-500 bg-emerald-50/50 font-medium'
@@ -364,7 +374,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
                       <input
                         type="radio"
                         name="courier"
-                        checked={form.courier === c.code}
+                         checked={form.courier === c.courier_code && form.courierService === c.courier_service_code}
                          onChange={() =>
                            setForm({
                              ...form,
@@ -478,7 +488,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
                 disabled={loading || !isHydrated}
                 className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2"
               >
-                 {loading ? 'Processing...' : `Place order · Rp ${totalAmount.toLocaleString('id-ID')}`}
+                 {loading ? 'Processing...' : `${copy.checkoutSubmit} · Rp ${totalAmount.toLocaleString('id-ID')}`}
               </button>
 
               <p className="text-[10px] text-slate-400 text-center leading-tight">
@@ -487,7 +497,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
             </div>
           </div>
         </form>
-      </main>
-    </div>
+       </main>
+     </BuyerThemeFrame>
   );
 }

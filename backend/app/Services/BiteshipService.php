@@ -51,8 +51,20 @@ class BiteshipService
     /**
      * Menghitung ongkos kirim multi-kurir real-time.
      */
-    public function calculateRates(string $originAreaId, string $destinationAreaId, array $items): array
+    public function calculateRates(string $originAreaId, string $destinationAreaId, array $items, ?Store $store = null): array
     {
+        if ($this->isQaSimulationEnabled($store)) {
+            return [[
+                'courier_code' => 'sicepat',
+                'courier_service_code' => 'reg',
+                'courier_name' => 'SiCepat QA',
+                'courier_service_name' => 'Reguler QA',
+                'code' => 'sicepat-reg',
+                'price' => 10000,
+                'duration' => '1-2 days',
+            ]];
+        }
+
         if ($this->isUnconfigured()) {
             throw new \RuntimeException('Biteship API key belum dikonfigurasi.');
         }
@@ -80,6 +92,15 @@ class BiteshipService
      */
     public function createShippingOrder(Order $order, Store $store, string $courierCode, string $courierService, bool $isCod = false): array
     {
+        if ($this->isQaSimulationEnabled($store)) {
+            return [
+                'id' => 'QA-SHIPMENT-'.$order->order_number,
+                'waybill_id' => 'QA-AWB-'.$order->order_number,
+                'status' => 'allocated',
+                'label_url' => null,
+            ];
+        }
+
         if ($this->isUnconfigured()) {
             throw new \RuntimeException('Biteship API key belum dikonfigurasi.');
         }
@@ -130,5 +151,12 @@ class BiteshipService
     private function isUnconfigured(): bool
     {
         return $this->apiKey === '' || str_starts_with($this->apiKey, 'biteship_test_dummy');
+    }
+
+    private function isQaSimulationEnabled(?Store $store): bool
+    {
+        return (bool) config('services.qa_simulation.enabled')
+            && $store !== null
+            && str_starts_with($store->slug, (string) config('services.qa_simulation.store_slug'));
     }
 }

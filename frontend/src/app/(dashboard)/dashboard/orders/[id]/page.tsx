@@ -139,7 +139,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
         {/* Action Buttons based on State Machine */}
         <div className="flex items-center gap-2">
-          {statusRaw === 'paid_escrow' && (
+          {['paid_escrow', 'cod_verified'].includes(statusRaw) && (
             <button
               type="button"
               disabled={updateStatusMutation.isPending}

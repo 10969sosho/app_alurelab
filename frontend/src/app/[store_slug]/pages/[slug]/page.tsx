@@ -13,6 +13,7 @@ import { useBuyerStore } from '@/store/buyer-store';
 import BuyerLoginModal from '@/components/buyer/BuyerLoginModal';
 import { CmsPage, CmsSettings, CmsBranding, CmsNavigation } from '@/components/templates/types';
 import { fetchApi } from '@/lib/api-client';
+import { BuyerNavbar, BuyerThemeFrame } from '@/components/buyer/BuyerTheme';
 
 export default function StorefrontCustomPage({
   params,
@@ -91,121 +92,8 @@ export default function StorefrontCustomPage({
         ];
 
   return (
-    <div
-      className="min-h-screen font-sans antialiased selection:bg-[#111111] selection:text-[#F5F5F3] flex flex-col"
-      style={{ backgroundColor: bgColor, color: textColor }}
-    >
-      {/* ── 1. FIXED TOP NAVBAR ─────────────────────────────────────────── */}
-      <header
-        className="h-[80px] border-b border-[#DADADA] px-6 md:px-12 flex items-center justify-between sticky top-0 z-40 backdrop-blur-md"
-        style={{ backgroundColor: `${bgColor}f2` }}
-      >
-        {/* Left: Back to Home + Menu Trigger */}
-        <div className="flex items-center gap-6">
-          <Link
-            href={`/${storeSlug}`}
-            className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.2em] uppercase opacity-60 hover:opacity-100 transition-opacity"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">KEMBALI KE TOKO</span>
-          </Link>
-
-          <button
-            onClick={() => setIsMenuOpen(true)}
-            className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.22em] uppercase hover:opacity-75 transition-opacity"
-          >
-            <span>MENU</span>
-          </button>
-        </div>
-
-        {/* Center: Monogram Brand Logo */}
-        <Link
-          href={`/${storeSlug}`}
-          className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2.5"
-        >
-          <div className={`w-7 h-7 border border-current flex items-center justify-center ${fontHeadingClass} text-lg leading-none`}>
-            {logoInitial}
-          </div>
-          <span className="text-[12px] font-bold tracking-[0.22em] uppercase hidden md:inline">
-            {storeName}
-          </span>
-        </Link>
-
-        {/* Right: Account & Cart */}
-        <div className="flex items-center gap-6">
-          {buyer ? (
-            <Link
-              href={`/${storeSlug}/account`}
-              className="flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.2em] uppercase hover:opacity-75 transition-opacity"
-            >
-              <User className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{buyer.fullName.split(' ')[0]}</span>
-            </Link>
-          ) : (
-            <button
-              onClick={() => setIsLoginModalOpen(true)}
-              className="flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.2em] uppercase opacity-60 hover:opacity-100 transition-opacity"
-            >
-              <User className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">LOGIN</span>
-            </button>
-          )}
-
-          <Link
-            href={`/${storeSlug}/cart`}
-            className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.2em] uppercase hover:opacity-75 transition-opacity"
-          >
-            <ShoppingBag className="w-4 h-4" />
-            <span>BAG ({getTotalItems()})</span>
-          </Link>
-        </div>
-      </header>
-
-      {/* ── 2. DRAWER SIDEBAR MENU ───────────────────────────────────────── */}
-      <div
-        onClick={() => setIsMenuOpen(false)}
-        className={`fixed inset-0 bg-black/50 z-50 transition-opacity duration-500 ${
-          isMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-        }`}
-      />
-      <aside
-        className={`fixed top-0 left-0 bottom-0 w-full sm:w-[380px] z-50 p-8 sm:p-12 flex flex-col justify-between transition-transform duration-500 ease-out border-r border-[#DADADA] ${
-          isMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
-        }`}
-        style={{ backgroundColor: bgColor, color: textColor }}
-      >
-        <div className="space-y-8">
-          <div className="flex items-center justify-between border-b border-[#DADADA] pb-4">
-            <span className="text-[11px] uppercase tracking-[0.24em] font-medium opacity-60">
-              NAVIGASI TOKO
-            </span>
-            <button
-              onClick={() => setIsMenuOpen(false)}
-              className="p-1 hover:opacity-60 transition-opacity"
-            >
-              ✕
-            </button>
-          </div>
-
-          <nav className="flex flex-col space-y-3">
-            {navMenuItems.map((item: any) => (
-              <a
-                key={item.id || item.label}
-                href={item.url}
-                onClick={() => setIsMenuOpen(false)}
-                className={`${fontHeadingClass} text-[36px] sm:text-[42px] leading-[0.95] tracking-[0.03em] uppercase hover:pl-2 transition-all`}
-              >
-                {item.label}
-              </a>
-            ))}
-          </nav>
-        </div>
-
-        <div className="pt-8 border-t border-[#DADADA] text-[11px] uppercase tracking-[0.14em] opacity-60 flex justify-between">
-          <span>{storeName}</span>
-          <span>© 2026</span>
-        </div>
-      </aside>
+    <BuyerThemeFrame storeSlug={storeSlug} className="font-sans antialiased flex flex-col">
+      <BuyerNavbar storeSlug={storeSlug} storeName={storeName} />
 
       {/* ── 3. MAIN CUSTOM PAGE CONTENT ─────────────────────────────────── */}
       <main className="flex-1 w-full pb-20">
@@ -369,6 +257,6 @@ export default function StorefrontCustomPage({
         storeName={storeName}
         onSuccess={() => setIsLoginModalOpen(false)}
       />
-    </div>
+    </BuyerThemeFrame>
   );
 }
