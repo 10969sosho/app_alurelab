@@ -35,6 +35,7 @@ class ShowcaseSeeder extends Seeder
             ['slug' => 'kalmora'],
             [
                 'name' => 'Kalmora',
+                'phone_number' => '081234567891',
                 'settings' => $this->getFashionCmsSettings(),
             ]
         );
@@ -65,6 +66,7 @@ class ShowcaseSeeder extends Seeder
             ['slug' => 'techhub'],
             [
                 'name' => 'TechHub ID',
+                'phone_number' => '081234567892',
                 'settings' => $this->getGadgetCmsSettings(),
             ]
         );
