@@ -21,7 +21,7 @@ import axios from 'axios';
 import { useCartStore } from '@/store/cart-store';
 import { useBuyerStore } from '@/store/buyer-store';
 import { useBuyerCms } from '@/components/buyer/useBuyerCms';
-import { BuyerNavbar, BuyerThemeFrame } from '@/components/buyer/BuyerTheme';
+import { BuyerNavbar, BuyerThemeFrame, BuyerFooter } from '@/components/buyer/BuyerTheme';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
@@ -392,10 +392,22 @@ export default function ProductDetailPage({
         </div>
       </main>
 
+      {/* ── Mobile Sticky "Add to Bag" ──────────────────────── */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-black/10 p-3 shadow-2xl pb-safe">
+        <button
+          onClick={handleAddToCartAndOpen}
+          disabled={!product}
+          className="w-full bg-[#111111] text-[#F5F5F3] py-3.5 text-xs font-bold uppercase tracking-[0.15em] flex justify-between items-center px-4"
+        >
+          <span>{copy.productAddToCart}</span>
+          <span className="opacity-80">Rp {(currentPrice * quantity).toLocaleString('id-ID')}</span>
+        </button>
+      </div>
+
       {/* ── Footer ─────────────────────────────────────────── */}
-      <footer className="border-t border-[#DADADA] bg-[#F5F5F3] py-8 px-6 text-center text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-         <div>© 2026 {storeDisplayName}</div>
-      </footer>
+      <div className="pb-20 md:pb-0">
+        <BuyerFooter storeSlug={storeSlug} storeName={storeDisplayName} />
+      </div>
 
      </BuyerThemeFrame>
   );

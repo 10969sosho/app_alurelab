@@ -485,10 +485,10 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
 
               <button
                 type="submit"
-                disabled={loading || !isHydrated}
-                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2"
+                disabled={loading || !isHydrated || loadingRates || !form.courier}
+                className="w-full bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2"
               >
-                 {loading ? 'Processing...' : `${copy.checkoutSubmit} · Rp ${totalAmount.toLocaleString('id-ID')}`}
+                 {loading ? 'Processing...' : loadingRates ? 'Menghitung Ongkir...' : `${copy.checkoutSubmit} · Rp ${totalAmount.toLocaleString('id-ID')}`}
               </button>
 
               <p className="text-[10px] text-slate-400 text-center leading-tight">

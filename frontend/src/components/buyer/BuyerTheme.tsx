@@ -2,10 +2,10 @@
 
 import { createContext, useContext, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ShoppingBag, User } from 'lucide-react';
+import { ShoppingBag, User, Menu, X, ArrowRight } from 'lucide-react';
 import { useCartStore } from '@/store/cart-store';
 import { useBuyerStore } from '@/store/buyer-store';
-import { CmsSettings } from '@/components/templates/types';
+import { CmsSettings, NavMenuItem } from '@/components/templates/types';
 import BuyerLoginModal from './BuyerLoginModal';
 
 function useHydrated() {
@@ -14,13 +14,10 @@ function useHydrated() {
   return hydrated;
 }
 
-const DEFAULT_NAV = [
-  ['home', 'Home', ''],
-  ['shop', 'Shop', '/shop'],
-  ['cart', 'Cart', '/cart'],
-  ['checkout', 'Checkout', '/checkout'],
-  ['account', 'Account', '/account'],
-] as const;
+const DEFAULT_NAV: NavMenuItem[] = [
+  { id: 'home', label: 'Home', url: '/', enabled: true },
+  { id: 'shop', label: 'Shop', url: '/shop', enabled: true },
+];
 
 const BuyerThemeContext = createContext<CmsSettings>({});
 
@@ -40,9 +37,11 @@ export function BuyerThemeFrame({ storeSlug, children, className = '' }: {
   const settings = useBuyerTheme(storeSlug);
   const template = settings.template || 'modern';
   const branding = settings.branding || {};
-  return <div data-buyer-template={template} className={`buyer-theme buyer-page min-h-screen ${className}`} style={{ backgroundColor: branding.backgroundColor, color: branding.textColor }}>
-    {children}
-  </div>;
+  return (
+    <div data-buyer-template={template} className={`buyer-theme buyer-page min-h-screen flex flex-col ${className}`} style={{ backgroundColor: branding.backgroundColor, color: branding.textColor }}>
+      {children}
+    </div>
+  );
 }
 
 export function BuyerNavbar({ storeSlug, storeName, onLogin }: { storeSlug: string; storeName?: string; onLogin?: () => void }) {
@@ -50,32 +49,187 @@ export function BuyerNavbar({ storeSlug, storeName, onLogin }: { storeSlug: stri
   const { buyer } = useBuyerStore();
   const totalItems = useCartStore((state) => state.getTotalItems());
   const hydrated = useHydrated();
+  
   const [loginOpen, setLoginOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const branding = settings.branding || {};
   const cmsItems = settings.navigation?.menuItems || [];
-  const labels = new Map(cmsItems.map((item) => [item.id, item.label]));
+  const navItems = cmsItems.length > 0 ? cmsItems.filter(i => i.enabled) : DEFAULT_NAV;
   const name = branding.storeName || storeName || storeSlug.replace(/-/g, ' ');
-  const link = (path: string) => path.startsWith('#') ? `/${storeSlug}${path}` : path ? `/${storeSlug}${path}` : `/${storeSlug}`;
+  const primaryColor = branding.primaryColor || '#111111';
 
-  return <>
-    <header className="buyer-navbar sticky top-0 z-40 border-b px-4 py-3 backdrop-blur-xl sm:px-6 md:px-10">
-      <div className="mx-auto flex max-w-7xl items-center gap-4">
-        <Link href={`/${storeSlug}`} className="shrink-0 text-base font-black uppercase tracking-tight">{name}</Link>
-        <nav className="buyer-navbar-links flex min-w-0 flex-1 items-center justify-center gap-1 overflow-x-auto sm:gap-2">
-          {DEFAULT_NAV.map(([id, label, path]) => <Link key={id} href={link(path)} className="whitespace-nowrap rounded-full px-3 py-2 text-[10px] font-bold uppercase tracking-[.12em] opacity-70 hover:opacity-100 sm:px-4">{labels.get(id) || label}</Link>)}
-        </nav>
-        <div className="flex shrink-0 items-center gap-2">
-          {hydrated && buyer ? <Link href={`/${storeSlug}/account`} aria-label="Account"><User className="h-4 w-4" /></Link> : <button type="button" aria-label="Login" onClick={() => onLogin ? onLogin() : setLoginOpen(true)}><User className="h-4 w-4" /></button>}
-          <Link href={`/${storeSlug}/cart`} className="flex items-center gap-1 rounded-full px-2 py-2 text-xs font-bold"><ShoppingBag className="h-4 w-4" />{hydrated ? totalItems : 0}</Link>
+  const link = (path: string) => {
+    if (path.startsWith('http')) return path;
+    if (path.startsWith('/')) return `/${storeSlug}${path === '/' ? '' : path}`;
+    return `/${storeSlug}/${path}`;
+  };
+
+  const showAnnouncement = settings.sections?.showAnnouncementBar !== false;
+  const announcementText = settings.highlights?.announcementText || `Welcome to ${name} — Free Shipping Worldwide`;
+
+  return (
+    <>
+      {/* Announcement Bar */}
+      {showAnnouncement && (
+        <div className="w-full py-1.5 px-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-2 relative z-50" style={{ backgroundColor: primaryColor, color: '#ffffff' }}>
+          <span>{announcementText}</span>
         </div>
-      </div>
-    </header>
-    <BuyerLoginModal isOpen={loginOpen} onClose={() => setLoginOpen(false)} storeSlug={storeSlug} storeName={name} />
-  </>;
+      )}
+
+      {/* Navbar */}
+      <header className="buyer-navbar sticky top-0 z-40 border-b border-black/10 backdrop-blur-xl bg-white/80 transition-all duration-300">
+        <div className="mx-auto flex h-14 sm:h-16 max-w-7xl items-center justify-between px-4 sm:px-6 md:px-10">
+          
+          {/* Mobile Menu Button & Logo */}
+          <div className="flex items-center gap-3 md:w-1/3">
+            <button 
+              className="md:hidden p-1.5 -ml-1.5 text-black hover:opacity-70 transition-opacity"
+              onClick={() => setMobileMenuOpen(true)}
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <Link href={`/${storeSlug}`} className="text-sm sm:text-base font-black uppercase tracking-tight text-black truncate max-w-[150px] sm:max-w-[200px]">
+              {name}
+            </Link>
+          </div>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex flex-1 items-center justify-center gap-6 lg:gap-8">
+            {navItems.map((item) => (
+              <Link 
+                key={item.id} 
+                href={link(item.url)} 
+                className="text-[11px] font-bold uppercase tracking-[0.15em] text-black/70 hover:text-black transition-colors"
+                target={item.url.startsWith('http') ? '_blank' : undefined}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Right Icons */}
+          <div className="flex shrink-0 items-center justify-end gap-3 sm:gap-4 md:w-1/3 text-black">
+            {hydrated && buyer ? (
+              <Link href={`/${storeSlug}/account`} aria-label="Account" className="hover:opacity-70 transition-opacity p-1">
+                <User className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
+              </Link>
+            ) : (
+              <button type="button" aria-label="Login" onClick={() => onLogin ? onLogin() : setLoginOpen(true)} className="hover:opacity-70 transition-opacity p-1">
+                <User className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
+              </button>
+            )}
+            <Link href={`/${storeSlug}/cart`} className="flex items-center gap-1.5 hover:opacity-70 transition-opacity p-1">
+              <ShoppingBag className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
+              <span className="text-[10px] sm:text-xs font-bold bg-black text-white w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center">
+                {hydrated ? totalItems : 0}
+              </span>
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 flex">
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity" 
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          
+          {/* Drawer */}
+          <div className="relative w-[85vw] max-w-[320px] bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-left duration-300">
+            <div className="flex items-center justify-between p-5 border-b border-black/10">
+              <span className="font-black uppercase tracking-tight text-black text-sm">{name}</span>
+              <button onClick={() => setMobileMenuOpen(false)} className="p-2 -mr-2 text-black/60 hover:text-black">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto py-4">
+              <nav className="flex flex-col">
+                {navItems.map((item) => (
+                  <Link 
+                    key={item.id} 
+                    href={link(item.url)} 
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-between px-6 py-4 text-sm font-bold uppercase tracking-[0.1em] text-black border-b border-black/5 hover:bg-black/5"
+                  >
+                    <span>{item.label}</span>
+                    <ArrowRight className="w-3.5 h-3.5 opacity-40" />
+                  </Link>
+                ))}
+              </nav>
+            </div>
+            
+            <div className="p-6 border-t border-black/10 bg-slate-50">
+              {hydrated && buyer ? (
+                <Link 
+                  href={`/${storeSlug}/account`} 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-center w-full bg-black text-white py-3.5 text-xs font-bold uppercase tracking-[0.15em] rounded-xs"
+                >
+                  My Account
+                </Link>
+              ) : (
+                <button 
+                  onClick={() => { setMobileMenuOpen(false); if (onLogin) onLogin(); else setLoginOpen(true); }}
+                  className="flex items-center justify-center w-full bg-black text-white py-3.5 text-xs font-bold uppercase tracking-[0.15em] rounded-xs"
+                >
+                  Sign In / Register
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <BuyerLoginModal isOpen={loginOpen} onClose={() => setLoginOpen(false)} storeSlug={storeSlug} storeName={name} />
+    </>
+  );
 }
 
 export function BuyerFooter({ storeSlug, storeName }: { storeSlug: string; storeName?: string }) {
   const settings = useBuyerTheme(storeSlug);
+  const branding = settings.branding || {};
+  const social = settings.navigation?.socialLinks || {};
+  const primaryColor = branding.primaryColor || '#111111';
+  const name = branding.storeName || storeName || storeSlug;
   const year = new Date().getFullYear();
-  return <footer className="buyer-footer border-t px-4 py-8 text-center text-xs opacity-70 sm:px-6"><p>{settings.buyerCopy?.footerNote || 'Belanja aman dengan pembayaran dan pengiriman terpercaya.'}</p><p className="mt-2">© {year} {settings.branding?.storeName || storeName || storeSlug}</p></footer>;
+
+  return (
+    <footer className="buyer-footer mt-auto border-t border-black/10 bg-white pt-12 pb-8 px-5 sm:px-10 text-center sm:text-left">
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center md:items-start gap-8">
+        
+        {/* Brand & Note */}
+        <div className="max-w-xs space-y-4">
+          <div className="text-xl font-black uppercase tracking-tight text-black">{name}</div>
+          <p className="text-xs text-black/60 leading-relaxed">
+            {settings.buyerCopy?.footerNote || 'Belanja aman dengan pembayaran dan pengiriman terpercaya.'}
+          </p>
+        </div>
+        
+        {/* Social Links */}
+        {(social.instagram || social.tiktok || social.whatsapp) && (
+          <div className="space-y-3 text-center md:text-right">
+            <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-black">Follow Us</div>
+            <div className="flex items-center justify-center md:justify-end gap-4">
+              {social.instagram && <a href={social.instagram} target="_blank" rel="noreferrer" className="text-black/60 hover:text-black text-xs font-bold uppercase tracking-wider">Instagram</a>}
+              {social.tiktok && <a href={social.tiktok} target="_blank" rel="noreferrer" className="text-black/60 hover:text-black text-xs font-bold uppercase tracking-wider">TikTok</a>}
+              {social.whatsapp && <a href={social.whatsapp} target="_blank" rel="noreferrer" className="text-black/60 hover:text-black text-xs font-bold uppercase tracking-wider">WhatsApp</a>}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="max-w-7xl mx-auto mt-12 pt-6 border-t border-black/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-[10px] font-bold uppercase tracking-[0.1em] text-black/40">
+        <p>© {year} {name}. All rights reserved.</p>
+        <div className="flex gap-4">
+          <a href="#" className="hover:text-black">Terms</a>
+          <a href="#" className="hover:text-black">Privacy</a>
+        </div>
+      </div>
+    </footer>
+  );
 }

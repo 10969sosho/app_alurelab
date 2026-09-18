@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { useCartStore } from '@/store/cart-store';
 import { useBuyerCms } from '@/components/buyer/useBuyerCms';
-import { BuyerNavbar, BuyerThemeFrame } from '@/components/buyer/BuyerTheme';
+import { BuyerNavbar, BuyerThemeFrame, BuyerFooter } from '@/components/buyer/BuyerTheme';
 
 export default function CartPage({
   params,
@@ -234,10 +234,23 @@ export default function CartPage({
         )}
       </main>
 
+      {/* ── Mobile Sticky "Checkout" ──────────────────────── */}
+      {items.length > 0 && (
+        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-black/10 p-3 shadow-2xl pb-safe">
+          <Link
+            href={`/${storeSlug}/checkout`}
+            className="w-full bg-[#111111] text-[#F5F5F3] py-3.5 text-xs font-bold uppercase tracking-[0.15em] flex justify-between items-center px-4"
+          >
+            <span>{copy.cartCheckout}</span>
+            <span className="opacity-80">Rp {subtotal.toLocaleString('id-ID')}</span>
+          </Link>
+        </div>
+      )}
+
       {/* ── Footer ─────────────────────────────────────────── */}
-       <footer className="border-t border-[#DADADA] bg-[#F5F5F3] py-8 px-6 text-center text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-         <div>© 2026 {storeDisplayName}</div>
-       </footer>
+      <div className="pb-20 md:pb-0">
+        <BuyerFooter storeSlug={storeSlug} storeName={storeDisplayName} />
+      </div>
      </BuyerThemeFrame>
   );
 }

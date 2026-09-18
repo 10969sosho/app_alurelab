@@ -1294,49 +1294,111 @@ export default function StorefrontCmsPage() {
 
           {/* TAB 5: SIDEBAR & NAVIGASI */}
           {activeTab === "navigation" && (
-            <div className="bg-white p-4 rounded-xs border border-slate-200 space-y-4 shadow-2xs">
+            <div className="bg-white p-4 rounded-xs border border-slate-200 space-y-5 shadow-2xs">
               <div className="flex items-center justify-between">
                 <div>
-                    <h3 className="text-xs font-bold text-slate-800">Menu Buyer</h3>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                     Atur label dan tampil/sembunyi. Tujuan link dikunci ke halaman buyer yang tersedia.
+                  <h3 className="text-xs font-bold text-slate-800">Menu & Announcement Bar</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Atur teks bar pengumuman atas, navigasi header, dan sosial media.
                   </p>
                 </div>
               </div>
 
-              {/* Menu items list */}
-              <div className="space-y-1.5">
-                {(cms.navigation?.menuItems || []).map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center gap-2 p-2 rounded-xs border border-slate-200 bg-slate-50/70"
-                  >
+              {/* Announcement Bar */}
+              <div className="p-3 bg-slate-50/70 border border-slate-200 rounded-xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800">Announcement Bar (Top Bar)</h4>
+                    <p className="text-[10px] text-slate-500">Tampil di paling atas situs untuk promo/info.</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={item.enabled}
-                      onChange={(e) => updateMenuItem(item.id, "enabled", e.target.checked)}
-                      className="w-4 h-4 rounded-xs text-[#EE4D2D] focus:ring-[#EE4D2D]"
+                      className="sr-only peer"
+                      checked={cms.sections?.showAnnouncementBar ?? true}
+                      onChange={(e) =>
+                        setCms({
+                          ...cms,
+                          sections: { ...cms.sections, showAnnouncementBar: e.target.checked },
+                        })
+                      }
                     />
-
+                    <div className="w-8 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-[#EE4D2D]"></div>
+                  </label>
+                </div>
+                
+                {cms.sections?.showAnnouncementBar !== false && (
+                  <div>
                     <input
                       type="text"
-                      value={item.label}
-                      onChange={(e) => updateMenuItem(item.id, "label", e.target.value)}
-                      placeholder="NAMA MENU"
-                      className="w-1/3 text-xs px-2.5 py-1 rounded-xs border border-slate-300 bg-white font-bold focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D]"
+                      value={cms.highlights?.announcementText || ""}
+                      onChange={(e) =>
+                        setCms({
+                          ...cms,
+                          highlights: { ...cms.highlights, announcementText: e.target.value },
+                        })
+                      }
+                      placeholder="Contoh: Gratis Ongkir ke Seluruh Indonesia"
+                      className="w-full text-xs px-2.5 py-1.5 rounded-xs border border-slate-300 focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D]"
                     />
-
-                    <input
-                      type="text"
-                      value={item.url}
-                      onChange={(e) => updateMenuItem(item.id, "url", e.target.value)}
-                      readOnly
-                      aria-label="Tujuan menu"
-                      className="flex-1 text-xs px-2.5 py-1 rounded-xs border border-slate-300 bg-slate-100 text-slate-500 font-mono"
-                    />
-
                   </div>
-                ))}
+                )}
+              </div>
+
+              {/* Menu items list */}
+              <div className="space-y-2 pt-2 border-t border-slate-200">
+                <h4 className="text-xs font-bold text-slate-800">Menu Header Utama</h4>
+                <div className="space-y-1.5">
+                  {(cms.navigation?.menuItems || []).map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center gap-2 p-2 rounded-xs border border-slate-200 bg-slate-50/70"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={item.enabled}
+                        onChange={(e) => updateMenuItem(item.id, "enabled", e.target.checked)}
+                        className="w-4 h-4 rounded-xs text-[#EE4D2D] focus:ring-[#EE4D2D]"
+                      />
+
+                      <input
+                        type="text"
+                        value={item.label}
+                        onChange={(e) => updateMenuItem(item.id, "label", e.target.value)}
+                        placeholder="NAMA MENU"
+                        className="w-1/3 text-xs px-2.5 py-1 rounded-xs border border-slate-300 bg-white font-bold focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D]"
+                      />
+
+                      <input
+                        type="text"
+                        value={item.url}
+                        onChange={(e) => updateMenuItem(item.id, "url", e.target.value)}
+                        placeholder="/halaman atau https://..."
+                        aria-label="Tujuan menu"
+                        className="flex-1 text-xs px-2.5 py-1 rounded-xs border border-slate-300 bg-white text-slate-600 font-mono focus:outline-none focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D]"
+                      />
+                    </div>
+                  ))}
+                  
+                  <button
+                    onClick={() => {
+                      const newId = `custom-${Date.now()}`;
+                      setCms({
+                        ...cms,
+                        navigation: {
+                          ...cms.navigation!,
+                          menuItems: [
+                            ...(cms.navigation?.menuItems || []),
+                            { id: newId, label: 'Menu Baru', url: '/', enabled: true }
+                          ]
+                        }
+                      });
+                    }}
+                    className="w-full py-1.5 mt-2 border border-dashed border-slate-300 rounded-xs text-[11px] font-bold text-slate-500 hover:text-[#EE4D2D] hover:border-[#EE4D2D] hover:bg-slate-50 transition-colors"
+                  >
+                    + Tambah Menu Baru
+                  </button>
+                </div>
               </div>
 
               {/* Social Links */}
