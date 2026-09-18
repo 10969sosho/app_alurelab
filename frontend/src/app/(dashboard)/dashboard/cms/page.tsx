@@ -116,8 +116,16 @@ const DEFAULT_EDITORIAL_CMS: CmsSettings = {
 };
 
 function normalizeCmsSettings(settings: CmsSettings, storeSlug: string): CmsSettings {
-  const { showCollections, showLookbook, showTrustGuarantee, ...sections } = settings.sections || {};
-  const { collections, aboutSubheading, aboutImage, founderQuote, valuePillars, lookbookHeading, lookbookImages, ...highlights } = settings.highlights || {};
+  const sections = Object.fromEntries(
+    Object.entries(settings.sections || {}).filter(([key]) =>
+      !["showCollections", "showLookbook", "showTrustGuarantee"].includes(key)
+    )
+  ) as CmsSettings["sections"];
+  const highlights = Object.fromEntries(
+    Object.entries(settings.highlights || {}).filter(([key]) =>
+      !["collections", "aboutSubheading", "aboutImage", "founderQuote", "valuePillars", "lookbookHeading", "lookbookImages"].includes(key)
+    )
+  ) as CmsSettings["highlights"];
   const validMenuItems = (settings.navigation?.menuItems || []).filter((item) =>
     item.url === "#top" ||
     item.url === "#shop" ||
