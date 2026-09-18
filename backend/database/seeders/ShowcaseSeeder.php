@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use App\Models\Store;
 use App\Models\Product;
@@ -16,6 +17,8 @@ class ShowcaseSeeder extends Seeder
 {
     public function run(): void
     {
+        DB::statement("set app.is_system_bypass = 'on';");
+
         // ==========================================
         // 1. BUAT TOKO 1: FASHION (MINIMALIST)
         // ==========================================
