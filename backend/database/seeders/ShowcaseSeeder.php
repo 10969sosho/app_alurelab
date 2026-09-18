@@ -332,13 +332,13 @@ class ShowcaseSeeder extends Seeder
                 'customer_name' => $customerNames[array_rand($customerNames)],
                 'customer_email' => 'customer' . $i . '@example.com',
                 'customer_phone' => '0812' . rand(10000000, 99999999),
-                'shipping_address' => [
+                'shipping_address' => json_encode([
                     'name' => 'Rumah',
                     'address' => 'Jl. Sudirman No ' . rand(1, 100),
                     'city' => 'Jakarta Selatan',
                     'province' => 'DKI Jakarta',
                     'postal_code' => '12190'
-                ]
+                ])
             ]);
 
             OrderItem::create([
