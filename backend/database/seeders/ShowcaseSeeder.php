@@ -23,7 +23,7 @@ class ShowcaseSeeder extends Seeder
             ['email' => 'kalmora@example.com'],
             [
                 'name' => 'Kalmora Fashion',
-                'password' => Hash::make('password123'),
+                'password_hash' => Hash::make('password123'),
                 'email_verified_at' => now(),
             ]
         );
@@ -49,7 +49,7 @@ class ShowcaseSeeder extends Seeder
             ['email' => 'techhub@example.com'],
             [
                 'name' => 'TechHub Store',
-                'password' => Hash::make('password123'),
+                'password_hash' => Hash::make('password123'),
                 'email_verified_at' => now(),
             ]
         );
