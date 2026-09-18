@@ -309,7 +309,7 @@ class ShowcaseSeeder extends Seeder
         $products = Product::where('tenant_id', $storeId)->get();
         if ($products->isEmpty()) return;
 
-        $statuses = ['UNPAID', 'PAID', 'SHIPPED', 'COMPLETED'];
+        $statuses = ['pending_payment', 'paid_escrow', 'processing', 'shipped', 'completed'];
         $customerNames = ['Budi Santoso', 'Siti Aminah', 'John Doe', 'Jane Smith', 'Agus Setiawan'];
 
         for ($i = 0; $i < 5; $i++) {
