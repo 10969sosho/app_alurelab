@@ -85,7 +85,7 @@ export function BuyerNavbar({ storeSlug, storeName, onLogin }: { storeSlug: stri
           {/* Mobile Menu Button & Logo */}
           <div className="flex items-center gap-3 md:w-1/3">
             <button 
-              className={cn("p-1.5 -ml-1.5 text-black hover:opacity-70 transition-opacity", desktopStyle === 'inline' ? 'md:hidden' : '')}
+              className={`p-1.5 -ml-1.5 text-black hover:opacity-70 transition-opacity ${desktopStyle === 'inline' ? 'md:hidden' : ''}`}
               onClick={() => setMobileMenuOpen(true)}
             >
               <Menu className="w-5 h-5" />
