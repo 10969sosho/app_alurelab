@@ -1,36 +1,174 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import Link from 'next/link';
-import { Search, ShoppingBag } from 'lucide-react';
-import { useCartStore } from '@/store/cart-store';
+import { useState, useMemo, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { SlidersHorizontal, ArrowUpDown, Tag, PackageSearch } from 'lucide-react';
 import { Product, StoreData } from '@/components/templates/types';
-import { BuyerFooter, BuyerNavbar, BuyerThemeFrame } from './BuyerTheme';
+import BuyerTopBar from './BuyerTopBar';
+import BuyerBottomNav from './BuyerBottomNav';
+import BuyerProductCard from './BuyerProductCard';
 
-export default function ShopPageClient({ storeSlug, store }: { storeSlug: string; store: StoreData }) {
-  const [category, setCategory] = useState('Semua');
-  const [query, setQuery] = useState('');
-  const addItem = useCartStore((state) => state.addItem);
-  const products = useMemo(() => store.products.filter((product) =>
-    (category === 'Semua' || product.category === category) && product.title.toLowerCase().includes(query.toLowerCase())
-  ), [category, query, store.products]);
+function ShopPageContent({
+  storeSlug,
+  store,
+}: {
+  storeSlug: string;
+  store: StoreData;
+}) {
+  const searchParams = useSearchParams();
+  const initialCategoryParam = searchParams.get('cat') || 'Semua';
+  const initialSearchParam = searchParams.get('q') || '';
 
-  const addToCart = (product: Product) => {
-    const variant = product.variants[0];
-    if (!variant) return;
-    addItem({ productId: product.id, variantId: variant.id, title: product.title, variantTitle: variant.title, price: variant.price, quantity: 1, imageUrl: product.images[0] });
-  };
+  const [category, setCategory] = useState(initialCategoryParam);
+  const [query, setQuery] = useState(initialSearchParam);
+  const [sortBy, setSortBy] = useState<'populer' | 'terbaru' | 'termurah' | 'termahal'>('populer');
 
-  return <BuyerThemeFrame storeSlug={storeSlug} className="font-sans">
-    <BuyerNavbar storeSlug={storeSlug} storeName={store.storeName} />
-    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 md:px-10 md:py-14">
-      <div className="mb-8 flex flex-col gap-5 border-b border-[var(--theme-line)] pb-6 md:flex-row md:items-end md:justify-between">
-        <div><p className="text-[10px] font-bold uppercase tracking-[.22em] opacity-60">{store.settings?.hero?.badgeText || 'Shop all'}</p><h1 className="mt-2 text-5xl font-black tracking-[-.06em] md:text-7xl">{store.settings?.hero?.headline || 'Shop'}</h1><p className="mt-3 max-w-xl text-sm opacity-65">{store.settings?.hero?.description || store.tagline}</p></div>
-        <label className="relative block w-full md:w-64"><Search className="absolute left-3 top-3 h-4 w-4 opacity-50" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Cari produk" className="w-full rounded-full border border-[var(--theme-line)] bg-[var(--theme-surface)] py-2.5 pl-9 pr-4 text-xs outline-none" /></label>
-      </div>
-      <div className="mb-8 flex gap-2 overflow-x-auto">{store.categories.map((item) => <button key={item} type="button" onClick={() => setCategory(item)} className={`whitespace-nowrap rounded-full border border-[var(--theme-line)] px-4 py-2 text-xs font-bold ${category === item ? 'bg-[var(--theme-ink)] text-[var(--theme-surface)]' : ''}`}>{item}</button>)}</div>
-      {products.length ? <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">{products.map((product) => <article key={product.id} className="group"><Link href={`/${storeSlug}/products/${product.slug}`} className="block aspect-[4/5] overflow-hidden bg-black/5"><img src={product.images[0]} alt={product.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /></Link><div className="space-y-1 py-3"><p className="text-[10px] font-bold uppercase tracking-wider opacity-55">{product.category}</p><Link href={`/${storeSlug}/products/${product.slug}`} className="block text-sm font-bold leading-tight">{product.title}</Link><div className="flex items-center justify-between gap-2 text-sm"><span>Rp {product.price.toLocaleString('id-ID')}</span><button type="button" onClick={() => addToCart(product)} className="flex items-center gap-1 text-[10px] font-bold uppercase"><ShoppingBag className="h-3.5 w-3.5" />Tambah</button></div></div></article>)}</div> : <div className="border border-dashed border-[var(--theme-line)] py-20 text-center text-sm opacity-65">Produk tidak ditemukan.</div>}
-    </main>
-    <BuyerFooter storeSlug={storeSlug} storeName={store.storeName} />
-  </BuyerThemeFrame>;
+  // Sync if URL query params change
+  useEffect(() => {
+    const q = searchParams.get('q');
+    const cat = searchParams.get('cat');
+    if (q !== null) setQuery(q);
+    if (cat !== null) setCategory(cat);
+  }, [searchParams]);
+
+  const categories = store.categories || ['Semua'];
+
+  // Filter & Sort Logic
+  const filteredAndSortedProducts = useMemo(() => {
+    let result = (store.products || []).filter((prod) => {
+      const matchCat = category === 'Semua' || prod.category === category;
+      const matchQuery =
+        !query ||
+        prod.title.toLowerCase().includes(query.toLowerCase()) ||
+        prod.category.toLowerCase().includes(query.toLowerCase()) ||
+        (prod.description && prod.description.toLowerCase().includes(query.toLowerCase()));
+      return matchCat && matchQuery;
+    });
+
+    // Sorting
+    if (sortBy === 'termurah') {
+      result.sort((a, b) => a.price - b.price);
+    } else if (sortBy === 'termahal') {
+      result.sort((a, b) => b.price - a.price);
+    } else if (sortBy === 'terbaru') {
+      // Latest first
+      result.reverse();
+    }
+    // 'populer' retains default curated sort
+
+    return result;
+  }, [store.products, category, query, sortBy]);
+
+  return (
+    <div className="min-h-screen bg-stone-50 text-slate-900 flex flex-col font-sans antialiased pb-20">
+      {/* ── 1. Navbar Atas: Search Bar + Chat + Keranjang ── */}
+      <BuyerTopBar
+        storeSlug={storeSlug}
+        storeName={store.storeName}
+        phoneNumber={store.phone_number}
+        initialQuery={query}
+        placeholder="Cari semua produk..."
+      />
+
+      <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 pt-3 space-y-3">
+        {/* ── 2. Filter & Sort Bar ── */}
+        <div className="bg-white rounded-xl border border-stone-200/80 p-3 shadow-2xs space-y-3">
+          {/* Category Filter Chips (Horizontal Scroll) */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+            <div className="flex items-center gap-1 text-[11px] font-bold text-stone-600 pl-1 pr-2 shrink-0">
+              <Tag className="w-3.5 h-3.5" />
+              <span>Filter:</span>
+            </div>
+            {categories.map((cat) => {
+              const isSelected = category === cat;
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setCategory(cat)}
+                  className={`whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 ${
+                    isSelected
+                      ? 'bg-slate-900 text-white shadow-xs'
+                      : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                  }`}
+                >
+                  {cat}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Sort By & Product Counter */}
+          <div className="flex items-center justify-between pt-2 border-t border-stone-100 text-xs">
+            <div className="flex items-center gap-1.5 text-stone-600 font-medium">
+              <span>Menampilkan:</span>
+              <span className="font-extrabold text-slate-950">
+                {filteredAndSortedProducts.length} Produk
+              </span>
+            </div>
+
+            {/* Sort Dropdown */}
+            <div className="flex items-center gap-1.5">
+              <ArrowUpDown className="w-3.5 h-3.5 text-stone-600" />
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="bg-stone-100 border border-stone-200 text-slate-900 text-xs font-bold rounded-lg py-1 px-2.5 focus:outline-none focus:ring-1 focus:ring-slate-900 cursor-pointer"
+              >
+                <option value="populer">Terpopuler</option>
+                <option value="terbaru">Terbaru</option>
+                <option value="termurah">Harga Termurah</option>
+                <option value="termahal">Harga Termahal</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* ── 3. Grid: 2 Card Kanan Kiri Saja ── */}
+        {filteredAndSortedProducts.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 sm:gap-4 pt-1">
+            {filteredAndSortedProducts.map((product) => (
+              <BuyerProductCard
+                key={product.id}
+                product={product}
+                storeSlug={storeSlug}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl border border-dashed border-stone-300 py-16 px-4 text-center space-y-3">
+            <PackageSearch className="w-10 h-10 text-stone-400 mx-auto stroke-[1.5]" />
+            <div className="space-y-1">
+              <h3 className="text-sm font-bold text-slate-900">
+                Produk Tidak Ditemukan
+              </h3>
+              <p className="text-xs text-stone-500 max-w-xs mx-auto">
+                Coba gunakan kata kunci lain atau pilih kategori yang berbeda.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setCategory('Semua');
+                setQuery('');
+              }}
+              className="text-xs font-bold text-slate-900 bg-stone-100 hover:bg-stone-200 px-4 py-2 rounded-xl transition-colors inline-block"
+            >
+              Reset Filter
+            </button>
+          </div>
+        )}
+      </main>
+
+      {/* ── 4. Sticky Bottom Navigation (Tab PRODUK Aktif) ── */}
+      <BuyerBottomNav storeSlug={storeSlug} />
+    </div>
+  );
+}
+
+export default function ShopPageClient(props: { storeSlug: string; store: StoreData }) {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-stone-50 flex items-center justify-center text-xs text-stone-500">Memuat katalog...</div>}>
+      <ShopPageContent {...props} />
+    </Suspense>
+  );
 }

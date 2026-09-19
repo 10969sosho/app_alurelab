@@ -72,6 +72,14 @@ export interface CmsHighlights {
   featuredCategory?: string;
   aboutHeading?: string;
   aboutStory?: string;
+  sectionA_title?: string;
+  sectionA_subtitle?: string;
+  highlightA_title?: string;
+  sectionB_title?: string;
+  sectionB_subtitle?: string;
+  highlightB_title?: string;
+  extraSections?: any[];
+  [key: string]: any;
 }
 
 export interface CmsBuyerCopy {

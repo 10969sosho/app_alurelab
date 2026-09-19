@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Sparkles, Store, CheckCircle2, Rocket, ArrowRight } from 'lucide-react';
+import Image from 'next/image';
+import { ArrowLeft, Sparkles, Store, Rocket, ArrowRight } from 'lucide-react';
 import { fetchApi } from '@/lib/api-client';
 
 export default function OnboardingPage() {
@@ -66,22 +67,24 @@ export default function OnboardingPage() {
 
   if (createdStore) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4">
-        <div className="max-w-lg w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 text-center shadow-2xl">
-          <div className="w-20 h-20 bg-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-emerald-500/30">
-            <Rocket className="w-10 h-10" />
+      <div className="min-h-screen bg-offwhite text-charcoal-900 flex items-center justify-center p-4 relative overflow-hidden">
+        <div className="absolute inset-0 z-0 pointer-events-none bg-grid-lines opacity-[0.3]" />
+        
+        <div className="max-w-lg w-full bg-white border border-cloud rounded-lg p-8 md:p-10 text-center shadow-soft relative z-10">
+          <div className="w-16 h-16 bg-offwhite border border-cloud rounded-full flex items-center justify-center mx-auto mb-6 text-charcoal-900 shadow-lime-glow">
+            <Rocket className="w-7 h-7 stroke-[1.5]" />
           </div>
 
-          <h2 className="text-3xl font-extrabold mb-2">Cek Email Anda</h2>
-          <p className="text-slate-400 text-sm mb-6">
-            Toko <span className="text-emerald-400 font-semibold">{createdStore.name}</span> berhasil dibuat. Buka link verifikasi yang dikirim ke <span className="text-white font-semibold">{createdStore.ownerEmail}</span>, lalu login untuk masuk ke dashboard seller.
+          <h2 className="text-2xl font-semibold mb-2">Cek Email Anda</h2>
+          <p className="body-text text-sm mb-6">
+            Toko <span className="text-charcoal-900 font-semibold">{createdStore.name}</span> berhasil dibuat. Buka link verifikasi yang dikirim ke <span className="text-charcoal-900 font-semibold">{createdStore.ownerEmail}</span>, lalu login untuk masuk ke dashboard seller.
           </p>
 
-          <div className="bg-slate-950/80 border border-slate-800 p-4 rounded-xl text-left text-xs space-y-2 mb-8 font-mono">
-            <div className="text-slate-500">Alamat Storefront Publik:</div>
+          <div className="bg-offwhite border border-cloud p-4 rounded-sm text-left text-xs space-y-2 mb-8 font-mono">
+            <div className="micro-label">Alamat Storefront Publik:</div>
             <a
               href={`/${createdStore.slug}`}
-              className="text-emerald-400 font-bold break-all hover:underline block"
+              className="text-charcoal-900 font-bold break-all hover:underline block text-sm"
             >
               {createdStore.storefront_url}
             </a>
@@ -90,16 +93,16 @@ export default function OnboardingPage() {
           <div className="flex flex-col gap-3">
             <Link
               href={`/${createdStore.slug}`}
-              className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3.5 rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
+              className="btn-primary w-full py-3"
             >
-              Lihat Toko Sekarang <ArrowRight className="w-4 h-4" />
+              Lihat Toko Sekarang <ArrowRight className="w-4 h-4 ml-2" />
             </Link>
-             <Link
-               href="/login"
-               className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium py-3 rounded-xl text-sm transition-all"
-             >
-               Login ke Dashboard Seller
-             </Link>
+            <Link
+              href="/login"
+              className="btn-secondary w-full py-3"
+            >
+              Login ke Dashboard Seller
+            </Link>
           </div>
         </div>
       </div>
@@ -107,36 +110,39 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 py-12 px-4">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-offwhite text-charcoal-900 py-12 px-4 relative overflow-hidden font-sans">
+      <div className="absolute inset-0 z-0 pointer-events-none bg-grid-lines opacity-[0.3]" />
+      <div className="absolute top-0 w-full h-[1px] bg-gradient-to-r from-transparent via-lime-accent to-transparent opacity-30"></div>
+
+      <div className="max-w-2xl mx-auto relative z-10">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-xs text-slate-400 hover:text-white mb-6 font-medium"
+          className="inline-flex items-center gap-2 text-xs font-medium text-darkgray hover:text-charcoal-900 mb-8 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" /> Kembali ke Halaman Utama
+          <ArrowLeft className="w-4 h-4" /> KEMBALI KE BERANDA
         </Link>
 
-        <div className="text-center mb-8">
-          <span className="inline-flex items-center gap-1.5 text-xs font-mono text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20 mb-3">
+        <div className="text-center mb-10">
+          <span className="inline-flex items-center gap-1.5 micro-label text-charcoal-900 bg-white px-3 py-1.5 rounded-sm border border-cloud mb-4 shadow-sm">
             <Sparkles className="w-3.5 h-3.5" /> 60-Second Onboarding Wizard
           </span>
-          <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
+          <h1 className="h2-text text-charcoal-900 mb-2">
             Mulai Jualan dengan ALURELAB
           </h1>
-          <p className="text-sm text-slate-400 mt-2">
+          <p className="body-text text-sm">
             Isi formulir singkat ini dan toko multi-tenant bertenaga AI Anda akan aktif seketika.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 space-y-6 shadow-2xl">
+        <form onSubmit={handleSubmit} className="bg-white border border-cloud rounded-lg p-6 md:p-10 space-y-8 shadow-soft">
           <div className="space-y-4">
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2 text-emerald-400">
-              <Store className="w-4 h-4" /> 1. Identitas Toko
+            <h2 className="micro-label border-b border-cloud pb-2 flex items-center gap-2 text-charcoal-900 font-semibold">
+              <Store className="w-4 h-4" /> 1. IDENTITAS TOKO
             </h2>
 
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Nama Toko</label>
+                <label className="micro-label block mb-1.5">Nama Toko</label>
                 <input
                   type="text"
                   required
@@ -148,12 +154,12 @@ export default function OnboardingPage() {
                       handleSlugChange(e.target.value);
                     }
                   }}
-                  className="w-full bg-slate-950 border border-slate-800 text-xs px-3.5 py-2.5 rounded-xl text-white focus:border-emerald-500 focus:outline-none"
+                  className="w-full bg-offwhite border border-cloud text-sm px-3.5 py-2.5 rounded-sm text-charcoal-900 focus:border-charcoal-900 focus:outline-none transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Subdomain Toko</label>
+                <label className="micro-label block mb-1.5">Subdomain Toko</label>
                 <div className="flex items-center">
                   <input
                     type="text"
@@ -161,60 +167,60 @@ export default function OnboardingPage() {
                     placeholder="kopi-senja"
                     value={formData.storeSlug}
                     onChange={(e) => handleSlugChange(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 text-xs px-3.5 py-2.5 rounded-l-xl text-white focus:border-emerald-500 focus:outline-none font-mono"
+                    className="w-full bg-offwhite border border-cloud text-sm px-3.5 py-2.5 rounded-l-sm text-charcoal-900 focus:border-charcoal-900 focus:outline-none font-mono"
                   />
-                   <span className="bg-slate-800 border border-l-0 border-slate-800 text-[11px] text-slate-400 px-3 py-2.5 rounded-r-xl select-none font-mono">
-                     app.alurelab.com/
+                  <span className="bg-white border border-l-0 border-cloud text-[11px] text-mediumgray px-3 py-2.5 rounded-r-sm select-none font-mono">
+                    .alurelab.com
                   </span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="space-y-4 pt-4 border-t border-slate-800">
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider text-emerald-400">
-              2. Akun Pemilik (Owner)
+          <div className="space-y-4 pt-4 border-t border-cloud">
+            <h2 className="micro-label border-b border-cloud pb-2 text-charcoal-900 font-semibold">
+              2. AKUN PEMILIK (OWNER)
             </h2>
 
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Nama Lengkap</label>
+                <label className="micro-label block mb-1.5">Nama Lengkap</label>
                 <input
                   type="text"
                   required
                   placeholder="Nama pemilik"
                   value={formData.ownerName}
                   onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-800 text-xs px-3.5 py-2.5 rounded-xl text-white focus:border-emerald-500 focus:outline-none"
+                  className="w-full bg-offwhite border border-cloud text-sm px-3.5 py-2.5 rounded-sm text-charcoal-900 focus:border-charcoal-900 focus:outline-none transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Nomor WhatsApp</label>
+                <label className="micro-label block mb-1.5">Nomor WhatsApp</label>
                 <input
                   type="tel"
                   required
                   placeholder="081234567890"
                   value={formData.ownerPhone}
                   onChange={(e) => setFormData({ ...formData, ownerPhone: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-800 text-xs px-3.5 py-2.5 rounded-xl text-white focus:border-emerald-500 focus:outline-none"
+                  className="w-full bg-offwhite border border-cloud text-sm px-3.5 py-2.5 rounded-sm text-charcoal-900 focus:border-charcoal-900 focus:outline-none transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Email</label>
+                <label className="micro-label block mb-1.5">Email</label>
                 <input
                   type="email"
                   required
                   placeholder="email@bisnis.com"
                   value={formData.ownerEmail}
                   onChange={(e) => setFormData({ ...formData, ownerEmail: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-800 text-xs px-3.5 py-2.5 rounded-xl text-white focus:border-emerald-500 focus:outline-none"
+                  className="w-full bg-offwhite border border-cloud text-sm px-3.5 py-2.5 rounded-sm text-charcoal-900 focus:border-charcoal-900 focus:outline-none transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Kata Sandi (Password)</label>
+                <label className="micro-label block mb-1.5">Kata Sandi (Password)</label>
                 <input
                   type="password"
                   required
@@ -222,7 +228,7 @@ export default function OnboardingPage() {
                   placeholder="Minimal 8 karakter"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-800 text-xs px-3.5 py-2.5 rounded-xl text-white focus:border-emerald-500 focus:outline-none"
+                  className="w-full bg-offwhite border border-cloud text-sm px-3.5 py-2.5 rounded-sm text-charcoal-900 focus:border-charcoal-900 focus:outline-none transition-colors"
                 />
               </div>
             </div>
@@ -231,7 +237,7 @@ export default function OnboardingPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-4 rounded-xl text-sm transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 mt-4"
+            className="w-full btn-primary py-3.5 text-sm"
           >
             {loading ? 'Membangun Toko dalam 60 Detik...' : 'Buat & Luncurkan Toko Sekarang 🚀'}
           </button>

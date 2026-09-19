@@ -4,11 +4,12 @@ import { Suspense, useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { Eye, EyeOff, Loader2, Store } from 'lucide-react';
+import { Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react';
 
 const loginSchema = z.object({
   email:    z.string().email('Email tidak valid'),
@@ -58,24 +59,30 @@ function LoginFormContent() {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-2xl p-8">
-      <h2 className="text-xl font-semibold text-slate-800 mb-6">Masuk ke akun Anda</h2>
+    <div className="bg-white rounded-lg border border-cloud shadow-soft p-8 md:p-10">
+      <div className="mb-8 text-center flex flex-col items-center">
+        <div className="relative h-16 w-48 mb-4">
+          <Image src="/logo.png" alt="AlureLab" fill priority className="object-contain object-center mix-blend-multiply" />
+        </div>
+        <h2 className="text-xl font-semibold text-charcoal-900">Masuk ke Portal Merchant</h2>
+        <p className="text-xs text-mediumgray mt-1">Kelola toko online dan inventaris Anda</p>
+      </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         {/* Email */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1.5">
-            Email
+          <label className="micro-label block mb-1.5">
+            EMAIL
           </label>
           <input
             {...register('email')}
             type="email"
             placeholder="merchant@email.com"
             autoComplete="email"
-            className={`w-full px-4 py-3 rounded-xl border text-sm outline-none transition-all
+            className={`w-full px-4 py-3 rounded-sm border text-sm outline-none transition-all
               ${errors.email
-                ? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-200'
-                : 'border-slate-200 bg-slate-50 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100'
+                ? 'border-red-400 bg-red-50 focus:border-red-500'
+                : 'border-cloud bg-offwhite text-charcoal-900 focus:border-charcoal-900'
               }`}
           />
           {errors.email && (
@@ -85,25 +92,30 @@ function LoginFormContent() {
 
         {/* Password */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1.5">
-            Password
-          </label>
+          <div className="flex justify-between items-center mb-1.5">
+            <label className="micro-label">
+              PASSWORD
+            </label>
+            <Link href="/forgot-password" className="text-xs text-mediumgray hover:text-charcoal-900 transition-colors">
+              Lupa password?
+            </Link>
+          </div>
           <div className="relative">
             <input
               {...register('password')}
               type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
               autoComplete="current-password"
-              className={`w-full px-4 py-3 pr-12 rounded-xl border text-sm outline-none transition-all
+              className={`w-full px-4 py-3 pr-12 rounded-sm border text-sm outline-none transition-all
                 ${errors.password
-                  ? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-200'
-                  : 'border-slate-200 bg-slate-50 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100'
+                  ? 'border-red-400 bg-red-50 focus:border-red-500'
+                  : 'border-cloud bg-offwhite text-charcoal-900 focus:border-charcoal-900'
                 }`}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-mediumgray hover:text-charcoal-900"
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -113,34 +125,26 @@ function LoginFormContent() {
           )}
         </div>
 
-        {/* Forgot password */}
-        <div className="flex justify-end">
-          <Link href="/forgot-password" className="text-xs text-emerald-600 hover:text-emerald-700">
-            Lupa password?
-          </Link>
-        </div>
-
         {/* Submit */}
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full py-3 px-4 bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300
-                     text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+          className="w-full btn-primary py-3.5 mt-2"
         >
           {isLoading ? (
             <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Masuk...
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              Memproses...
             </>
           ) : (
-            'Masuk'
+            'Masuk ke Akun'
           )}
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-slate-500">
+      <p className="mt-6 text-center text-xs text-mediumgray">
         Belum punya toko?{' '}
-        <Link href="/onboarding" className="text-emerald-600 font-medium hover:text-emerald-700">
+        <Link href="/onboarding" className="text-charcoal-900 font-semibold hover:underline">
           Buat toko gratis
         </Link>
       </p>
@@ -150,30 +154,28 @@ function LoginFormContent() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-500 rounded-2xl mb-4 shadow-lg shadow-emerald-500/30">
-            <Store className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold text-white">ALURELAB</h1>
-          <p className="text-slate-400 mt-1 text-sm">Dashboard Merchant</p>
-        </div>
+    <div className="min-h-screen bg-offwhite text-charcoal-900 flex flex-col items-center justify-center p-4 relative overflow-hidden font-sans">
+      <div className="absolute inset-0 z-0 pointer-events-none bg-grid-lines opacity-[0.3]" />
+      <div className="absolute inset-0 z-0 pointer-events-none subtle-radial-gradient" />
+      <div className="absolute top-0 w-full h-[1px] bg-gradient-to-r from-transparent via-lime-accent to-transparent opacity-30"></div>
+
+      <div className="w-full max-w-md relative z-10">
+        <Link href="/" className="inline-flex items-center gap-2 text-xs font-medium text-darkgray hover:text-charcoal-900 mb-6 transition-colors">
+          <ArrowLeft className="w-4 h-4" /> KEMBALI KE BERANDA
+        </Link>
 
         <Suspense fallback={
-          <div className="bg-white rounded-2xl shadow-2xl p-8 flex items-center justify-center min-h-[300px]">
-            <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+          <div className="bg-white rounded-lg border border-cloud shadow-soft p-8 flex items-center justify-center min-h-[300px]">
+            <Loader2 className="w-8 h-8 animate-spin text-charcoal-900" />
           </div>
         }>
           <LoginFormContent />
         </Suspense>
 
-        <p className="text-center text-xs text-slate-500 mt-6">
+        <p className="text-center text-[11px] text-mediumgray mt-6">
           © 2026 ALURELAB. All rights reserved.
         </p>
       </div>
     </div>
   );
 }
-

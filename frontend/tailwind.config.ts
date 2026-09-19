@@ -14,6 +14,18 @@ const config: Config = {
         editorial: ['var(--font-bebas)', 'Impact', 'sans-serif'],
       },
       colors: {
+        charcoal: {
+          900: '#111111',
+          800: '#171717',
+        },
+        offwhite: '#FAFAF8',
+        cloud: '#E8E8E8',
+        softgray: '#C7CDD3',
+        mediumgray: '#9FA4A8',
+        darkgray: '#555555',
+        lime: {
+          accent: '#C8FF3D',
+        },
         editorial: {
           bg: '#F5F5F3',
           text: '#111111',

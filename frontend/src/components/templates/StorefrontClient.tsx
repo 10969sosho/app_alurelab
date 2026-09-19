@@ -16,6 +16,7 @@ import ModernTemplate from '@/components/templates/ModernTemplate';
 import EditorialTemplate from '@/components/templates/EditorialTemplate';
 import { BrutalistTemplate, MarketplaceTemplate, SplitTemplate } from '@/components/templates/AdditionalTemplates';
 import BuyerLoginModal from '@/components/buyer/BuyerLoginModal';
+import MobileStorefrontHome from '@/components/buyer/MobileStorefrontHome';
 import { Product, ProductVariant, StoreData } from '@/components/templates/types';
 import { BuyerNavbar } from '@/components/buyer/BuyerTheme';
 
@@ -88,6 +89,21 @@ export default function StorefrontClient({
     onAddToCart: handleAddToCart,
     getTotalItems,
   };
+
+  // Jika tidak ada query template khusus, tampilkan storefront mobile-first standar
+  if (!queryTemplate) {
+    return (
+      <>
+        <MobileStorefrontHome storeSlug={storeSlug} store={effectiveStore} />
+        <BuyerLoginModal
+          isOpen={isLoginModalOpen}
+          onClose={() => setIsLoginModalOpen(false)}
+          storeSlug={storeSlug}
+          storeName={effectiveStore.storeName}
+        />
+      </>
+    );
+  }
 
   return (
     <>

@@ -2,74 +2,93 @@
 
 import { use, useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   User,
-  Package,
-  Clock,
-  Settings,
-  ArrowLeft,
-  Truck,
   ShieldCheck,
+  CreditCard,
+  Package,
+  Truck,
   CheckCircle2,
-  LogOut,
-  ExternalLink,
+  ChevronRight,
+  Ticket,
   MapPin,
+  Lock,
+  Bell,
+  Eye,
+  LogOut,
   Save,
   Loader2,
+  ExternalLink,
+  ArrowLeft,
+  Copy,
+  Clock,
+  Settings,
 } from 'lucide-react';
 import { useBuyerStore } from '@/store/buyer-store';
 import { fetchApi } from '@/lib/api-client';
 import BuyerLoginModal from '@/components/buyer/BuyerLoginModal';
+import BuyerTopBar from '@/components/buyer/BuyerTopBar';
+import BuyerBottomNav from '@/components/buyer/BuyerBottomNav';
 import { WilayahAddressFields, type WilayahAddressValue } from '@/components/address/WilayahAddressFields';
-import { useBuyerCms } from '@/components/buyer/useBuyerCms';
-import { BuyerNavbar, BuyerThemeFrame } from '@/components/buyer/BuyerTheme';
+import { toast } from 'sonner';
 
 export default function AccountPage({
   params,
 }: {
   params: Promise<{ store_slug: string }>;
 }) {
+  const router = useRouter();
   const { store_slug: storeSlug } = use(params);
-  const { buyer, logout, updateAddress } = useBuyerStore();
-  const copy = useBuyerCms(storeSlug);
+  const { buyer, logout, updateAddress, setBuyer } = useBuyerStore();
 
-  const [activeTab, setActiveTab] = useState<'active' | 'history' | 'settings'>('active');
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [activeModal, setActiveModal] = useState<
+    'editProfile' | 'addresses' | 'security' | 'notifications' | 'privacy' | 'vouchers' | null
+  >(null);
+
+  // Profile Edit State
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+
+  // Address Form State
+  const [addressDetail, setAddressDetail] = useState('');
+  const [postalCode, setPostalCode] = useState('');
+  const [wilayah, setWilayah] = useState<WilayahAddressValue>({});
+  const [savingAddress, setSavingAddress] = useState(false);
+
+  // Orders State
   const [orders, setOrders] = useState<any[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
 
-  // Settings form state
-  const [addressDetail, setAddressDetail] = useState(buyer?.defaultAddress?.detail || '');
-  const [postalCode, setPostalCode] = useState(buyer?.defaultAddress?.postalCode || '');
-  const [wilayah, setWilayah] = useState<WilayahAddressValue>({});
-  const [savingAddress, setSavingAddress] = useState(false);
-  const [saveSuccessMsg, setSaveSuccessMsg] = useState('');
-
   useEffect(() => {
-    if (buyer?.defaultAddress) {
-      setWilayah({
-        provinceCode: buyer.defaultAddress.provinceCode,
-        provinceName: buyer.defaultAddress.provinceName,
-        regencyCode: buyer.defaultAddress.regencyCode,
-        regencyName: buyer.defaultAddress.regencyName,
-        districtCode: buyer.defaultAddress.districtCode,
-        districtName: buyer.defaultAddress.districtName,
-        villageCode: buyer.defaultAddress.villageCode,
-        villageName: buyer.defaultAddress.villageName,
-        areaId: buyer.defaultAddress.areaId,
-        areaName: buyer.defaultAddress.areaName,
-        postalCode: buyer.defaultAddress.postalCode,
-      });
+    if (buyer) {
+      setEditName(buyer.fullName || '');
+      setEditEmail(buyer.email || '');
+      if (buyer.defaultAddress) {
+        setAddressDetail(buyer.defaultAddress.detail || '');
+        setPostalCode(buyer.defaultAddress.postalCode || '');
+        setWilayah({
+          provinceCode: buyer.defaultAddress.provinceCode,
+          provinceName: buyer.defaultAddress.provinceName,
+          regencyCode: buyer.defaultAddress.regencyCode,
+          regencyName: buyer.defaultAddress.regencyName,
+          districtCode: buyer.defaultAddress.districtCode,
+          districtName: buyer.defaultAddress.districtName,
+          villageCode: buyer.defaultAddress.villageCode,
+          villageName: buyer.defaultAddress.villageName,
+          areaId: buyer.defaultAddress.areaId,
+          areaName: buyer.defaultAddress.areaName,
+          postalCode: buyer.defaultAddress.postalCode,
+        });
+      }
     }
   }, [buyer]);
 
-  const storeDisplayName = storeSlug.replace(/-/g, ' ').toUpperCase();
-
-  // Load orders when buyer is logged in
+  // Load orders when buyer logged in
   useEffect(() => {
     if (!buyer?.phoneNumber) return;
     let isMounted = true;
-    const phone = buyer.phoneNumber;
     async function loadOrders() {
       setLoadingOrders(true);
       try {
@@ -89,11 +108,10 @@ export default function AccountPage({
     };
   }, [buyer, storeSlug]);
 
-  const handleSaveSettings = async (e: React.FormEvent) => {
+  const handleSaveAddress = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!buyer) return;
     setSavingAddress(true);
-    setSaveSuccessMsg('');
 
     try {
       const updated = {
@@ -109,393 +127,588 @@ export default function AccountPage({
         headers: { 'x-store-slug': storeSlug },
       });
       updateAddress(updated);
-      setSaveSuccessMsg('Alamat pengiriman berhasil diperbarui.');
+      toast.success('Alamat pengiriman berhasil disimpan!');
+      setActiveModal(null);
     } catch (err: any) {
-      setSaveSuccessMsg(err?.message || 'Alamat gagal diperbarui.');
+      toast.error(err?.message || 'Gagal menyimpan alamat.');
     } finally {
       setSavingAddress(false);
     }
   };
 
-  const activeOrders = orders.filter((o) => o.status !== 'COMPLETED' && o.status !== 'CANCELLED');
-  const pastOrders = orders.filter((o) => o.status === 'COMPLETED' || o.status === 'CANCELLED');
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!buyer) return;
+    try {
+      await fetchApi('/buyer/profile', {
+        method: 'PUT',
+        body: JSON.stringify({
+          fullName: editName,
+          email: editEmail,
+        }),
+        headers: { 'x-store-slug': storeSlug },
+      });
+      setBuyer({
+        ...buyer,
+        fullName: editName,
+        email: editEmail,
+      });
+      toast.success('Profil berhasil diperbarui!');
+      setActiveModal(null);
+    } catch {
+      toast.error('Gagal memperbarui profil.');
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    toast.success('Berhasil keluar dari akun.');
+  };
+
+  const storeDisplayName = storeSlug.replace(/-/g, ' ');
+
+  // Count orders per status
+  const unpaidCount = orders.filter((o) => o.status === 'PENDING' || o.status === 'UNPAID').length;
+  const processingCount = orders.filter((o) => o.status === 'PAID' || o.status === 'PROCESSING').length;
+  const shippedCount = orders.filter((o) => o.status === 'SHIPPED').length;
+  const completedCount = orders.filter((o) => o.status === 'DELIVERED' || o.status === 'COMPLETED').length;
 
   return (
-     <BuyerThemeFrame storeSlug={storeSlug} className="text-[#111111] font-sans antialiased flex flex-col">
-       <BuyerNavbar storeSlug={storeSlug} storeName={storeDisplayName} />
+    <div className="min-h-screen bg-stone-50 text-slate-900 flex flex-col font-sans antialiased pb-24">
+      {/* ── 1. Top Bar ── */}
+      <BuyerTopBar
+        storeSlug={storeSlug}
+        storeName={storeDisplayName}
+        placeholder="Cari pesanan atau produk..."
+      />
 
-      {/* ── Main Content ────────────────────────────────────── */}
-      <main className="max-w-5xl mx-auto w-full px-6 md:px-10 py-12 flex-1">
+      <main className="flex-1 w-full max-w-2xl mx-auto px-3 sm:px-4 pt-3 space-y-3">
         {!buyer ? (
           /* Unauthenticated State */
-          <div className="py-20 text-center space-y-6 max-w-md mx-auto">
-            <div className="w-16 h-16 border border-[#DADADA] flex items-center justify-center mx-auto text-[#666666]">
-              <User className="w-7 h-7 stroke-[1.4]" />
-             </div>
-            <div className="space-y-2">
-              <h1 className="font-bebas text-4xl uppercase tracking-wide text-[#111111]">
-                  {copy.accountTitle}
-              </h1>
-              <p className="text-xs text-[#666666] leading-relaxed">
-                  {copy.accountSignIn}
-               </p>
-             </div>
+          <div className="bg-white rounded-2xl border border-stone-200 p-8 text-center space-y-4 shadow-xs">
+            <div className="w-16 h-16 rounded-full bg-stone-100 flex items-center justify-center mx-auto text-slate-400">
+              <User className="w-8 h-8 stroke-[1.5]" />
+            </div>
+            <div className="space-y-1">
+              <h2 className="text-base font-bold text-slate-900">
+                Masuk ke Akun Pembeli
+              </h2>
+              <p className="text-xs text-stone-500 max-w-xs mx-auto">
+                Lacak status pesanan, simpan alamat pengiriman, dan gunakan voucher toko dengan mudah.
+              </p>
+            </div>
             <button
               onClick={() => setIsLoginModalOpen(true)}
-              className="bg-[#111111] text-[#F5F5F3] px-8 py-3.5 text-xs font-semibold uppercase tracking-[0.2em] hover:bg-black transition-all"
+              className="bg-slate-900 hover:bg-black text-white text-xs font-bold px-6 py-3 rounded-xl transition-all shadow-xs"
             >
-               SIGN IN
+              Masuk / Daftar via WhatsApp
             </button>
           </div>
         ) : (
-          /* Authenticated Dashboard */
-          <div className="space-y-10">
-            {/* Buyer Profile Header Banner */}
-            <div className="border border-[#DADADA] bg-white p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-[#111111] text-[#F5F5F3] font-bebas text-3xl flex items-center justify-center">
-                  {buyer.fullName.charAt(0).toUpperCase()}
+          /* Authenticated Account Page */
+          <>
+            {/* ── 2. Foto Profil & Nama ── */}
+            <section className="bg-white rounded-2xl border border-stone-200/80 p-4 shadow-2xs">
+              <div className="flex items-center gap-3.5">
+                <div className="w-14 h-14 rounded-full bg-linear-to-tr from-slate-900 to-slate-700 text-white font-black text-xl flex items-center justify-center shadow-md shadow-slate-200 shrink-0">
+                  {buyer.fullName ? buyer.fullName.charAt(0).toUpperCase() : 'U'}
                 </div>
-                <div className="space-y-1">
-                  <div className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#666666]">
-                     ACCOUNT
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <h2 className="text-base font-bold text-slate-900 truncate">
+                      {buyer.fullName || 'Pelanggan ALURELAB'}
+                    </h2>
+                    <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200 shrink-0">
+                      <ShieldCheck className="w-3 h-3" />
+                      Verified
+                    </span>
                   </div>
-                  <h2 className="font-bebas text-3xl tracking-wide uppercase text-[#111111]">
-                    {buyer.fullName}
-                  </h2>
-                  <div className="text-xs text-[#666666] font-mono">
-                    {buyer.phoneNumber} {buyer.email && `• ${buyer.email}`}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex sm:flex-col items-end justify-between gap-2 border-t sm:border-t-0 pt-3 sm:pt-0 border-[#DADADA]">
-                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 border border-emerald-200">
-                   <ShieldCheck className="w-3.5 h-3.5" /> Verified
-                </span>
-                <span className="text-[10px] uppercase tracking-wider text-[#666666]">
-                  Toko: {storeDisplayName}
-                </span>
-              </div>
-            </div>
-
-            {/* Navigation Tabs */}
-            <div className="flex items-center gap-8 border-b border-[#DADADA] overflow-x-auto">
-              <button
-                onClick={() => setActiveTab('active')}
-                className={`pb-3 text-xs uppercase tracking-[0.18em] transition-all whitespace-nowrap ${
-                  activeTab === 'active'
-                    ? 'font-bold text-[#111111] border-b-2 border-[#111111]'
-                    : 'text-[#666666] hover:text-[#111111]'
-                }`}
-              >
-                  {copy.accountActiveOrders} ({activeOrders.length})
-              </button>
-
-              <button
-                onClick={() => setActiveTab('history')}
-                className={`pb-3 text-xs uppercase tracking-[0.18em] transition-all whitespace-nowrap ${
-                  activeTab === 'history'
-                    ? 'font-bold text-[#111111] border-b-2 border-[#111111]'
-                    : 'text-[#666666] hover:text-[#111111]'
-                }`}
-              >
-                  {copy.accountOrderHistory} ({pastOrders.length})
-              </button>
-
-              <button
-                onClick={() => setActiveTab('settings')}
-                className={`pb-3 text-xs uppercase tracking-[0.18em] transition-all whitespace-nowrap ${
-                  activeTab === 'settings'
-                    ? 'font-bold text-[#111111] border-b-2 border-[#111111]'
-                    : 'text-[#666666] hover:text-[#111111]'
-                }`}
-              >
-                  {copy.accountSettings}
-              </button>
-            </div>
-
-            {/* TAB 1: PESANAN SAYA (ACTIVE ORDERS) */}
-            {activeTab === 'active' && (
-              <div className="space-y-6">
-                {activeOrders.length === 0 ? (
-                  <div className="py-16 text-center border border-dashed border-[#DADADA] p-8 space-y-3">
-                    <Package className="w-8 h-8 mx-auto text-[#666666] stroke-[1.4]" />
-                    <p className="text-sm font-semibold text-[#111111]">
-                      Tidak ada pesanan yang sedang berlangsung.
-                    </p>
-                    <p className="text-xs text-[#666666]">
-                       Pesanan baru akan tampil di sini.
-                    </p>
-                    <Link
-                      href={`/${storeSlug}`}
-                      className="inline-block pt-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#111111] underline"
-                    >
-                       SHOP NOW →
-                    </Link>
-                  </div>
-                ) : (
-                  activeOrders.map((order) => (
-                    <div
-                      key={order.id}
-                      className="border border-[#DADADA] bg-white p-6 space-y-6"
-                    >
-                      {/* Order Header */}
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#DADADA] text-xs">
-                        <div>
-                          <div className="font-mono font-bold text-[#111111] text-sm">
-                            {order.order_number}
-                          </div>
-                          <div className="text-[11px] text-[#666666] mt-0.5">
-                            {order.created_at}
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                          <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 bg-amber-100 text-amber-900">
-                            {order.status_label || order.status}
-                          </span>
-                          <span className="font-bold text-[#111111]">
-                            Rp {order.total_amount.toLocaleString('id-ID')}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Items */}
-                      <div className="space-y-4">
-                        {order.items?.map((item: any, i: number) => (
-                          <div key={i} className="flex gap-4 items-center text-xs">
-                            <div className="w-14 aspect-[3/4] bg-stone-100 border border-[#DADADA] overflow-hidden shrink-0">
-                              {item.image_url && (
-                                <img
-                                  src={item.image_url}
-                                  alt={item.title}
-                                  className="w-full h-full object-cover"
-                                />
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-bold text-[#111111] uppercase tracking-wide truncate">
-                                {item.title}
-                              </h4>
-                              <div className="text-[#666666] text-[11px] mt-0.5">
-                                {item.variant_title} • Qty: {item.quantity}
-                              </div>
-                            </div>
-                            <div className="font-semibold text-[#111111]">
-                              Rp {(item.price * item.quantity).toLocaleString('id-ID')}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Courier & AWB Track Info */}
-                      <div className="pt-4 border-t border-[#DADADA] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs bg-stone-50 p-4">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1.5 font-semibold text-[#111111]">
-                            <Truck className="w-4 h-4 text-emerald-600" />
-                            <span>{order.courier}</span>
-                          </div>
-                          <div className="font-mono text-[11px] text-[#666666]">
-                            No. Resi AWB: {order.awb}
-                          </div>
-                        </div>
-
-                        <Link
-                          href={`/${storeSlug}/orders/${order.order_number}`}
-                          className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#111111] hover:underline"
-                        >
-                          <span>Lacak Perjalanan Paket</span>
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </Link>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-
-            {/* TAB 2: RIWAYAT PESANAN (ORDER HISTORY) */}
-            {activeTab === 'history' && (
-              <div className="space-y-6">
-                {pastOrders.length === 0 ? (
-                  <div className="py-16 text-center border border-dashed border-[#DADADA] p-8 space-y-2">
-                    <Clock className="w-8 h-8 mx-auto text-[#666666] stroke-[1.4]" />
-                    <p className="text-sm font-semibold text-[#111111]">
-                      Belum ada riwayat pesanan selesai.
-                    </p>
-                    <p className="text-xs text-[#666666]">
-                       Pesanan selesai akan tampil di sini.
-                    </p>
-                  </div>
-                ) : (
-                  pastOrders.map((order) => (
-                    <div
-                      key={order.id}
-                      className="border border-[#DADADA] bg-white p-6 space-y-4"
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#DADADA] text-xs">
-                        <div>
-                          <div className="font-mono font-bold text-[#111111]">
-                            {order.order_number}
-                          </div>
-                          <div className="text-[11px] text-[#666666] mt-0.5">
-                            {order.created_at}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-emerald-100 text-emerald-800">
-                            {order.status_label || order.status}
-                          </span>
-                          <span className="font-bold text-[#111111]">
-                            Rp {order.total_amount.toLocaleString('id-ID')}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        {order.items?.map((item: any, i: number) => (
-                          <div key={i} className="flex justify-between items-center text-xs">
-                            <span className="text-[#111111]">
-                              {item.title} ({item.variant_title}) × {item.quantity}
-                            </span>
-                            <span className="font-semibold text-[#111111]">
-                              Rp {(item.price * item.quantity).toLocaleString('id-ID')}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="pt-3 border-t border-[#DADADA] flex justify-end">
-                        <Link
-                          href={`/${storeSlug}/orders/${order.order_number}`}
-                          className="text-[11px] uppercase tracking-[0.16em] font-semibold text-[#111111] hover:underline"
-                        >
-                          Lihat Rincian & Invoice →
-                        </Link>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-
-            {/* TAB 3: PENGATURAN (SETTINGS) */}
-            {activeTab === 'settings' && (
-              <div className="border border-[#DADADA] bg-white p-6 sm:p-8 space-y-6">
-                <div>
-                  <h3 className="font-bebas text-2xl tracking-wide uppercase text-[#111111]">
-                     SETTINGS
-                  </h3>
-                  <p className="text-xs text-[#666666]">
-                     Alamat ini digunakan saat checkout.
+                  <p className="text-xs text-stone-500 font-mono mt-0.5">
+                    {buyer.phoneNumber}
                   </p>
+                  {buyer.email && (
+                    <p className="text-[11px] text-stone-400 truncate">
+                      {buyer.email}
+                    </p>
+                  )}
                 </div>
-
-                {saveSuccessMsg && (
-                  <div className="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>{saveSuccessMsg}</span>
-                  </div>
-                )}
-
-                <form onSubmit={handleSaveSettings} className="space-y-5 text-xs">
-                  <div>
-                    <label className="block font-semibold uppercase tracking-[0.14em] text-[#111111] mb-1.5">
-                      Wilayah Pengiriman
-                    </label>
-                    <WilayahAddressFields value={wilayah} onChange={setWilayah} />
-                  </div>
-
-                  <div>
-                    <label className="block font-semibold uppercase tracking-[0.14em] text-[#111111] mb-1.5">
-                      Nama Lengkap Pembeli
-                    </label>
-                    <input
-                      type="text"
-                      disabled
-                      value={buyer.fullName}
-                       className="w-full bg-stone-100 p-3 border border-[#DADADA] text-[#666666] cursor-not-allowed"
-                     />
-                   </div>
-
-                  <div>
-                    <label className="block font-semibold uppercase tracking-[0.14em] text-[#111111] mb-1.5">
-                      Nomor WhatsApp / HP Aktif
-                    </label>
-                    <input
-                      type="text"
-                      disabled
-                      value={buyer.phoneNumber}
-                      className="w-full bg-stone-100 p-3 border border-[#DADADA] text-[#666666] cursor-not-allowed font-mono"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block font-semibold uppercase tracking-[0.14em] text-[#111111] mb-1.5">
-                      Alamat Lengkap Pengiriman (Jalan, No Rumah, RT/RW, Kelurahan, Kecamatan)
-                    </label>
-                    <textarea
-                      rows={3}
-                      required
-                      value={addressDetail}
-                      onChange={(e) => setAddressDetail(e.target.value)}
-                      placeholder="Contoh: Jl. Pemuda No. 45 RT 02 RW 03, Kel. Embong Kaliasin, Kec. Genteng, Kota Surabaya"
-                      className="w-full p-3 border border-[#DADADA] text-[#111111] focus:outline-none focus:border-[#111111] bg-white"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block font-semibold uppercase tracking-[0.14em] text-[#111111] mb-1.5">
-                      Kode Pos
-                    </label>
-                    <input
-                      type="text"
-                      value={postalCode}
-                      onChange={(e) => setPostalCode(e.target.value)}
-                      placeholder="Contoh: 60271"
-                      className="w-full sm:w-48 p-3 border border-[#DADADA] text-[#111111] focus:outline-none focus:border-[#111111] bg-white font-mono"
-                    />
-                  </div>
-
-                  <div className="pt-4 border-t border-[#DADADA]">
-                    <button
-                      type="submit"
-                      disabled={savingAddress}
-                      className="bg-[#111111] text-[#F5F5F3] px-8 py-3.5 font-semibold uppercase tracking-[0.2em] hover:bg-black transition-all flex items-center gap-2 disabled:opacity-50"
-                    >
-                      {savingAddress ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          <span>Menyimpan...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Save className="w-4 h-4" />
-                           <span>SAVE</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </form>
+                <button
+                  type="button"
+                  onClick={() => setActiveModal('editProfile')}
+                  className="text-xs font-bold text-slate-700 hover:text-black bg-stone-100 hover:bg-stone-200 px-3 py-1.5 rounded-xl transition-colors shrink-0"
+                >
+                  Edit
+                </button>
               </div>
-            )}
-          </div>
+            </section>
+
+            {/* ── 3. Voucher & Promo Saya ── */}
+            <section className="bg-white rounded-2xl border border-stone-200/80 p-3.5 shadow-2xs">
+              <button
+                type="button"
+                onClick={() => setActiveModal('vouchers')}
+                className="w-full flex items-center justify-between group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-xs">
+                    <Ticket className="w-5 h-5" />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                      <span>Voucher & Kupon Toko</span>
+                      <span className="bg-rose-100 text-rose-700 text-[10px] font-extrabold px-1.5 py-0.2 rounded-full">
+                        2 Tersedia
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-stone-500">
+                      Gunakan potongan belanja saat checkout
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-stone-700 transition-colors" />
+              </button>
+            </section>
+
+            {/* ── 4. Transaksi: Belum Bayar, Diproses, Dikirim, Sudah Tiba ── */}
+            <section className="bg-white rounded-2xl border border-stone-200/80 p-4 shadow-2xs space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-800">
+                  Transaksi Saya
+                </h3>
+                <Link
+                  href={`/${storeSlug}/orders`}
+                  className="text-[11px] font-bold text-slate-600 hover:text-slate-900 flex items-center gap-0.5"
+                >
+                  <span>Lihat Riwayat</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-4 gap-1.5 text-center">
+                {/* 1. Belum Bayar */}
+                <Link
+                  href={`/${storeSlug}/orders?tab=unpaid`}
+                  className="p-2 rounded-xl hover:bg-stone-50 transition-colors flex flex-col items-center relative"
+                >
+                  <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mb-1 relative">
+                    <CreditCard className="w-5 h-5" />
+                    {unpaidCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-rose-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                        {unpaidCount}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-700">Belum Bayar</span>
+                </Link>
+
+                {/* 2. Diproses */}
+                <Link
+                  href={`/${storeSlug}/orders?tab=processing`}
+                  className="p-2 rounded-xl hover:bg-stone-50 transition-colors flex flex-col items-center relative"
+                >
+                  <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-1 relative">
+                    <Package className="w-5 h-5" />
+                    {processingCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                        {processingCount}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-700">Diproses</span>
+                </Link>
+
+                {/* 3. Dikirim */}
+                <Link
+                  href={`/${storeSlug}/orders?tab=shipped`}
+                  className="p-2 rounded-xl hover:bg-stone-50 transition-colors flex flex-col items-center relative"
+                >
+                  <div className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center mb-1 relative">
+                    <Truck className="w-5 h-5" />
+                    {shippedCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-indigo-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                        {shippedCount}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-700">Dikirim</span>
+                </Link>
+
+                {/* 4. Sudah Tiba */}
+                <Link
+                  href={`/${storeSlug}/orders?tab=completed`}
+                  className="p-2 rounded-xl hover:bg-stone-50 transition-colors flex flex-col items-center relative"
+                >
+                  <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mb-1 relative">
+                    <CheckCircle2 className="w-5 h-5" />
+                    {completedCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-emerald-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                        {completedCount}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-700">Sudah Tiba</span>
+                </Link>
+              </div>
+            </section>
+
+            {/* ── 5. Menu Setting / Pengaturan ── */}
+            <section className="bg-white rounded-2xl border border-stone-200/80 overflow-hidden shadow-2xs divide-y divide-stone-100">
+              <div className="px-4 py-2.5 bg-stone-50/50 text-[10px] font-extrabold uppercase tracking-wider text-stone-500">
+                Pengaturan Akun & Keamanan
+              </div>
+
+              {/* Ubah Profil */}
+              <button
+                type="button"
+                onClick={() => setActiveModal('editProfile')}
+                className="w-full p-3.5 flex items-center justify-between hover:bg-stone-50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <User className="w-4 h-4 text-slate-600" />
+                  <span className="text-xs font-semibold text-slate-800">Ubah Profil</span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-stone-400" />
+              </button>
+
+              {/* Daftar Alamat */}
+              <button
+                type="button"
+                onClick={() => setActiveModal('addresses')}
+                className="w-full p-3.5 flex items-center justify-between hover:bg-stone-50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <MapPin className="w-4 h-4 text-slate-600" />
+                  <div className="text-left">
+                    <span className="text-xs font-semibold text-slate-800 block">Daftar Alamat</span>
+                    <span className="text-[10px] text-stone-400 truncate max-w-[200px] block">
+                      {buyer.defaultAddress?.detail || 'Belum ada alamat tersimpan'}
+                    </span>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-stone-400" />
+              </button>
+
+              {/* Keamanan Akun */}
+              <button
+                type="button"
+                onClick={() => setActiveModal('security')}
+                className="w-full p-3.5 flex items-center justify-between hover:bg-stone-50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Lock className="w-4 h-4 text-slate-600" />
+                  <span className="text-xs font-semibold text-slate-800">Keamanan Akun</span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-stone-400" />
+              </button>
+
+              {/* Notifikasi */}
+              <button
+                type="button"
+                onClick={() => setActiveModal('notifications')}
+                className="w-full p-3.5 flex items-center justify-between hover:bg-stone-50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Bell className="w-4 h-4 text-slate-600" />
+                  <span className="text-xs font-semibold text-slate-800">Notifikasi Pesanan</span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-stone-400" />
+              </button>
+
+              {/* Privasi Akun */}
+              <button
+                type="button"
+                onClick={() => setActiveModal('privacy')}
+                className="w-full p-3.5 flex items-center justify-between hover:bg-stone-50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Eye className="w-4 h-4 text-slate-600" />
+                  <span className="text-xs font-semibold text-slate-800">Privasi Akun & Data</span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-stone-400" />
+              </button>
+
+              {/* Keluar Akun */}
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="w-full p-3.5 flex items-center justify-between hover:bg-rose-50 transition-colors text-rose-600"
+              >
+                <div className="flex items-center gap-3">
+                  <LogOut className="w-4 h-4" />
+                  <span className="text-xs font-bold">Keluar dari Akun</span>
+                </div>
+              </button>
+            </section>
+          </>
         )}
       </main>
 
-      {/* ── Footer ─────────────────────────────────────────── */}
-      <footer className="border-t border-[#DADADA] bg-[#F5F5F3] py-8 px-6 text-center text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-         <div>© 2026 {storeDisplayName}</div>
-      </footer>
+      {/* ── MODALS / DRAWERS UNTUK SETTING ── */}
+
+      {/* 1. Modal Ubah Profil */}
+      {activeModal === 'editProfile' && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs" onClick={() => setActiveModal(null)} />
+          <div className="relative w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl z-10 space-y-4 animate-in slide-in-from-bottom">
+            <h3 className="text-sm font-bold text-slate-900 pb-2 border-b border-stone-100">
+              Ubah Profil Pembeli
+            </h3>
+            <form onSubmit={handleSaveProfile} className="space-y-3 text-xs">
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Nama Lengkap</label>
+                <input
+                  type="text"
+                  required
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full p-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-slate-900"
+                />
+              </div>
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Email (Opsional)</label>
+                <input
+                  type="email"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  placeholder="contoh@gmail.com"
+                  className="w-full p-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-slate-900"
+                />
+              </div>
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Nomor WhatsApp (Terkunci)</label>
+                <input
+                  type="text"
+                  disabled
+                  value={buyer?.phoneNumber || ''}
+                  className="w-full p-3 rounded-xl border border-stone-200 bg-stone-100 text-stone-500 font-mono"
+                />
+              </div>
+              <div className="pt-3 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveModal(null)}
+                  className="flex-1 py-3 bg-stone-100 text-slate-700 font-bold rounded-xl"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-3 bg-slate-900 text-white font-bold rounded-xl"
+                >
+                  Simpan Perubahan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 2. Modal Daftar Alamat */}
+      {activeModal === 'addresses' && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs" onClick={() => setActiveModal(null)} />
+          <div className="relative w-full sm:max-w-lg bg-white rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl z-10 max-h-[90vh] overflow-y-auto space-y-4 animate-in slide-in-from-bottom">
+            <h3 className="text-sm font-bold text-slate-900 pb-2 border-b border-stone-100">
+              Pengaturan Alamat Pengiriman
+            </h3>
+            <form onSubmit={handleSaveAddress} className="space-y-4 text-xs">
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Wilayah Indonesia</label>
+                <WilayahAddressFields value={wilayah} onChange={setWilayah} />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Detail Alamat (Jalan, RT/RW, No)</label>
+                <textarea
+                  rows={3}
+                  required
+                  value={addressDetail}
+                  onChange={(e) => setAddressDetail(e.target.value)}
+                  placeholder="Contoh: Jl. Diponegoro No. 12, RT 01 RW 04"
+                  className="w-full p-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Kode Pos</label>
+                <input
+                  type="text"
+                  value={postalCode}
+                  onChange={(e) => setPostalCode(e.target.value)}
+                  placeholder="Contoh: 60241"
+                  className="w-full sm:w-36 p-3 rounded-xl border border-stone-200 font-mono focus:outline-none focus:ring-2 focus:ring-slate-900"
+                />
+              </div>
+
+              <div className="pt-3 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveModal(null)}
+                  className="flex-1 py-3 bg-stone-100 text-slate-700 font-bold rounded-xl"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingAddress}
+                  className="flex-1 py-3 bg-slate-900 text-white font-bold rounded-xl flex items-center justify-center gap-1.5"
+                >
+                  {savingAddress ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  <span>Simpan Alamat</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 3. Modal Keamanan Akun */}
+      {activeModal === 'security' && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs" onClick={() => setActiveModal(null)} />
+          <div className="relative w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl z-10 space-y-4 animate-in slide-in-from-bottom">
+            <h3 className="text-sm font-bold text-slate-900 pb-2 border-b border-stone-100 flex items-center gap-2">
+              <Lock className="w-4 h-4 text-emerald-600" />
+              <span>Keamanan Akun Pembeli</span>
+            </h3>
+            <div className="space-y-3 text-xs text-stone-600 leading-relaxed">
+              <p>
+                Akun Anda diamankan menggunakan autentikasi <strong>One-Click WhatsApp OTP</strong> tanpa kata sandi yang mudah bocor.
+              </p>
+              <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-emerald-900 space-y-1">
+                <div className="font-bold">Nomor Terhubung:</div>
+                <div className="font-mono text-sm">{buyer?.phoneNumber}</div>
+              </div>
+              <p className="text-[11px] text-stone-400">
+                Sesi login aktif disimpan di perangkat ini dan dilindungi oleh enkripsi SSL 256-bit ALURELAB.
+              </p>
+            </div>
+            <button
+              onClick={() => setActiveModal(null)}
+              className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl text-xs"
+            >
+              Tutup
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 4. Modal Notifikasi */}
+      {activeModal === 'notifications' && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs" onClick={() => setActiveModal(null)} />
+          <div className="relative w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl z-10 space-y-4 animate-in slide-in-from-bottom">
+            <h3 className="text-sm font-bold text-slate-900 pb-2 border-b border-stone-100 flex items-center gap-2">
+              <Bell className="w-4 h-4 text-blue-600" />
+              <span>Notifikasi Pesanan</span>
+            </h3>
+            <div className="space-y-3 text-xs text-stone-600">
+              <div className="flex items-center justify-between p-3 bg-stone-50 rounded-xl border border-stone-200">
+                <div>
+                  <div className="font-bold text-slate-900">Pembaruan WhatsApp</div>
+                  <div className="text-[11px] text-stone-500">Kirim resi & status kirim ke WA</div>
+                </div>
+                <span className="text-emerald-700 font-bold text-[11px] bg-emerald-100 px-2 py-0.5 rounded-full">
+                  Aktif
+                </span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-stone-50 rounded-xl border border-stone-200">
+                <div>
+                  <div className="font-bold text-slate-900">Info Promo Toko</div>
+                  <div className="text-[11px] text-stone-500">Notifikasi diskon dan voucher baru</div>
+                </div>
+                <span className="text-emerald-700 font-bold text-[11px] bg-emerald-100 px-2 py-0.5 rounded-full">
+                  Aktif
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={() => setActiveModal(null)}
+              className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl text-xs"
+            >
+              Selesai
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 5. Modal Privasi Akun */}
+      {activeModal === 'privacy' && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs" onClick={() => setActiveModal(null)} />
+          <div className="relative w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl z-10 space-y-4 animate-in slide-in-from-bottom">
+            <h3 className="text-sm font-bold text-slate-900 pb-2 border-b border-stone-100 flex items-center gap-2">
+              <Eye className="w-4 h-4 text-slate-700" />
+              <span>Privasi Akun & Data</span>
+            </h3>
+            <div className="space-y-2 text-xs text-stone-600 leading-relaxed">
+              <p>
+                Data pribadi dan riwayat pesanan Anda dilindungi dan hanya digunakan untuk keperluan pemrosesan pembayaran (Xendit) serta pengiriman ekspedisi (Biteship).
+              </p>
+              <p>
+                ALURELAB tidak membagikan atau menjual data pelanggan kepada pihak ketiga.
+              </p>
+            </div>
+            <button
+              onClick={() => setActiveModal(null)}
+              className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl text-xs"
+            >
+              Mengerti
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 6. Modal Voucher & Kupon */}
+      {activeModal === 'vouchers' && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs" onClick={() => setActiveModal(null)} />
+          <div className="relative w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl z-10 space-y-4 animate-in slide-in-from-bottom">
+            <h3 className="text-sm font-bold text-slate-900 pb-2 border-b border-stone-100 flex items-center gap-2">
+              <Ticket className="w-4 h-4 text-amber-500" />
+              <span>Voucher Toko Tersedia</span>
+            </h3>
+            <div className="space-y-3">
+              <div className="p-3.5 bg-linear-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl space-y-1.5">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-bold text-amber-900">Voucher Diskon Rp 25.000</span>
+                  <span className="text-[10px] font-mono bg-white text-amber-900 font-bold px-2 py-0.5 rounded-sm border border-amber-300">
+                    HEMAT25
+                  </span>
+                </div>
+                <p className="text-[11px] text-amber-700">Min. transaksi Rp 100.000 untuk semua produk</p>
+              </div>
+
+              <div className="p-3.5 bg-linear-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl space-y-1.5">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-bold text-emerald-900">Gratis Ongkir Xtra Rp 15.000</span>
+                  <span className="text-[10px] font-mono bg-white text-emerald-900 font-bold px-2 py-0.5 rounded-full border border-emerald-300">
+                    ONGKIRFREE
+                  </span>
+                </div>
+                <p className="text-[11px] text-emerald-700">Otomatis terpotong saat memilih kurir reguler</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setActiveModal(null)}
+              className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl text-xs"
+            >
+              Gunakan Saat Belanja
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── 6. Sticky Bottom Navigation (Tab AKUN Aktif) ── */}
+      <BuyerBottomNav storeSlug={storeSlug} />
 
       {/* Login Popup Modal */}
       <BuyerLoginModal
         isOpen={isLoginModalOpen}
-       onClose={() => setIsLoginModalOpen(false)}
+        onClose={() => setIsLoginModalOpen(false)}
         storeSlug={storeSlug}
         storeName={storeDisplayName}
       />
-     </BuyerThemeFrame>
+    </div>
   );
 }
