@@ -51,6 +51,7 @@ export interface CmsHero {
 }
 
 export interface CmsNavigation {
+  desktopStyle?: 'inline' | 'hamburger';
   menuItems: NavMenuItem[];
   socialLinks?: {
     instagram?: string;

@@ -56,6 +56,7 @@ export function BuyerNavbar({ storeSlug, storeName, onLogin }: { storeSlug: stri
   const branding = settings.branding || {};
   const cmsItems = settings.navigation?.menuItems || [];
   const navItems = cmsItems.length > 0 ? cmsItems.filter(i => i.enabled) : DEFAULT_NAV;
+  const desktopStyle = settings.navigation?.desktopStyle || 'inline';
   const name = branding.storeName || storeName || storeSlug.replace(/-/g, ' ');
   const primaryColor = branding.primaryColor || '#111111';
 
@@ -65,26 +66,30 @@ export function BuyerNavbar({ storeSlug, storeName, onLogin }: { storeSlug: stri
     return `/${storeSlug}/${path}`;
   };
 
-  const showAnnouncement = settings.sections?.showAnnouncementBar !== false;
-  const announcementText = settings.highlights?.announcementText || `Welcome to ${name} — Free Shipping Worldwide`;
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
 
   return (
     <>
       {/* Announcement Bar */}
-      {showAnnouncement && (
-        <div className="w-full py-1.5 px-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-2 relative z-50" style={{ backgroundColor: primaryColor, color: '#ffffff' }}>
-          <span>{announcementText}</span>
+      {settings.sections?.showAnnouncementBar && settings.highlights?.announcementText && (
+        <div 
+          className="w-full text-center py-2 px-4 text-xs font-semibold tracking-wide flex items-center justify-center animate-in slide-in-from-top-4"
+          style={{ backgroundColor: primaryColor, color: '#fff' }}
+        >
+          <span>{settings.highlights.announcementText}</span>
         </div>
       )}
 
-      {/* Navbar */}
+      {/* Main Navbar */}
       <header className="buyer-navbar sticky top-0 z-40 border-b border-black/10 backdrop-blur-xl bg-white/80 transition-all duration-300">
         <div className="mx-auto flex h-14 sm:h-16 max-w-7xl items-center justify-between px-4 sm:px-6 md:px-10">
           
           {/* Mobile Menu Button & Logo */}
           <div className="flex items-center gap-3 md:w-1/3">
             <button 
-              className="md:hidden p-1.5 -ml-1.5 text-black hover:opacity-70 transition-opacity"
+              className={cn("p-1.5 -ml-1.5 text-black hover:opacity-70 transition-opacity", desktopStyle === 'inline' ? 'md:hidden' : '')}
               onClick={() => setMobileMenuOpen(true)}
             >
               <Menu className="w-5 h-5" />
@@ -95,18 +100,20 @@ export function BuyerNavbar({ storeSlug, storeName, onLogin }: { storeSlug: stri
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex flex-1 items-center justify-center gap-6 lg:gap-8">
-            {navItems.map((item) => (
-              <Link 
-                key={item.id} 
-                href={link(item.url)} 
-                className="text-[11px] font-bold uppercase tracking-[0.15em] text-black/70 hover:text-black transition-colors"
-                target={item.url.startsWith('http') ? '_blank' : undefined}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+          {desktopStyle === 'inline' && (
+            <nav className="hidden md:flex flex-1 items-center justify-center gap-6 lg:gap-8">
+              {navItems.map((item) => (
+                <Link 
+                  key={item.id} 
+                  href={link(item.url)} 
+                  className="text-[11px] font-bold uppercase tracking-[0.15em] text-black/70 hover:text-black transition-colors"
+                  target={item.url.startsWith('http') ? '_blank' : undefined}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          )}
 
           {/* Right Icons */}
           <div className="flex shrink-0 items-center justify-end gap-3 sm:gap-4 md:w-1/3 text-black">

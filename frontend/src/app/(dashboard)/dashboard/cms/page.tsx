@@ -1345,6 +1345,24 @@ export default function StorefrontCmsPage() {
                 )}
               </div>
 
+              {/* Desktop Nav Style */}
+              <div className="space-y-2 pt-2 border-t border-slate-200">
+                <h4 className="text-xs font-bold text-slate-800">Gaya Menu (Desktop)</h4>
+                <select
+                  value={cms.navigation?.desktopStyle || "inline"}
+                  onChange={(e) =>
+                    setCms({
+                      ...cms,
+                      navigation: { ...cms.navigation, desktopStyle: e.target.value as any, menuItems: cms.navigation?.menuItems || [] },
+                    })
+                  }
+                  className="w-full text-xs px-2.5 py-1.5 rounded-xs border border-slate-300 font-normal focus:outline-none focus:border-[#EE4D2D]"
+                >
+                  <option value="inline">Inline (Tengah)</option>
+                  <option value="hamburger">Hamburger (Kiri)</option>
+                </select>
+              </div>
+
               {/* Menu items list */}
               <div className="space-y-2 pt-2 border-t border-slate-200">
                 <h4 className="text-xs font-bold text-slate-800">Menu Header Utama</h4>

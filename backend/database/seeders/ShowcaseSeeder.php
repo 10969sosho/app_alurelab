@@ -123,6 +123,7 @@ class ShowcaseSeeder extends Seeder
                 ]
             ],
             'navigation' => [
+                'desktopStyle' => 'hamburger',
                 'menuItems' => [
                     ['id' => '1', 'label' => 'Shop All', 'url' => '/kalmora/shop', 'enabled' => true],
                     ['id' => '2', 'label' => 'Track Order', 'url' => '/kalmora/account/orders', 'enabled' => true],
