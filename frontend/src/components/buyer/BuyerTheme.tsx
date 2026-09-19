@@ -66,10 +66,6 @@ export function BuyerNavbar({ storeSlug, storeName, onLogin }: { storeSlug: stri
     return `/${storeSlug}/${path}`;
   };
 
-  useEffect(() => {
-    setHydrated(true);
-  }, []);
-
   return (
     <>
       {/* Announcement Bar */}
