@@ -70,7 +70,7 @@ class ChatController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $user = Auth::user();
+        $user = $this->resolveSeller($request);
 
         if ($user) {
             // Seller flow — lihat semua conv di store mereka
@@ -117,7 +117,7 @@ class ChatController extends Controller
             ->get();
 
         // Mark as read
-        $senderType = Auth::user() ? 'seller' : 'buyer';
+        $senderType = $this->resolveSeller($request) ? 'seller' : 'buyer';
         Message::where('conversation_id', $id)
             ->where('sender_type', '!=', $senderType)
             ->whereNull('read_at')
@@ -144,7 +144,7 @@ class ChatController extends Controller
         $conversation = Conversation::findOrFail($id);
         $this->authorizeConversation($conversation, $request);
 
-        $user = Auth::user();
+        $user = $this->resolveSeller($request);
         $senderType = $user ? 'seller' : 'buyer';
         $senderId   = $user
             ? $user->id
@@ -178,6 +178,11 @@ class ChatController extends Controller
     // HELPERS
     // ═══════════════════════════════════════════════════════════════════════════
 
+    private function resolveSeller(Request $request): ?\App\Models\User
+    {
+        return auth('sanctum')->setRequest($request)->user() ?: Auth::user();
+    }
+
     private function resolveCustomer(Request $request): ?Customer
     {
         $token = $request->header('X-Customer-Token') ?? $request->cookie('customer_token');
@@ -188,7 +193,7 @@ class ChatController extends Controller
 
     private function authorizeConversation(Conversation $conv, Request $request): void
     {
-        $user = Auth::user();
+        $user = $this->resolveSeller($request);
 
         if ($user) {
             // Seller: must own the store
