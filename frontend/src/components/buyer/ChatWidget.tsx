@@ -74,6 +74,9 @@ export default function ChatWidget({ storeSlug, storeName }: ChatWidgetProps) {
         headers: token ? { 'X-Customer-Token': token } : {},
       });
       const id = res.data.data.id;
+      if (res.data.customer_token) {
+        localStorage.setItem('customer_token', res.data.customer_token);
+      }
       setConversationId(id);
       localStorage.setItem(`conv_${storeSlug}`, id);
       qc.invalidateQueries({ queryKey: ['chat-widget', 'messages', id] });

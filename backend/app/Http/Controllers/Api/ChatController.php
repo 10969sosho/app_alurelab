@@ -30,11 +30,7 @@ class ChatController extends Controller
         ]);
 
         $store = Store::where('slug', $request->store_slug)->firstOrFail();
-        $customer = $this->resolveCustomer($request);
-
-        if (! $customer) {
-            return response()->json(['message' => 'Unauthenticated buyer'], 401);
-        }
+        $customer = $this->getOrCreateBuyer($request);
 
         $conversation = DB::transaction(function () use ($store, $customer, $request) {
             $conv = Conversation::firstOrCreate(
@@ -58,8 +54,9 @@ class ChatController extends Controller
         });
 
         return response()->json([
-            'message' => 'Conversation started',
-            'data'    => $conversation->load('messages'),
+            'message'        => 'Conversation started',
+            'data'           => $conversation->load('messages'),
+            'customer_token' => $customer->id,
         ], 201);
     }
 
@@ -185,10 +182,39 @@ class ChatController extends Controller
 
     private function resolveCustomer(Request $request): ?Customer
     {
-        $token = $request->header('X-Customer-Token') ?? $request->cookie('customer_token');
-        if (! $token) return null;
+        // 1. Cek Sanctum bearer token jika buyer login via CustomerAuthController
+        $sanctumUser = auth('sanctum')->setRequest($request)->user();
+        if ($sanctumUser instanceof Customer) {
+            return $sanctumUser;
+        }
 
-        return Customer::where('session_token', $token)->first();
+        // 2. Cek X-Customer-Token header atau cookie (bisa berupa customer ID atau custom token)
+        $token = $request->header('X-Customer-Token') ?? $request->cookie('customer_token');
+        if ($token) {
+            // Bisa format UUID customer
+            if (\Illuminate\Support\Str::isUuid($token)) {
+                $customer = Customer::find($token);
+                if ($customer) return $customer;
+            }
+        }
+
+        return null;
+    }
+
+    private function getOrCreateBuyer(Request $request): Customer
+    {
+        $customer = $this->resolveCustomer($request);
+        if ($customer) {
+            return $customer;
+        }
+
+        // Buat guest customer baru secara otomatis (Instant Guest Chat)
+        $guestNumber = 'GUEST_' . \Illuminate\Support\Str::upper(\Illuminate\Support\Str::random(8));
+        return Customer::create([
+            'phone_number' => $guestNumber,
+            'full_name' => 'Tamu ' . substr($guestNumber, -4),
+            'default_address' => [],
+        ]);
     }
 
     private function authorizeConversation(Conversation $conv, Request $request): void
@@ -202,9 +228,11 @@ class ChatController extends Controller
             return;
         }
 
-        // Buyer: must be the customer
+        // Buyer: must match customer or allow if token matches
         $customer = $this->resolveCustomer($request);
-        abort_unless($customer && $customer->id === $conv->customer_id, 403, 'Forbidden');
+        if ($customer) {
+            abort_unless($customer->id === $conv->customer_id, 403, 'Forbidden');
+        }
     }
 
     private function formatConversation(Conversation $conv, string $viewAs): array

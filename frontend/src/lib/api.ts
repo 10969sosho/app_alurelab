@@ -44,8 +44,14 @@ api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     if (error.response?.status === 401) {
-      // Token expired atau invalid → signout
-      await signOut({ callbackUrl: '/login' });
+      // HANYA redirect ke /login jika user sedang berada di portal dashboard atau admin!
+      // Jika di halaman buyer storefront (misal: /chat atau /[store_slug]), JANGAN signOut / redirect ke /login.
+      if (typeof window !== 'undefined') {
+        const path = window.location.pathname;
+        if (path.startsWith('/dashboard') || path.startsWith('/admin')) {
+          await signOut({ callbackUrl: '/login' });
+        }
+      }
     }
     return Promise.reject(error);
   }

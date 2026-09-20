@@ -74,6 +74,9 @@ export default function BuyerChatPage() {
         headers: token ? { 'X-Customer-Token': token } : {},
       });
       const convId = res.data.data.id;
+      if (res.data.customer_token) {
+        localStorage.setItem('customer_token', res.data.customer_token);
+      }
       setConversationId(convId);
       localStorage.setItem(`conv_${store_slug}`, convId);
       qc.invalidateQueries({ queryKey: ['chat', 'messages', convId] });
