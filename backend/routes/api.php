@@ -154,4 +154,31 @@ Route::prefix('v1')->group(function () {
             Route::post('/promotions', [MerchantController::class, 'savePromotion'])->middleware('store.role:owner,manager');
             Route::delete('/promotions/{id}', [MerchantController::class, 'deletePromotion'])->middleware('store.role:owner,manager');
         });
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // 6. CHAT — Dual auth (Sanctum seller OR X-Customer-Token buyer)
+    // ═══════════════════════════════════════════════════════════════════════
+    Route::prefix('chat')->group(function () {
+        // Buyer starts a conversation (no Sanctum, uses X-Customer-Token)
+        Route::post('/start', [\App\Http\Controllers\Api\ChatController::class, 'start']);
+
+        // List conversations (seller via Sanctum, buyer via X-Customer-Token)
+        Route::get('/conversations', [\App\Http\Controllers\Api\ChatController::class, 'index']);
+
+        // Messages in a conversation
+        Route::get('/conversations/{id}/messages', [\App\Http\Controllers\Api\ChatController::class, 'messages']);
+        Route::post('/conversations/{id}/messages', [\App\Http\Controllers\Api\ChatController::class, 'send']);
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // 7. ADMIN — Protected (Sanctum Auth, role check in controller)
+    // ═══════════════════════════════════════════════════════════════════════
+    Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
+        Route::get('/stats',          [\App\Http\Controllers\Api\AdminController::class, 'stats']);
+        Route::get('/sellers',        [\App\Http\Controllers\Api\AdminController::class, 'sellers']);
+        Route::get('/sellers/{id}',   [\App\Http\Controllers\Api\AdminController::class, 'sellerDetail']);
+        Route::get('/buyers',         [\App\Http\Controllers\Api\AdminController::class, 'buyers']);
+        Route::get('/buyers/{id}',    [\App\Http\Controllers\Api\AdminController::class, 'buyerDetail']);
+    });
 });
+

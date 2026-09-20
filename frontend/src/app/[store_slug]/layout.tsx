@@ -1,5 +1,6 @@
 import { getStoreData } from '@/lib/store';
 import { BuyerThemeProvider } from '@/components/buyer/BuyerTheme';
+import ChatWidget from '@/components/buyer/ChatWidget';
 
 export default async function StorefrontLayout({
   children,
@@ -15,5 +16,12 @@ export default async function StorefrontLayout({
   // Melindungi seluruh sub-rute (/, /cart, /checkout, /products/[slug], /account, dll).
   const store = await getStoreData(storeSlug);
 
-  return <BuyerThemeProvider settings={store.settings || {}}>{children}</BuyerThemeProvider>;
+  return (
+    <BuyerThemeProvider settings={store.settings || {}}>
+      {children}
+      {/* Floating Chat Widget — tersedia di semua halaman storefront */}
+      <ChatWidget storeSlug={storeSlug} storeName={store.storeName} />
+    </BuyerThemeProvider>
+  );
 }
+

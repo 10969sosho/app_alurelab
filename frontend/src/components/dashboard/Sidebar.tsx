@@ -32,6 +32,7 @@ const navGroups = [
     items: [
       { href: '/dashboard/promotions', label: 'Pusat Promosi' },
       { href: '/dashboard/customers', label: 'Pelanggan & Member' },
+      { href: '/dashboard/inbox', label: 'Pesan Pembeli 💬' },
     ],
   },
   {
@@ -48,6 +49,7 @@ const navGroups = [
       { href: '/dashboard/subscription', label: 'Paket Langganan' },
     ],
   },
+
 ];
 
 export function Sidebar() {

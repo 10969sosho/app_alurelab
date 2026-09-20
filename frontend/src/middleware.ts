@@ -4,9 +4,12 @@ import type { NextRequest } from 'next/server';
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  const sessionToken =
+    req.cookies.get('__Secure-authjs.session-token')?.value ||
+    req.cookies.get('authjs.session-token')?.value;
+
+  // ── Guard: Dashboard ───────────────────────────────────────────────────────
   if (pathname.startsWith('/dashboard')) {
-    const sessionToken = req.cookies.get('__Secure-authjs.session-token')?.value
-      || req.cookies.get('authjs.session-token')?.value;
     if (!sessionToken) {
       const loginUrl = new URL('/login', req.url);
       loginUrl.searchParams.set('callbackUrl', pathname);
@@ -14,9 +17,17 @@ export function middleware(req: NextRequest) {
     }
   }
 
+  // ── Guard: Admin Panel ─────────────────────────────────────────────────────
+  if (pathname.startsWith('/admin')) {
+    if (!sessionToken) {
+      const loginUrl = new URL('/login', req.url);
+      loginUrl.searchParams.set('callbackUrl', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
+  // ── Redirect authenticated users away from auth pages ─────────────────────
   if (pathname === '/login' || pathname === '/register') {
-    const sessionToken = req.cookies.get('__Secure-authjs.session-token')?.value
-      || req.cookies.get('authjs.session-token')?.value;
     if (sessionToken) {
       return NextResponse.redirect(new URL('/dashboard', req.url));
     }
@@ -26,5 +37,6 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login', '/register'],
+  matcher: ['/dashboard/:path*', '/admin/:path*', '/login', '/register'],
 };
+

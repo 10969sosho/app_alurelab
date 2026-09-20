@@ -14,6 +14,29 @@ body {
   background: rgb(var(--background-rgb));
 }
 
+/* ─── Lenis Smooth Scroll ───────────────────────────────────────────────── */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
+}
+
+
 /* Editorial L-Kids Style Utilities */
 .font-condensed {
   font-family: var(--font-bebas), "Bebas Neue", "Impact", sans-serif;
