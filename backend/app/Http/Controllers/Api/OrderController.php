@@ -147,6 +147,24 @@ class OrderController extends Controller
             return response()->json(['message' => 'Pengiriman untuk pesanan ini sudah dibuat.'], 409);
         }
 
+        if (empty($order->shipping_destination_area_id)) {
+            return response()->json([
+                'message' => 'Alamat tujuan pesanan tidak lengkap. Minta pembeli memperbarui alamat terlebih dahulu.',
+            ], 422);
+        }
+
+        if (empty($store->phone_number)) {
+            return response()->json([
+                'message' => 'Nomor WhatsApp toko belum diisi. Lengkapi di Pengaturan Toko > Profil Toko.',
+            ], 422);
+        }
+
+        if (empty($store->address_area_id)) {
+            return response()->json([
+                'message' => 'Alamat asal toko belum dikonfigurasi. Lengkapi di Pengaturan Toko > Alamat & Gudang.',
+            ], 422);
+        }
+
         $biteshipService = app(BiteshipService::class);
         $isCod = $order->payment?->payment_method === 'COD';
 
@@ -161,7 +179,11 @@ class OrderController extends Controller
         } catch (\Throwable $e) {
             report($e);
 
-            return response()->json(['message' => 'Booking pengiriman gagal. Coba lagi.'], 503);
+            $message = str_contains($e->getMessage(), 'Biteship')
+                ? $e->getMessage()
+                : 'Booking pengiriman gagal. Coba lagi.';
+
+            return response()->json(['message' => $message], 503);
         }
 
         $waybillId = $biteshipData['waybill_id'] ?? ($biteshipData['courier']['waybill_id'] ?? null);

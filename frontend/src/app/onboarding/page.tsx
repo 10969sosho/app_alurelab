@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, Sparkles, Store, Rocket, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Sparkles, Store, Rocket, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { fetchApi } from '@/lib/api-client';
 
 export default function OnboardingPage() {
@@ -15,6 +15,7 @@ export default function OnboardingPage() {
     ownerPhone: '',
     password: '',
   });
+  const [showPassword, setShowPassword] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [createdStore, setCreatedStore] = useState<any>(null);
@@ -200,9 +201,17 @@ export default function OnboardingPage() {
                 <input
                   type="tel"
                   required
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={20}
                   placeholder="081234567890"
                   value={formData.ownerPhone}
-                  onChange={(e) => setFormData({ ...formData, ownerPhone: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, ownerPhone: e.target.value.replace(/[^0-9]/g, '') })}
+                  onKeyDown={(e) => {
+                    if (!/[0-9]/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                      e.preventDefault();
+                    }
+                  }}
                   className="w-full bg-offwhite border border-cloud text-sm px-3.5 py-2.5 rounded-sm text-charcoal-900 focus:border-charcoal-900 focus:outline-none transition-colors"
                 />
               </div>
@@ -221,15 +230,25 @@ export default function OnboardingPage() {
 
               <div>
                 <label className="micro-label block mb-1.5">Kata Sandi (Password)</label>
-                <input
-                  type="password"
-                  required
-                  minLength={8}
-                  placeholder="Minimal 8 karakter"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full bg-offwhite border border-cloud text-sm px-3.5 py-2.5 rounded-sm text-charcoal-900 focus:border-charcoal-900 focus:outline-none transition-colors"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    minLength={8}
+                    placeholder="Minimal 8 karakter"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className="w-full bg-offwhite border border-cloud text-sm px-3.5 py-2.5 pr-11 rounded-sm text-charcoal-900 focus:border-charcoal-900 focus:outline-none transition-colors"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-mediumgray hover:text-charcoal-900 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
             </div>
           </div>

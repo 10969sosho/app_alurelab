@@ -28,6 +28,18 @@ export default function HomePage() {
         </Link>
         
         <div className="flex items-center gap-6">
+          <a
+            href="#features"
+            className="text-[13px] font-medium text-darkgray hover:text-charcoal-900 transition-colors hidden sm:block tracking-wide"
+          >
+            FITUR
+          </a>
+          <a
+            href="#security"
+            className="text-[13px] font-medium text-darkgray hover:text-charcoal-900 transition-colors hidden sm:block tracking-wide"
+          >
+            SECURITY
+          </a>
           <Link
             href="/dashboard"
             className="text-[13px] font-medium text-darkgray hover:text-charcoal-900 transition-colors hidden sm:block tracking-wide"
@@ -177,7 +189,7 @@ export default function HomePage() {
       </section>
 
       {/* Feature Grid */}
-      <section className="relative z-10 py-24 px-6 max-w-7xl mx-auto border-t border-cloud">
+      <section id="features" className="relative z-10 py-24 px-6 max-w-7xl mx-auto border-t border-cloud scroll-mt-20">
         <div className="flex flex-col md:flex-row justify-between items-start mb-16 gap-4">
           <div>
             <h2 className="h2-text text-charcoal-900 mb-2">Core Capabilities</h2>
@@ -224,7 +236,7 @@ export default function HomePage() {
           </div>
 
           {/* 4 */}
-          <div className="bg-offwhite p-10 hover:bg-white transition-colors duration-500 relative group">
+          <div id="security" className="bg-offwhite p-10 hover:bg-white transition-colors duration-500 relative group scroll-mt-24">
             <div className="absolute top-6 right-6 w-2 h-2 rounded-full bg-lime-accent opacity-0 group-hover:opacity-100 transition-opacity shadow-lime-glow"></div>
             <div className="w-12 h-12 rounded-full border border-cloud flex items-center justify-center mb-6 text-charcoal-900 bg-white shadow-soft">
               <ShieldCheck className="w-5 h-5 stroke-[1.5]" />
@@ -306,7 +318,10 @@ export default function HomePage() {
         <div className="flex items-center gap-6 text-xs text-darkgray">
           <span className="micro-label">© 2026 ALURELAB</span>
           <span className="w-1 h-1 rounded-full bg-cloud"></span>
+          <a href="#features" className="micro-label hover:text-charcoal-900 transition-colors">Fitur</a>
+          <a href="#security" className="micro-label hover:text-charcoal-900 transition-colors">Security</a>
           <Link href="/login" className="micro-label hover:text-charcoal-900 transition-colors">Portal</Link>
+          <Link href="/register" className="micro-label hover:text-charcoal-900 transition-colors">Daftar</Link>
           <Link href="/onboarding" className="micro-label hover:text-charcoal-900 transition-colors">Onboarding</Link>
         </div>
       </footer>

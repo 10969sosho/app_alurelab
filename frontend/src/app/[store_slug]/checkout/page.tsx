@@ -10,6 +10,15 @@ import { WilayahAddressFields, type WilayahAddressValue } from '@/components/add
 import { useBuyerCms } from '@/components/buyer/useBuyerCms';
 import { BuyerNavbar, BuyerThemeFrame } from '@/components/buyer/BuyerTheme';
 
+function buildAreaId(wilayah: WilayahAddressValue): string {
+  if (wilayah.areaId) return wilayah.areaId;
+  const { provinceCode, regencyCode, districtCode, villageCode } = wilayah;
+  if (provinceCode && regencyCode && districtCode && villageCode) {
+    return `${provinceCode}.${regencyCode}.${districtCode}.${villageCode}`;
+  }
+  return '';
+}
+
 export default function CheckoutPage({ params }: { params: Promise<{ store_slug: string }> }) {
   const resolvedParams = use(params);
   const storeSlug = resolvedParams.store_slug;
@@ -27,9 +36,9 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
     wilayah: {} as WilayahAddressValue,
     addressDetail: '',
     notes: '',
-    courier: 'sicepat',
-    courierService: 'reg',
-    shippingCost: 17000,
+    courier: '',
+    courierService: '',
+    shippingCost: 0,
     paymentMethod: 'ONLINE' as 'ONLINE' | 'COD',
   });
 
@@ -68,16 +77,25 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
   const [shippingOptions, setShippingOptions] = useState<any[]>([]);
   const [orderSuccess, setOrderSuccess] = useState<any>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [ratesAttemptedFor, setRatesAttemptedFor] = useState<string | null>(null);
 
   const subtotal = getSubtotal();
   const totalAmount = subtotal + form.shippingCost;
+  const resolvedAreaId = form.areaId || buildAreaId(form.wilayah);
+  const hasStockIssue = items.some(
+    (item) => typeof item.stock === 'number' && (item.stock <= 0 || item.quantity > item.stock)
+  );
 
   const loadShippingRates = async (destinationAreaId: string, wilayah: WilayahAddressValue) => {
-    setForm((prev) => ({ ...prev, wilayah, areaId: destinationAreaId }));
+    const nextAreaId = destinationAreaId || buildAreaId(wilayah);
+    setForm((prev) => ({ ...prev, wilayah, areaId: nextAreaId, courier: '', courierService: '', shippingCost: 0 }));
     setShippingOptions([]);
-    if (!destinationAreaId) return;
+    setRatesAttemptedFor(null);
+    if (!nextAreaId) return;
 
+    setRatesAttemptedFor(nextAreaId);
     setLoadingRates(true);
+    setErrorMessage(null);
     try {
       const res = await fetchApi('/logistics/rates', {
         method: 'POST',
@@ -111,8 +129,17 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
   };
 
   useEffect(() => {
-    const savedAreaId = buyer?.defaultAddress?.areaId;
-    if (!isHydrated || !savedAreaId || form.areaId !== savedAreaId || items.length === 0 || shippingOptions.length > 0) {
+    if (!isHydrated || items.length === 0) return;
+
+    const savedAreaId = buyer?.defaultAddress?.areaId
+      || buildAreaId({
+          provinceCode: buyer?.defaultAddress?.provinceCode,
+          regencyCode: buyer?.defaultAddress?.regencyCode,
+          districtCode: buyer?.defaultAddress?.districtCode,
+          villageCode: buyer?.defaultAddress?.villageCode,
+        } as WilayahAddressValue);
+
+    if (!savedAreaId || shippingOptions.length > 0 || loadingRates || ratesAttemptedFor === savedAreaId) {
       return;
     }
 
@@ -129,7 +156,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
       areaName: buyer?.defaultAddress?.areaName,
       postalCode: buyer?.defaultAddress?.postalCode,
     });
-  }, [buyer, form.areaId, isHydrated, items.length, shippingOptions.length]);
+  }, [buyer, isHydrated, items.length, shippingOptions.length, loadingRates, ratesAttemptedFor]);
 
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,8 +169,14 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
       return;
     }
 
-    if (!form.areaId || shippingOptions.length === 0) {
-      setErrorMessage('Pilih alamat lengkap dan tunggu tarif Biteship tersedia.');
+    if (hasStockIssue) {
+      setErrorMessage('Ada item dengan stok habis atau melebihi stok. Kembali ke keranjang dan perbaiki.');
+      setLoading(false);
+      return;
+    }
+
+    if (!resolvedAreaId || shippingOptions.length === 0 || !form.courier) {
+      setErrorMessage('Pilih alamat lengkap (kecamatan) dan tarif pengiriman terlebih dahulu.');
       setLoading(false);
       return;
     }
@@ -152,7 +185,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
       customer_name: form.name,
       customer_phone: form.phone,
       customer_email: form.email || null,
-      destination_area_id: form.areaId,
+      destination_area_id: resolvedAreaId,
       address_detail: form.addressDetail,
       shipping_notes: form.notes,
       courier_code: form.courier,
@@ -470,8 +503,8 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
                   <span>Rp {subtotal.toLocaleString('id-ID')}</span>
                 </div>
                 <div className="flex justify-between text-slate-600">
-                  <span>Ongkos Kirim ({form.courier.toUpperCase()})</span>
-                  <span>Rp {form.shippingCost.toLocaleString('id-ID')}</span>
+                  <span>Ongkos Kirim {form.courier ? `(${form.courier.toUpperCase()})` : ''}</span>
+                  <span>{form.courier ? `Rp ${form.shippingCost.toLocaleString('id-ID')}` : '-'}</span>
                 </div>
                 <div className="flex justify-between text-slate-600">
                  <span>Service fee</span>
@@ -485,7 +518,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
 
               <button
                 type="submit"
-                disabled={loading || !isHydrated || loadingRates || !form.courier}
+                disabled={loading || !isHydrated || loadingRates || !form.courier || shippingOptions.length === 0 || hasStockIssue}
                 className="w-full bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2"
               >
                  {loading ? 'Processing...' : loadingRates ? 'Menghitung Ongkir...' : `${copy.checkoutSubmit} · Rp ${totalAmount.toLocaleString('id-ID')}`}

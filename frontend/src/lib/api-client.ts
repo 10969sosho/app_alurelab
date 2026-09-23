@@ -46,7 +46,11 @@ export async function fetchApi<T = any>(
     const data = body ? JSON.parse(body) : {};
 
     if (!res.ok) {
-      throw new Error(data?.message || data?.error || `Request gagal (${res.status})`);
+      const validation = data?.errors && typeof data.errors === 'object'
+        ? Object.values(data.errors)[0]
+        : null;
+      const validationMessage = Array.isArray(validation) ? validation[0] : validation;
+      throw new Error(validationMessage || data?.message || data?.error || `Request gagal (${res.status})`);
     }
 
     return data;

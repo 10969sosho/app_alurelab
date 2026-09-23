@@ -38,8 +38,26 @@ export default function ProductsPage() {
   const derivedStatus = useMemo(() => {
     if (activeTab === 'live') return 'active';
     if (activeTab === 'unlisted') return 'inactive';
+    if (activeTab === 'action_required') return 'action_required';
+    if (activeTab === 'review') return 'review';
     return '';
   }, [activeTab]);
+
+  // Badge counts for "Perlu Tindakan" & "Sedang Ditinjau" (same filter as the tab list)
+  const { data: badgeCounts } = useQuery({
+    queryKey: ['merchant-products-badge-counts', activeSearch],
+    queryFn: async () => {
+      const searchParam = activeSearch ? `&search=${encodeURIComponent(activeSearch)}` : '';
+      const [actionRequired, review] = await Promise.all([
+        api.get(`/merchant/products?status=action_required&per_page=1${searchParam}`),
+        api.get(`/merchant/products?status=review&per_page=1${searchParam}`),
+      ]);
+      return {
+        action_required: actionRequired.data?.total ?? 0,
+        review: review.data?.total ?? 0,
+      };
+    },
+  });
 
   // Fetch products
   const { data, isLoading } = useQuery({
@@ -211,7 +229,7 @@ export default function ProductsPage() {
               : 'border-transparent text-slate-600 hover:text-slate-900'
           }`}
         >
-          Perlu Tindakan (0)
+          Perlu Tindakan ({badgeCounts?.action_required ?? 0})
         </button>
         <button
           type="button"
@@ -225,7 +243,7 @@ export default function ProductsPage() {
               : 'border-transparent text-slate-600 hover:text-slate-900'
           }`}
         >
-          Sedang Ditinjau (0)
+          Sedang Ditinjau ({badgeCounts?.review ?? 0})
         </button>
         <button
           type="button"

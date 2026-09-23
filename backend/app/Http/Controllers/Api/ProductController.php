@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProductVariant;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class ProductController extends Controller
@@ -25,21 +25,31 @@ class ProductController extends Controller
 
         // Filter
         if ($request->filled('search')) {
-            $query->where('title', 'ilike', '%' . $request->search . '%');
+            $query->where('title', 'ilike', '%'.$request->search.'%');
         }
         if ($request->filled('status')) {
-            $query->where('is_active', $request->status === 'active');
+            $status = $request->status;
+            if (in_array($status, ['active', 'inactive'], true)) {
+                $query->where('is_active', $status === 'active');
+            } elseif ($status === 'action_required') {
+                // Perlu tindakan: tidak ada varian yang masih punya stok
+                $query->whereDoesntHave('variants', fn ($v) => $v->where('stock', '>', 0));
+            } elseif ($status === 'review') {
+                // Sedang ditinjau: data belum lengkap (deskripsi atau gambar kosong)
+                $query->where(function ($outer) {
+                    $outer->where(function ($q) {
+                        $q->whereNull('description')->orWhere('description', '');
+                    })->orWhere(function ($q) {
+                        $q->whereNull('images')->orWhere('images', '[]');
+                    });
+                });
+            }
         }
         if ($request->filled('category')) {
             $query->where('category_name', $request->category);
         }
         if ($request->input('low_stock') === 'true') {
-            // Produk tanpa varian dengan stok < 5, atau varian dengan stok < 5
-            $query->where(function ($q) {
-                $q->whereDoesntHave('variants')
-                  ->where('stock_fallback', '<', 5)
-                  ->orWhereHas('variants', fn($v) => $v->where('stock', '<', 5));
-            });
+            $query->whereHas('variants', fn ($v) => $v->where('stock', '<', 5));
         }
 
         $products = $query->paginate($request->input('per_page', 20));
@@ -56,22 +66,22 @@ class ProductController extends Controller
         $store = $request->attributes->get('current_store');
 
         $validated = $request->validate([
-            'title'            => 'required|string|max:255',
-            'description'      => 'nullable|string',
-            'category_name'    => 'nullable|string|max:100',
-            'price'            => 'required|numeric|min:0',
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'category_name' => 'nullable|string|max:100',
+            'price' => 'required|numeric|min:0',
             'compare_at_price' => 'nullable|numeric|min:0',
-            'cost_price'       => 'nullable|numeric|min:0',
-            'weight_grams'     => 'required|integer|min:1',
-            'images'           => 'nullable|array',
-            'images.*'         => 'url',
-            'is_active'        => 'boolean',
-            'meta_title'       => 'nullable|string|max:60',
+            'cost_price' => 'nullable|numeric|min:0',
+            'weight_grams' => 'required|integer|min:1',
+            'images' => 'nullable|array',
+            'images.*' => 'url',
+            'is_active' => 'boolean',
+            'meta_title' => 'nullable|string|max:60',
             'meta_description' => 'nullable|string|max:160',
-            'tags'             => 'nullable|array',
+            'tags' => 'nullable|array',
             // Varian (opsional)
-            'variants'         => 'nullable|array',
-            'variants.*.sku'   => 'nullable|string|max:100',
+            'variants' => 'nullable|array',
+            'variants.*.sku' => 'nullable|string|max:100',
             'variants.*.title' => 'required_with:variants|string|max:150',
             'variants.*.price' => 'required_with:variants|numeric|min:0',
             'variants.*.stock' => 'required_with:variants|integer|min:0',
@@ -79,50 +89,50 @@ class ProductController extends Controller
 
         $slug = Str::slug($validated['title']);
         $baseSlug = $slug;
-        $counter  = 1;
+        $counter = 1;
         while (Product::where('tenant_id', $store->id)->where('slug', $slug)->exists()) {
-            $slug = $baseSlug . '-' . $counter++;
+            $slug = $baseSlug.'-'.$counter++;
         }
 
         $product = Product::create([
-            'tenant_id'        => $store->id,
-            'title'            => $validated['title'],
-            'slug'             => $slug,
-            'description'      => $validated['description'] ?? null,
-            'category_name'    => $validated['category_name'] ?? null,
-            'price'            => $validated['price'],
+            'tenant_id' => $store->id,
+            'title' => $validated['title'],
+            'slug' => $slug,
+            'description' => $validated['description'] ?? null,
+            'category_name' => $validated['category_name'] ?? null,
+            'price' => $validated['price'],
             'compare_at_price' => $validated['compare_at_price'] ?? null,
-            'cost_price'       => $validated['cost_price'] ?? null,
-            'weight_grams'     => $validated['weight_grams'],
-            'images'           => $validated['images'] ?? [],
-            'is_active'        => $validated['is_active'] ?? true,
-            'settings'         => [
-                'meta_title'       => $validated['meta_title'] ?? null,
+            'cost_price' => $validated['cost_price'] ?? null,
+            'weight_grams' => $validated['weight_grams'],
+            'images' => $validated['images'] ?? [],
+            'is_active' => $validated['is_active'] ?? true,
+            'settings' => [
+                'meta_title' => $validated['meta_title'] ?? null,
                 'meta_description' => $validated['meta_description'] ?? null,
-                'tags'             => $validated['tags'] ?? [],
+                'tags' => $validated['tags'] ?? [],
             ],
         ]);
 
         // Buat varian jika ada, atau buat varian default jika produk tunggal
-        if (!empty($validated['variants'])) {
+        if (! empty($validated['variants'])) {
             foreach ($validated['variants'] as $variantData) {
                 ProductVariant::create([
-                    'tenant_id'  => $store->id,
+                    'tenant_id' => $store->id,
                     'product_id' => $product->id,
-                    'sku'        => $variantData['sku'] ?? strtoupper(Str::random(8)),
-                    'title'      => $variantData['title'],
-                    'price'      => $variantData['price'],
-                    'stock'      => $variantData['stock'],
+                    'sku' => $variantData['sku'] ?? strtoupper(Str::random(8)),
+                    'title' => $variantData['title'],
+                    'price' => $variantData['price'],
+                    'stock' => $variantData['stock'],
                 ]);
             }
         } else {
             ProductVariant::create([
-                'tenant_id'  => $store->id,
+                'tenant_id' => $store->id,
                 'product_id' => $product->id,
-                'sku'        => strtoupper(Str::random(8)),
-                'title'      => 'Standard',
-                'price'      => $product->price,
-                'stock'      => $request->input('stock', 100),
+                'sku' => strtoupper(Str::random(8)),
+                'title' => 'Standard',
+                'price' => $product->price,
+                'stock' => $request->input('stock', 100),
             ]);
         }
 
@@ -137,10 +147,10 @@ class ProductController extends Controller
      */
     public function show(Request $request, string $id): JsonResponse
     {
-        $store   = $request->attributes->get('current_store');
+        $store = $request->attributes->get('current_store');
         $product = Product::where('tenant_id', $store->id)
-                          ->with('variants')
-                          ->findOrFail($id);
+            ->with('variants')
+            ->findOrFail($id);
 
         return response()->json($product);
     }
@@ -150,33 +160,33 @@ class ProductController extends Controller
      */
     public function update(Request $request, string $id): JsonResponse
     {
-        $store   = $request->attributes->get('current_store');
+        $store = $request->attributes->get('current_store');
         $product = Product::where('tenant_id', $store->id)->findOrFail($id);
 
         $validated = $request->validate([
-            'title'            => 'sometimes|string|max:255',
-            'description'      => 'nullable|string',
-            'category_name'    => 'nullable|string|max:100',
-            'price'            => 'sometimes|numeric|min:0',
+            'title' => 'sometimes|string|max:255',
+            'description' => 'nullable|string',
+            'category_name' => 'nullable|string|max:100',
+            'price' => 'sometimes|numeric|min:0',
             'compare_at_price' => 'nullable|numeric|min:0',
-            'cost_price'       => 'nullable|numeric|min:0',
-            'weight_grams'     => 'sometimes|integer|min:1',
-            'images'           => 'nullable|array',
-            'images.*'         => 'url',
-            'is_active'        => 'boolean',
-            'meta_title'       => 'nullable|string|max:60',
+            'cost_price' => 'nullable|numeric|min:0',
+            'weight_grams' => 'sometimes|integer|min:1',
+            'images' => 'nullable|array',
+            'images.*' => 'url',
+            'is_active' => 'boolean',
+            'meta_title' => 'nullable|string|max:60',
             'meta_description' => 'nullable|string|max:160',
-            'tags'             => 'nullable|array',
-            'variants'         => 'nullable|array',
+            'tags' => 'nullable|array',
+            'variants' => 'nullable|array',
         ]);
 
         // Merge settings jika ada
         if (isset($validated['meta_title']) || isset($validated['meta_description']) || isset($validated['tags'])) {
             $currentSettings = $product->settings ?? [];
             $validated['settings'] = array_merge($currentSettings, [
-                'meta_title'       => $validated['meta_title'] ?? ($currentSettings['meta_title'] ?? null),
+                'meta_title' => $validated['meta_title'] ?? ($currentSettings['meta_title'] ?? null),
                 'meta_description' => $validated['meta_description'] ?? ($currentSettings['meta_description'] ?? null),
-                'tags'             => $validated['tags'] ?? ($currentSettings['tags'] ?? []),
+                'tags' => $validated['tags'] ?? ($currentSettings['tags'] ?? []),
             ]);
             unset($validated['meta_title'], $validated['meta_description'], $validated['tags']);
         }
@@ -187,36 +197,36 @@ class ProductController extends Controller
         $product->update($validated);
 
         if ($variantsData !== null) {
-            if (!empty($variantsData)) {
+            if (! empty($variantsData)) {
                 ProductVariant::where('product_id', $product->id)->delete();
                 foreach ($variantsData as $variantData) {
                     ProductVariant::create([
-                        'tenant_id'  => $store->id,
+                        'tenant_id' => $store->id,
                         'product_id' => $product->id,
-                        'sku'        => $variantData['sku'] ?? strtoupper(Str::random(8)),
-                        'title'      => $variantData['title'],
-                        'price'      => $variantData['price'] ?? $product->price,
-                        'stock'      => $variantData['stock'] ?? 10,
+                        'sku' => $variantData['sku'] ?? strtoupper(Str::random(8)),
+                        'title' => $variantData['title'],
+                        'price' => $variantData['price'] ?? $product->price,
+                        'stock' => $variantData['stock'] ?? 10,
                     ]);
                 }
-            } else if ($product->variants()->count() === 0) {
+            } elseif ($product->variants()->count() === 0) {
                 ProductVariant::create([
-                    'tenant_id'  => $store->id,
+                    'tenant_id' => $store->id,
                     'product_id' => $product->id,
-                    'sku'        => strtoupper(Str::random(8)),
-                    'title'      => 'Standard',
-                    'price'      => $product->price,
-                    'stock'      => $request->input('stock', 100),
+                    'sku' => strtoupper(Str::random(8)),
+                    'title' => 'Standard',
+                    'price' => $product->price,
+                    'stock' => $request->input('stock', 100),
                 ]);
             }
         } elseif ($product->variants()->count() === 0) {
             ProductVariant::create([
-                'tenant_id'  => $store->id,
+                'tenant_id' => $store->id,
                 'product_id' => $product->id,
-                'sku'        => strtoupper(Str::random(8)),
-                'title'      => 'Standard',
-                'price'      => $product->price,
-                'stock'      => 100,
+                'sku' => strtoupper(Str::random(8)),
+                'title' => 'Standard',
+                'price' => $product->price,
+                'stock' => 100,
             ]);
         }
 
@@ -228,7 +238,7 @@ class ProductController extends Controller
      */
     public function destroy(Request $request, string $id): JsonResponse
     {
-        $store   = $request->attributes->get('current_store');
+        $store = $request->attributes->get('current_store');
         $product = Product::where('tenant_id', $store->id)->findOrFail($id);
         $product->delete();
 
@@ -240,12 +250,12 @@ class ProductController extends Controller
      */
     public function toggleStatus(Request $request, string $id): JsonResponse
     {
-        $store   = $request->attributes->get('current_store');
+        $store = $request->attributes->get('current_store');
         $product = Product::where('tenant_id', $store->id)->findOrFail($id);
         $product->update(['is_active' => ! $product->is_active]);
 
         return response()->json([
-            'message'   => $product->is_active ? 'Produk diaktifkan.' : 'Produk dinon-aktifkan.',
+            'message' => $product->is_active ? 'Produk diaktifkan.' : 'Produk dinon-aktifkan.',
             'is_active' => $product->is_active,
         ]);
     }
@@ -257,8 +267,8 @@ class ProductController extends Controller
      */
     public function variants(Request $request, string $id): JsonResponse
     {
-        $store    = $request->attributes->get('current_store');
-        $product  = Product::where('tenant_id', $store->id)->findOrFail($id);
+        $store = $request->attributes->get('current_store');
+        $product = Product::where('tenant_id', $store->id)->findOrFail($id);
         $variants = $product->variants()->orderBy('created_at')->get();
 
         return response()->json($variants);
@@ -269,18 +279,18 @@ class ProductController extends Controller
      */
     public function storeVariant(Request $request, string $id): JsonResponse
     {
-        $store   = $request->attributes->get('current_store');
+        $store = $request->attributes->get('current_store');
         $product = Product::where('tenant_id', $store->id)->findOrFail($id);
 
         $validated = $request->validate([
-            'sku'   => 'nullable|string|max:100',
+            'sku' => 'nullable|string|max:100',
             'title' => 'required|string|max:150',
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
         ]);
 
         $variant = ProductVariant::create([
-            'tenant_id'  => $store->id,
+            'tenant_id' => $store->id,
             'product_id' => $product->id,
             ...$validated,
         ]);
@@ -293,13 +303,13 @@ class ProductController extends Controller
      */
     public function updateVariant(Request $request, string $id, string $variantId): JsonResponse
     {
-        $store   = $request->attributes->get('current_store');
+        $store = $request->attributes->get('current_store');
         $variant = ProductVariant::where('tenant_id', $store->id)
-                                 ->where('product_id', $id)
-                                 ->findOrFail($variantId);
+            ->where('product_id', $id)
+            ->findOrFail($variantId);
 
         $validated = $request->validate([
-            'sku'   => 'nullable|string|max:100',
+            'sku' => 'nullable|string|max:100',
             'title' => 'sometimes|string|max:150',
             'price' => 'sometimes|numeric|min:0',
             'stock' => 'sometimes|integer|min:0',
@@ -315,10 +325,10 @@ class ProductController extends Controller
      */
     public function destroyVariant(Request $request, string $id, string $variantId): JsonResponse
     {
-        $store   = $request->attributes->get('current_store');
+        $store = $request->attributes->get('current_store');
         $variant = ProductVariant::where('tenant_id', $store->id)
-                                 ->where('product_id', $id)
-                                 ->findOrFail($variantId);
+            ->where('product_id', $id)
+            ->findOrFail($variantId);
         $variant->delete();
 
         return response()->json(['message' => 'Varian berhasil dihapus.']);
@@ -333,19 +343,19 @@ class ProductController extends Controller
         $store = $request->attributes->get('current_store');
 
         $validated = $request->validate([
-            'ids'    => 'required|array|min:1',
-            'ids.*'  => 'uuid',
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'uuid',
             'action' => 'required|in:activate,deactivate,delete',
         ]);
 
         $query = Product::where('tenant_id', $store->id)->whereIn('id', $validated['ids']);
 
         match ($validated['action']) {
-            'activate'   => $query->update(['is_active' => true]),
+            'activate' => $query->update(['is_active' => true]),
             'deactivate' => $query->update(['is_active' => false]),
-            'delete'     => $query->delete(),
+            'delete' => $query->delete(),
         };
 
-        return response()->json(['message' => 'Aksi berhasil dijalankan pada ' . count($validated['ids']) . ' produk.']);
+        return response()->json(['message' => 'Aksi berhasil dijalankan pada '.count($validated['ids']).' produk.']);
     }
 }

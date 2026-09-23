@@ -29,6 +29,9 @@ export default function CartPage({
   const subtotal = getSubtotal();
   const totalItems = getTotalItems();
   const storeDisplayName = storeSlug.replace(/-/g, ' ').toUpperCase();
+  const hasStockIssue = items.some(
+    (item) => typeof item.stock === 'number' && (item.stock <= 0 || item.quantity > item.stock)
+  );
 
   return (
      <BuyerThemeFrame storeSlug={storeSlug} className="text-[#111111] font-sans antialiased flex flex-col">
@@ -115,6 +118,16 @@ export default function CartPage({
                             {item.variantTitle}
                           </div>
                         )}
+                        {typeof item.stock === 'number' && item.stock <= 0 && (
+                          <div className="text-[11px] font-bold text-rose-600 uppercase tracking-wide">
+                            Stok habis — hapus item ini
+                          </div>
+                        )}
+                        {typeof item.stock === 'number' && item.stock > 0 && item.quantity > item.stock && (
+                          <div className="text-[11px] font-bold text-rose-600 uppercase tracking-wide">
+                            Melebihi stok tersedia ({item.stock})
+                          </div>
+                        )}
                         <div className="text-xs font-semibold text-[#111111] pt-1">
                           Rp {item.price.toLocaleString('id-ID')}
                         </div>
@@ -136,8 +149,9 @@ export default function CartPage({
                           {item.quantity}
                         </span>
                         <button
+                          disabled={typeof item.stock === 'number' && item.quantity >= item.stock}
                           onClick={() => updateQuantity(item.productId, item.variantId, item.quantity + 1)}
-                          className="w-8 h-8 flex items-center justify-center text-[#111111] hover:bg-stone-100 transition-colors"
+                          className="w-8 h-8 flex items-center justify-center text-[#111111] hover:bg-stone-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                           aria-label="Tambah kuantitas"
                         >
                           <Plus className="w-3 h-3" />
@@ -209,10 +223,13 @@ export default function CartPage({
                 </div>
 
                 {/* Checkout CTA */}
-                <Link
-                  href={`/${storeSlug}/checkout`}
-                  className="w-full bg-[#111111] text-[#F5F5F3] py-4 text-xs font-semibold uppercase tracking-[0.2em] hover:bg-black transition-all flex items-center justify-center gap-2"
-                >
+          <Link
+            href={`/${storeSlug}/checkout`}
+            className={`flex items-center justify-between gap-3 bg-[#111111] hover:bg-black text-white w-full mt-5 py-4 px-6 rounded-xl transition-all group active:scale-[0.99] shadow-lg ${
+              hasStockIssue ? 'opacity-50 pointer-events-none' : ''
+            }`}
+            aria-disabled={hasStockIssue}
+          >
                     <span>{copy.cartCheckout}</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
@@ -239,7 +256,10 @@ export default function CartPage({
         <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-black/10 p-3 shadow-2xl pb-safe">
           <Link
             href={`/${storeSlug}/checkout`}
-            className="w-full bg-[#111111] text-[#F5F5F3] py-3.5 text-xs font-bold uppercase tracking-[0.15em] flex justify-between items-center px-4"
+            aria-disabled={hasStockIssue}
+            className={`w-full bg-[#111111] text-[#F5F5F3] py-3.5 text-xs font-bold uppercase tracking-[0.15em] flex justify-between items-center px-4 ${
+              hasStockIssue ? 'opacity-50 pointer-events-none' : ''
+            }`}
           >
             <span>{copy.cartCheckout}</span>
             <span className="opacity-80">Rp {subtotal.toLocaleString('id-ID')}</span>

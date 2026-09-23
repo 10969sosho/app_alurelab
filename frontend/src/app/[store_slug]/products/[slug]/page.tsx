@@ -131,6 +131,8 @@ export default function ProductDetailPage({
   const activeVariant = variants.find((v: any) => v.id === selectedVariantId) || variants[0];
   const currentPrice = activeVariant ? Number(activeVariant.price) : Number(product.price || 0);
   const comparePrice = product.compare_at_price ? Number(product.compare_at_price) : null;
+  const stockAvailable = typeof activeVariant?.stock === 'number' ? activeVariant.stock : 0;
+  const isOutOfStock = stockAvailable <= 0;
   const storeName = storeInfo?.name || storeSlug.replace(/-/g, ' ');
   const phoneNumber = storeInfo?.phone_number;
 
@@ -140,6 +142,10 @@ export default function ProductDetailPage({
       : null;
 
   const handleAddToCart = () => {
+    if (isOutOfStock) {
+      toast.error('Stok habis. Pilih varian lain atau tunggu restock.');
+      return;
+    }
     addItem({
       productId: product.id,
       variantId: activeVariant?.id || product.id,
@@ -148,6 +154,7 @@ export default function ProductDetailPage({
       price: currentPrice,
       quantity,
       imageUrl: images[0],
+      stock: stockAvailable,
     });
     toast.success(`${product.title} (${quantity} barang) masuk ke keranjang!`, {
       duration: 2500,
@@ -155,6 +162,10 @@ export default function ProductDetailPage({
   };
 
   const handleBuyNow = () => {
+    if (isOutOfStock) {
+      toast.error('Stok habis. Pilih varian lain atau tunggu restock.');
+      return;
+    }
     addItem({
       productId: product.id,
       variantId: activeVariant?.id || product.id,
@@ -163,6 +174,7 @@ export default function ProductDetailPage({
       price: currentPrice,
       quantity,
       imageUrl: images[0],
+      stock: stockAvailable,
     });
     router.push(`/${storeSlug}/checkout`);
   };
@@ -301,9 +313,18 @@ export default function ProductDetailPage({
             <span className="text-[10px] font-bold uppercase tracking-wider bg-stone-100 text-stone-700 px-2 py-0.5 rounded-md">
               {product.category_name || 'Koleksi Toko'}
             </span>
-            <span className="text-xs text-emerald-700 font-semibold flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              Stok Tersedia
+            <span className="text-xs font-semibold flex items-center gap-1">
+              {isOutOfStock ? (
+                <>
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                  <span className="text-rose-600">Stok Habis</span>
+                </>
+              ) : (
+                <>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <span className="text-emerald-700">Stok Tersedia</span>
+                </>
+              )}
             </span>
           </div>
         </section>
@@ -364,7 +385,10 @@ export default function ProductDetailPage({
                     <button
                       key={v.id}
                       type="button"
-                      onClick={() => setSelectedVariantId(v.id)}
+                      onClick={() => {
+                        setSelectedVariantId(v.id);
+                        setQuantity(1);
+                      }}
                       className={`text-xs px-3.5 py-2 rounded-xl font-bold transition-all border ${
                         isSelected
                           ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
@@ -387,8 +411,9 @@ export default function ProductDetailPage({
             <div className="flex items-center border border-stone-200 rounded-xl bg-stone-50 overflow-hidden">
               <button
                 type="button"
+                disabled={isOutOfStock || quantity <= 1}
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                className="w-8 h-8 flex items-center justify-center text-slate-700 hover:bg-stone-200 transition-colors"
+                className="w-8 h-8 flex items-center justify-center text-slate-700 hover:bg-stone-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <Minus className="w-3.5 h-3.5" />
               </button>
@@ -397,8 +422,9 @@ export default function ProductDetailPage({
               </span>
               <button
                 type="button"
-                onClick={() => setQuantity((q) => q + 1)}
-                className="w-8 h-8 flex items-center justify-center text-slate-700 hover:bg-stone-200 transition-colors"
+                disabled={isOutOfStock || quantity >= stockAvailable}
+                onClick={() => setQuantity((q) => Math.min(stockAvailable, q + 1))}
+                className="w-8 h-8 flex items-center justify-center text-slate-700 hover:bg-stone-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <Plus className="w-3.5 h-3.5" />
               </button>
@@ -474,20 +500,28 @@ export default function ProductDetailPage({
           {/* + Keranjang Button */}
           <button
             type="button"
+            disabled={isOutOfStock}
             onClick={handleAddToCart}
-            className="flex-1 bg-stone-100 hover:bg-stone-200 text-slate-900 text-xs font-extrabold py-3 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-98"
+            className="flex-1 bg-stone-100 hover:bg-stone-200 text-slate-900 text-xs font-extrabold py-3 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
           >
-            <Plus className="w-4 h-4" />
-            <span>Keranjang</span>
+            {isOutOfStock ? (
+              <span>Stok Habis</span>
+            ) : (
+              <>
+                <Plus className="w-4 h-4" />
+                <span>Keranjang</span>
+              </>
+            )}
           </button>
 
           {/* Beli Langsung Button */}
           <button
             type="button"
+            disabled={isOutOfStock}
             onClick={handleBuyNow}
-            className="flex-1 bg-slate-900 hover:bg-black text-white text-xs font-extrabold py-3 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-1 active:scale-98"
+            className="flex-1 bg-slate-900 hover:bg-black text-white text-xs font-extrabold py-3 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-1 active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
           >
-            <span>Beli Langsung</span>
+            <span>{isOutOfStock ? 'Stok Habis' : 'Beli Langsung'}</span>
           </button>
         </div>
         {/* iOS Safe Area Spacer */}

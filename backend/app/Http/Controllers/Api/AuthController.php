@@ -25,6 +25,13 @@ class AuthController extends Controller
             'email' => 'required|email|unique:users,email',
             'phone_number' => 'required|string|max:30|unique:users,phone_number',
             'password' => 'required|string|min:8|confirmed',
+        ], [
+            'email.unique' => 'Email sudah terdaftar. Gunakan email lain.',
+            'email.email' => 'Format email tidak valid.',
+            'email.required' => 'Email wajib diisi.',
+            'phone_number.unique' => 'Nomor WhatsApp sudah terdaftar. Gunakan nomor lain.',
+            'password.min' => 'Password minimal 8 karakter.',
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
         ]);
 
         $user = User::create([

@@ -142,7 +142,11 @@ class BiteshipService
 
         if ($response->failed()) {
             Log::error('Biteship Booking Order Failed', ['body' => $response->body()]);
-            throw new \Exception('Gagal booking kurir Biteship: '.$response->body());
+            $parsed = $response->json();
+            $detail = is_array($parsed)
+                ? ($parsed['error'] ?? $parsed['message'] ?? $response->body())
+                : $response->body();
+            throw new \Exception('Booking Biteship gagal: '.substr((string) $detail, 0, 300));
         }
 
         return $response->json();

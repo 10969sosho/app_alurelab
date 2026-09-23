@@ -32,9 +32,12 @@ export default function AnalyticsPage() {
     total_orders: 0,
     completed_orders: 0,
     average_order_value: 0,
+    gmv_growth_percent: null as number | null,
     visitors: 0,
     conversion_rate: 0,
   };
+
+  const gmvGrowth = metrics.gmv_growth_percent;
 
   const chart = data?.chart || [];
   const topProducts = data?.top_products || [];
@@ -92,7 +95,13 @@ export default function AnalyticsPage() {
           <p className="text-base sm:text-lg font-bold text-slate-900 mt-1">
             {formatRupiah(Number(metrics.total_gmv), { compact: true })}
           </p>
-          <span className="text-[10px] text-emerald-600 font-medium">↑ +14.2% dibanding pekan lalu</span>
+          {gmvGrowth === null || gmvGrowth === undefined ? (
+            <span className="text-[10px] text-slate-400 font-medium">Belum ada pembanding pekan lalu</span>
+          ) : (
+            <span className={`text-[10px] font-medium ${gmvGrowth >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+              {gmvGrowth >= 0 ? '↑ +' : '↓ '}{gmvGrowth}% dibanding pekan lalu
+            </span>
+          )}
         </div>
 
         <div className="bg-white border border-slate-200 rounded-xs p-3 shadow-2xs">

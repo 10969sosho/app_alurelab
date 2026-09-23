@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -18,6 +18,20 @@ const loginSchema = z.object({
 
 type LoginForm = z.infer<typeof loginSchema>;
 
+const ERROR_MESSAGES: Record<string, string> = {
+  CredentialsSignin: 'Email atau password salah.',
+  Configuration: 'Layanan login sedang bermasalah. Coba beberapa saat lagi.',
+  AccessDenied: 'Akses ditolak. Hubungi admin jika masalah berlanjut.',
+  Default: 'Login gagal. Coba lagi.',
+};
+
+function resolveLoginErrorMessage(error: string, code?: string | null): string {
+  if (error === 'CredentialsSignin' && code && code !== 'credentials') {
+    return code;
+  }
+  return ERROR_MESSAGES[error] ?? ERROR_MESSAGES.Default;
+}
+
 function LoginFormContent() {
   const router      = useRouter();
   const params      = useSearchParams();
@@ -25,6 +39,14 @@ function LoginFormContent() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading,    setIsLoading]    = useState(false);
+
+  const urlError = params.get('error');
+
+  useEffect(() => {
+    if (urlError) {
+      toast.error(resolveLoginErrorMessage(urlError, params.get('code')));
+    }
+  }, [urlError, params]);
 
   const {
     register,
@@ -42,10 +64,7 @@ function LoginFormContent() {
       });
 
       if (result?.error) {
-        toast.error(result.error === 'CredentialsSignin'
-          ? 'Email atau password salah.'
-          : result.error
-        );
+        toast.error(resolveLoginErrorMessage(result.error, (result as any).code));
       } else {
         toast.success('Login berhasil!');
         router.push(callbackUrl);

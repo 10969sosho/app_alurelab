@@ -32,7 +32,7 @@ export default function SettingsPage() {
   const [warehousePhone, setWarehousePhone] = useState('');
   const [address, setAddress] = useState('');
   const [wilayah, setWilayah] = useState<WilayahAddressValue>({});
-  const [postalCode, setPostalCode] = useState('60271');
+  const [postalCode, setPostalCode] = useState('');
 
   // Couriers states
   const [couriers, setCouriers] = useState<Record<string, boolean>>({
@@ -82,6 +82,9 @@ export default function SettingsPage() {
           areaName: s.origin_address.area_name || '',
           postalCode: s.origin_address.postal_code || '',
         });
+        setPostalCode(s.origin_address.postal_code || '');
+      } else {
+        setPostalCode('');
       }
 
       if (s.couriers) {
@@ -110,13 +113,22 @@ export default function SettingsPage() {
       toast.success(res.message || 'Pengaturan berhasil diperbarui!');
       queryClient.invalidateQueries({ queryKey: ['merchant-settings'] });
     },
-    onError: () => {
-      toast.error('Gagal memperbarui pengaturan toko');
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || 'Gagal memperbarui pengaturan toko');
     },
   });
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const missingAddress = !wilayah.provinceCode
+      || !wilayah.regencyCode
+      || !wilayah.districtCode
+      || !wilayah.villageCode;
+    if (missingAddress) {
+      toast.error('Provinsi, kabupaten/kota, kecamatan, dan kelurahan wajib diisi.');
+      return;
+    }
 
     updateMutation.mutate({
       name: storeName,
@@ -323,7 +335,7 @@ export default function SettingsPage() {
                   />
                 </div>
 
-                <WilayahAddressFields value={wilayah} onChange={setWilayah} />
+                <WilayahAddressFields value={wilayah} onChange={setWilayah} required />
 
                 <div>
                   <label className="block font-medium text-slate-700 mb-1">Kode Pos</label>

@@ -36,6 +36,22 @@ const STATUS_BADGES: Record<string, { label: string; color: string; icon: any }>
   rts_returned:    { label: 'Retur (RTS)',         color: 'bg-orange-50 text-orange-700 border-orange-200', icon: RotateCcw },
 };
 
+const COURIER_OPTIONS: Record<string, { value: string; label: string }[]> = {
+  sicepat: [
+    { value: 'reg', label: 'Reguler' },
+    { value: 'best', label: 'BEST' },
+    { value: 'siunt', label: 'SIUNT' },
+  ],
+  jne: [
+    { value: 'reg', label: 'Reguler' },
+    { value: 'yes', label: 'YES' },
+    { value: 'oke', label: 'OKE' },
+  ],
+  jnt: [
+    { value: 'ez', label: 'EZ' },
+  ],
+};
+
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const queryClient = useQueryClient();
@@ -155,12 +171,27 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             <div className="flex items-center gap-2">
               <select
                 value={courierCode}
-                onChange={(e) => setCourierCode(e.target.value)}
+                onChange={(e) => {
+                  const nextCourier = e.target.value;
+                  setCourierCode(nextCourier);
+                  setCourierService(COURIER_OPTIONS[nextCourier]?.[0]?.value || 'reg');
+                }}
                 className="px-3 py-2 bg-white border border-slate-200 text-xs rounded-xl font-medium"
               >
                 <option value="sicepat">SiCepat</option>
                 <option value="jnt">J&T Express</option>
                 <option value="jne">JNE</option>
+              </select>
+              <select
+                value={courierService}
+                onChange={(e) => setCourierService(e.target.value)}
+                className="px-3 py-2 bg-white border border-slate-200 text-xs rounded-xl font-medium"
+              >
+                {(COURIER_OPTIONS[courierCode] || []).map((service) => (
+                  <option key={service.value} value={service.value}>
+                    {service.label}
+                  </option>
+                ))}
               </select>
               <button
                 type="button"

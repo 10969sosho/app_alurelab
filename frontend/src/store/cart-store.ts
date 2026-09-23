@@ -9,6 +9,7 @@ export interface CartItem {
   price: number;
   quantity: number;
   imageUrl?: string;
+  stock?: number;
 }
 
 interface CartState {
@@ -29,13 +30,20 @@ export const useCartStore = create<CartState>()(persist((set, get) => ({
         (i) => i.productId === newItem.productId && i.variantId === newItem.variantId
       );
 
+      const clamp = (qty: number) =>
+        typeof newItem.stock === 'number' ? Math.min(qty, newItem.stock) : qty;
+
       if (existingIndex > -1) {
         const updated = [...state.items];
-        updated[existingIndex].quantity += newItem.quantity;
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          quantity: clamp(updated[existingIndex].quantity + newItem.quantity),
+          stock: newItem.stock ?? updated[existingIndex].stock,
+        };
         return { items: updated };
       }
 
-      return { items: [...state.items, newItem] };
+      return { items: [...state.items, { ...newItem, quantity: clamp(newItem.quantity) }] };
     });
   },
   removeItem: (productId, variantId) => {
@@ -52,11 +60,11 @@ export const useCartStore = create<CartState>()(persist((set, get) => ({
     }
 
     set((state) => ({
-      items: state.items.map((i) =>
-        i.productId === productId && i.variantId === variantId
-          ? { ...i, quantity: qty }
-          : i
-      ),
+      items: state.items.map((i) => {
+        if (i.productId !== productId || i.variantId !== variantId) return i;
+        const nextQty = typeof i.stock === 'number' ? Math.min(qty, i.stock) : qty;
+        return { ...i, quantity: nextQty };
+      }),
     }));
   },
   clearCart: () => set({ items: [] }),

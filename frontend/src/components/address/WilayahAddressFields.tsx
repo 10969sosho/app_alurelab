@@ -24,6 +24,7 @@ interface Props {
   value: WilayahAddressValue;
   onChange: (value: WilayahAddressValue) => void;
   className?: string;
+  required?: boolean;
 }
 
 function useRegions(path: string) {
@@ -58,7 +59,7 @@ function biteshipAreaId(regencyCode?: string, districtCode?: string) {
   return `ID_ID_${regencyCode.replaceAll('.', '')}_${districtCode.replaceAll('.', '')}`;
 }
 
-export function WilayahAddressFields({ value, onChange, className = '' }: Props) {
+export function WilayahAddressFields({ value, onChange, className = '', required = false }: Props) {
   const provinces = useRegions('provinces');
   const regencies = useRegions(value.provinceCode ? `regencies/${value.provinceCode}` : '');
   const districts = useRegions(value.regencyCode ? `districts/${value.regencyCode}` : '');
@@ -107,7 +108,7 @@ export function WilayahAddressFields({ value, onChange, className = '' }: Props)
     <div className={`grid grid-cols-1 sm:grid-cols-2 gap-2.5 ${className}`}>
       <label className="block text-xs font-medium text-slate-700">
         Provinsi
-        <select value={value.provinceCode || ''} onChange={(event) => {
+        <select required={required} value={value.provinceCode || ''} onChange={(event) => {
           const region = provinces.find((item) => item.code === event.target.value);
           if (region) selectRegion('province', region);
         }} className={selectClass}>
@@ -118,7 +119,7 @@ export function WilayahAddressFields({ value, onChange, className = '' }: Props)
 
       <label className="block text-xs font-medium text-slate-700">
         Kabupaten / Kota
-        <select value={value.regencyCode || ''} disabled={!value.provinceCode} onChange={(event) => {
+        <select required={required} value={value.regencyCode || ''} disabled={!value.provinceCode} onChange={(event) => {
           const region = regencies.find((item) => item.code === event.target.value);
           if (region) selectRegion('regency', region);
         }} className={selectClass}>
@@ -129,7 +130,7 @@ export function WilayahAddressFields({ value, onChange, className = '' }: Props)
 
       <label className="block text-xs font-medium text-slate-700">
         Kecamatan
-        <select value={value.districtCode || ''} disabled={!value.regencyCode} onChange={(event) => {
+        <select required={required} value={value.districtCode || ''} disabled={!value.regencyCode} onChange={(event) => {
           const region = districts.find((item) => item.code === event.target.value);
           if (region) selectRegion('district', region);
         }} className={selectClass}>
@@ -140,7 +141,7 @@ export function WilayahAddressFields({ value, onChange, className = '' }: Props)
 
       <label className="block text-xs font-medium text-slate-700">
         Kelurahan / Desa
-        <select value={value.villageCode || ''} disabled={!value.districtCode} onChange={(event) => {
+        <select required={required} value={value.villageCode || ''} disabled={!value.districtCode} onChange={(event) => {
           const region = villages.find((item) => item.code === event.target.value);
           if (region) selectRegion('village', region);
         }} className={selectClass}>

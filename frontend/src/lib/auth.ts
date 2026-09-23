@@ -4,10 +4,20 @@
  */
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
+import { CredentialsSignin } from 'next-auth';
 import type { NextAuthConfig } from 'next-auth';
 import axios from 'axios';
 
 const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'https://app.alurelab.com/api/v1';
+
+class BackendSigninError extends CredentialsSignin {
+  code: string;
+
+  constructor(code: string) {
+    super();
+    this.code = code;
+  }
+}
 
 export const authConfig: NextAuthConfig = {
   trustHost: true,
@@ -43,8 +53,10 @@ export const authConfig: NextAuthConfig = {
           }
           return null;
         } catch (error: any) {
-          const msg = error?.response?.data?.message ?? 'Email atau password salah.';
-          throw new Error(msg);
+          const msg = error?.response?.data?.message
+            ?? error?.response?.data?.errors?.email?.[0]
+            ?? 'Email atau password salah.';
+          throw new BackendSigninError(msg);
         }
       },
     }),

@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Models\MerchantWallet;
 use App\Models\Order;
 use App\Models\Payout;
+use App\Models\Product;
 use App\Models\Store;
 use App\Models\StoreUser;
 use App\Models\User;
@@ -33,6 +35,13 @@ class MerchantController extends Controller
             'owner_email' => 'required|email|max:255|unique:users,email',
             'owner_phone' => 'required|string|max:30|unique:users,phone_number',
             'password' => 'required|string|min:8',
+        ], [
+            'owner_email.unique' => 'Email sudah terdaftar. Gunakan email lain.',
+            'owner_email.email' => 'Format email tidak valid.',
+            'owner_email.required' => 'Email wajib diisi.',
+            'owner_phone.unique' => 'Nomor WhatsApp sudah terdaftar. Gunakan nomor lain.',
+            'store_slug.unique' => 'Subdomain toko sudah dipakai. Pilih subdomain lain.',
+            'password.min' => 'Password minimal 8 karakter.',
         ]);
 
         return DB::transaction(function () use ($validated, $request) {
@@ -115,12 +124,42 @@ class MerchantController extends Controller
             ['available_balance' => 0, 'escrow_held_balance' => 0]
         );
 
-        $totalOrders = Order::count();
-        $totalGmv = Order::sum('total_amount');
-        $recentOrders = Order::with('items')->latest()->take(10)->get();
+        $totalOrders = Order::where('tenant_id', $store->id)->count();
+        $totalGmv = Order::where('tenant_id', $store->id)
+            ->where('status', '!=', OrderStatus::CANCELLED->value)
+            ->sum('total_amount');
+        $recentOrders = Order::where('tenant_id', $store->id)->with('items')->latest()->take(10)->get();
+
+        $stats = [
+            'revenue_today' => (float) Order::where('tenant_id', $store->id)
+                ->where('status', '!=', OrderStatus::CANCELLED->value)
+                ->whereDate('created_at', now()->toDateString())
+                ->sum('total_amount'),
+            'revenue_month' => (float) Order::where('tenant_id', $store->id)
+                ->where('status', '!=', OrderStatus::CANCELLED->value)
+                ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
+                ->sum('total_amount'),
+            'orders_today' => Order::where('tenant_id', $store->id)
+                ->whereDate('created_at', now()->toDateString())
+                ->count(),
+            'orders_pending' => Order::where('tenant_id', $store->id)
+                ->whereIn('status', [OrderStatus::PAID_ESCROW->value, OrderStatus::COD_VERIFIED->value])
+                ->count(),
+            'orders_processing' => Order::where('tenant_id', $store->id)
+                ->where('status', OrderStatus::PROCESSING->value)
+                ->count(),
+            'orders_shipped' => Order::where('tenant_id', $store->id)
+                ->whereIn('status', [OrderStatus::SHIPPED->value, OrderStatus::DELIVERED->value])
+                ->count(),
+            'products_active' => Product::where('tenant_id', $store->id)->where('is_active', true)->count(),
+            'products_low_stock' => Product::where('tenant_id', $store->id)
+                ->whereHas('variants', fn ($q) => $q->where('stock', '<', 5))
+                ->count(),
+        ];
 
         return response()->json([
             'success' => true,
+            'stats' => $stats,
             'overview' => [
                 'store_name' => $store->name,
                 'store_slug' => $store->slug,
@@ -306,16 +345,27 @@ class MerchantController extends Controller
         $store = app('current_tenant') ?? $request->attributes->get('current_store');
 
         $orders = Order::where('tenant_id', $store->id)->get();
-        $totalGmv = $orders->where('status', '!=', 'cancelled')->sum('total_amount');
+        $activeOrders = $orders->filter(fn ($o) => $o->status !== OrderStatus::CANCELLED);
+        $totalGmv = (float) $activeOrders->sum('total_amount');
         $totalOrders = $orders->count();
-        $completedOrders = $orders->where('status', 'completed')->count();
+        $completedOrders = $orders->filter(fn ($o) => $o->status === OrderStatus::COMPLETED)->count();
         $aov = $totalOrders > 0 ? round($totalGmv / $totalOrders) : 0;
+
+        $currentGmv = (float) Order::where('tenant_id', $store->id)
+            ->where('status', '!=', OrderStatus::CANCELLED->value)
+            ->where('created_at', '>=', Carbon::now()->subDays(7))
+            ->sum('total_amount');
+        $previousGmv = (float) Order::where('tenant_id', $store->id)
+            ->where('status', '!=', OrderStatus::CANCELLED->value)
+            ->whereBetween('created_at', [Carbon::now()->subDays(14), Carbon::now()->subDays(7)])
+            ->sum('total_amount');
+        $gmvGrowth = $previousGmv > 0 ? round((($currentGmv - $previousGmv) / $previousGmv) * 100, 1) : null;
 
         $dailyStats = [];
         for ($i = 6; $i >= 0; $i--) {
             $date = Carbon::now()->subDays($i)->format('Y-m-d');
             $label = Carbon::now()->subDays($i)->format('d M');
-            $dayOrders = $orders->filter(function ($o) use ($date) {
+            $dayOrders = $activeOrders->filter(function ($o) use ($date) {
                 return Carbon::parse($o->created_at)->format('Y-m-d') === $date;
             });
             $dailyStats[] = [
@@ -347,6 +397,7 @@ class MerchantController extends Controller
                 'total_orders' => $totalOrders,
                 'completed_orders' => $completedOrders,
                 'average_order_value' => (float) $aov,
+                'gmv_growth_percent' => $gmvGrowth,
                 'visitors' => max(150, $totalOrders * 12),
                 'conversion_rate' => $totalOrders > 0 ? round(($totalOrders / max(150, $totalOrders * 12)) * 100, 1) : 3.4,
             ],
@@ -390,6 +441,21 @@ class MerchantController extends Controller
             'phone_number' => 'nullable|string|max:30',
             'settings' => 'required|array',
         ]);
+
+        $origin = $validated['settings']['origin_address'] ?? null;
+        if (is_array($origin)) {
+            $missing = collect(['province', 'city', 'district', 'village'])
+                ->filter(fn ($key) => trim((string) ($origin[$key] ?? '')) === '');
+            if ($missing->isNotEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Provinsi, kabupaten/kota, kecamatan, dan kelurahan wajib diisi.',
+                    'errors' => $missing->mapWithKeys(
+                        fn ($key) => ["settings.origin_address.{$key}" => ['Wajib diisi.']]
+                    )->all(),
+                ], 422);
+            }
+        }
 
         if (! empty($validated['name'])) {
             $store->name = $validated['name'];
