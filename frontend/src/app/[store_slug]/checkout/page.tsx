@@ -230,7 +230,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
           <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 text-left text-xs space-y-2 mb-6">
             <div className="flex justify-between">
               <span className="text-slate-500">Total Pembayaran:</span>
-              <span className="font-bold text-slate-900">Rp {totalAmount.toLocaleString('id-ID')}</span>
+              <span className="font-bold text-slate-900">Rp {(orderSuccess.total_amount ?? 0).toLocaleString('id-ID')}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">Metode:</span>
