@@ -77,3 +77,23 @@ export function debounce<T extends (...args: any[]) => any>(fn: T, ms = 300) {
     timeout = setTimeout(() => fn(...args), ms);
   };
 }
+
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  cod: 'Bayar di Tempat (COD)',
+  online: 'Transfer Bank / Online',
+  bank_transfer: 'Transfer Bank / Online',
+  xendit: 'Transfer Bank / Online',
+  qris: 'QRIS / Online',
+  ewallet: 'E-Wallet / Online',
+};
+
+/**
+ * Label metode pembayaran order dari API merchant.
+ * Sumber nilai: payments.payment_method ('ONLINE' | 'COD'), fallback order.payment_method.
+ */
+export function paymentMethodLabel(order: any): string {
+  const raw = order?.payment?.payment_method ?? order?.payment_method ?? '';
+  const key = String(raw).trim().toLowerCase();
+  if (!key) return 'Belum Dipilih';
+  return PAYMENT_METHOD_LABELS[key] ?? String(raw).toUpperCase();
+}

@@ -145,7 +145,10 @@ export function Sidebar() {
 
         {/* Logout */}
         <button
-          onClick={() => signOut({ callbackUrl: '/login' })}
+          onClick={() => {
+                signOut({ callbackUrl: '/login' });
+                setTimeout(() => { window.location.href = '/login'; }, 1500); // fallback in case NextAuth hangs/blocked
+              }}
           className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-slate-500 hover:text-red-600 hover:bg-red-50/50 rounded-xs transition-colors"
         >
           <LogOut className="w-3.5 h-3.5" />

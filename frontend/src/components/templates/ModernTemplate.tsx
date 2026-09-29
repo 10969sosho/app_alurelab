@@ -134,18 +134,28 @@ export default function ModernTemplate({
                   <div className="space-y-1.5 pt-2 border-t border-slate-100">
                     <span className="text-[11px] font-semibold text-slate-600 block">Pilihan Varian:</span>
                     <div className="space-y-1">
-                      {product.variants.map((v) => (
-                        <button
-                          key={v.id}
-                          onClick={() => onAddToCart(product, v)}
-                          className="w-full flex items-center justify-between text-xs px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 transition-all font-medium text-slate-700"
-                        >
-                          <span>{v.title}</span>
-                          <span className="font-bold text-emerald-700 flex items-center gap-1">
-                            + Masuk Keranjang
-                          </span>
-                        </button>
-                      ))}
+                      {product.variants.map((v) => {
+                        const variantOutOfStock = typeof v.stock === 'number' && v.stock <= 0;
+                        return (
+                          <button
+                            key={v.id}
+                            disabled={variantOutOfStock}
+                            onClick={() => onAddToCart(product, v)}
+                            className="w-full flex items-center justify-between text-xs px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 transition-all font-medium text-slate-700 disabled:opacity-60 disabled:hover:bg-slate-50 disabled:hover:border-slate-200 disabled:cursor-not-allowed"
+                          >
+                            <span>{v.title}</span>
+                            {variantOutOfStock ? (
+                              <span className="font-bold text-stone-500 uppercase tracking-wide">
+                                Stok Habis
+                              </span>
+                            ) : (
+                              <span className="font-bold text-emerald-700 flex items-center gap-1">
+                                + Masuk Keranjang
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>

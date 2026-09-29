@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Models\MerchantWallet;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Payout;
 use App\Models\Product;
 use App\Models\Store;
@@ -155,6 +156,11 @@ class MerchantController extends Controller
             'products_low_stock' => Product::where('tenant_id', $store->id)
                 ->whereHas('variants', fn ($q) => $q->where('stock', '<', 5))
                 ->count(),
+            'new_customers' => Order::where('tenant_id', $store->id)
+                ->whereNotNull('customer_id')
+                ->where('created_at', '>=', now()->subDays(30))
+                ->distinct()
+                ->count('customer_id'),
         ];
 
         return response()->json([
@@ -376,19 +382,39 @@ class MerchantController extends Controller
             ];
         }
 
-        $topProducts = Product::where('tenant_id', $store->id)
-            ->take(5)
+        $salesByProduct = OrderItem::query()
+            ->where('tenant_id', $store->id)
+            ->whereNotNull('product_id')
+            ->whereHas('order', fn ($q) => $q
+                ->where('tenant_id', $store->id)
+                ->where('status', '!=', OrderStatus::CANCELLED->value))
+            ->select('product_id')
+            ->selectRaw('SUM(quantity) AS sales_count')
+            ->selectRaw('SUM(subtotal) AS revenue')
+            ->groupBy('product_id')
+            ->orderByDesc('sales_count')
+            ->limit(5)
+            ->get();
+
+        $soldProducts = Product::where('tenant_id', $store->id)
+            ->whereIn('id', $salesByProduct->pluck('product_id'))
             ->get()
-            ->map(function ($p) {
+            ->keyBy('id');
+
+        $topProducts = $salesByProduct
+            ->map(function ($row) use ($soldProducts) {
+                $product = $soldProducts->get($row->product_id);
+
                 return [
-                    'id' => $p->id,
-                    'title' => $p->title,
-                    'price' => (float) $p->price,
-                    'sales_count' => rand(3, 28),
-                    'revenue' => (float) $p->price * rand(3, 28),
-                    'images' => $p->images,
+                    'id' => $row->product_id,
+                    'title' => $product->title ?? 'Produk',
+                    'price' => (float) ($product->price ?? 0),
+                    'sales_count' => (int) $row->sales_count,
+                    'revenue' => (float) $row->revenue,
+                    'images' => $product->images ?? [],
                 ];
-            });
+            })
+            ->values();
 
         return response()->json([
             'success' => true,

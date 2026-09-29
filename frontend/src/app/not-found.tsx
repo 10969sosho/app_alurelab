@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowLeft, Store, Sparkles, Home } from 'lucide-react';
+import { Home } from 'lucide-react';
 
 export default function NotFound() {
   return (
@@ -46,14 +46,6 @@ export default function NotFound() {
           >
             <Home className="w-4 h-4" />
             Kembali ke Beranda
-          </Link>
-
-          <Link
-            href="/onboarding"
-            className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-5 py-3 rounded-xl font-semibold text-sm transition-all shadow-lg shadow-emerald-500/20"
-          >
-            <Store className="w-4 h-4" />
-            Buka Toko Sendiri (60 Detik)
           </Link>
         </div>
       </section>

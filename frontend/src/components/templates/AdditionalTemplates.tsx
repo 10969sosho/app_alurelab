@@ -21,6 +21,8 @@ function ProductTile({ product, storeSlug, onAddToCart, className = '' }: {
   onAddToCart: TemplateProps['onAddToCart'];
   className?: string;
 }) {
+  const variant = product.variants[0];
+  const outOfStock = !!variant && typeof variant.stock === 'number' && variant.stock <= 0;
   return (
     <article className={`group ${className}`}>
       <Link href={`/${storeSlug}/products/${product.slug}`} className="block overflow-hidden bg-slate-100 aspect-[4/5]">
@@ -31,7 +33,11 @@ function ProductTile({ product, storeSlug, onAddToCart, className = '' }: {
         <Link href={`/${storeSlug}/products/${product.slug}`} className="block text-sm font-bold leading-tight hover:opacity-60">{product.title}</Link>
         <div className="flex items-center justify-between gap-2 text-sm">
           <span>Rp {product.price.toLocaleString('id-ID')}</span>
-          <button type="button" onClick={() => product.variants[0] && onAddToCart(product, product.variants[0])} className="text-[10px] font-bold uppercase tracking-wider underline underline-offset-4">Tambah</button>
+          {outOfStock ? (
+            <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Stok Habis</span>
+          ) : (
+            <button type="button" onClick={() => variant && onAddToCart(product, variant)} className="text-[10px] font-bold uppercase tracking-wider underline underline-offset-4">Tambah</button>
+          )}
         </div>
       </div>
     </article>

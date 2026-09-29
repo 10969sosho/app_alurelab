@@ -29,16 +29,58 @@ class CustomerAuthController extends Controller
 
     /**
      * Login / Register One-Click Buyer via Nomor WhatsApp / HP.
+     * DEPRECATED: Gunakan /buyer/request-otp + /buyer/verify-otp
      */
     public function login(Request $request): JsonResponse
     {
+        return response()->json([
+            'success' => false,
+            'message' => 'Endpoint ini sudah tidak aktif. Gunakan /buyer/request-otp lalu /buyer/verify-otp untuk login.',
+        ], 410);
+    }
+
+    /**
+     * Request OTP for buyer login.
+     */
+    public function requestOtp(Request $request): JsonResponse
+    {
         $validated = $request->validate([
             'phone_number' => 'required|string|min:8|max:30',
+        ]);
+
+        $normalizedPhone = $this->normalizePhone($validated['phone_number']);
+        $otp = random_int(100000, 999999);
+        // Store OTP for 5 minutes
+        \Illuminate\Support\Facades\Cache::put('otp_'.$normalizedPhone, $otp, 300);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'OTP sent',
+            'dev_otp' => $otp, // for testing only
+        ]);
+    }
+
+    /**
+     * Verify OTP and login / register buyer.
+     */
+    public function verifyOtp(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'phone_number' => 'required|string|min:8|max:30',
+            'otp' => 'required|digits:6',
             'full_name' => 'nullable|string|max:255',
             'email' => 'nullable|email|max:255',
         ]);
 
         $normalizedPhone = $this->normalizePhone($validated['phone_number']);
+        $cachedOtp = \Illuminate\Support\Facades\Cache::get('otp_'.$normalizedPhone);
+
+        if (! $cachedOtp || $cachedOtp != $validated['otp']) {
+            return response()->json(['success' => false, 'message' => 'OTP tidak valid atau kadaluarsa.'], 422);
+        }
+
+        // OTP valid, remove it
+        \Illuminate\Support\Facades\Cache::forget('otp_'.$normalizedPhone);
 
         $customer = Customer::where('phone_number', $normalizedPhone)->first();
 
@@ -50,7 +92,6 @@ class CustomerAuthController extends Controller
                 'default_address' => [],
             ]);
         } else {
-            // Update nama jika sebelumnya default dan sekarang diisi
             if (! empty($validated['full_name']) && (str_starts_with($customer->full_name, 'Pelanggan ') || empty($customer->full_name))) {
                 $customer->update(['full_name' => $validated['full_name']]);
             }

@@ -19,6 +19,7 @@ import BuyerLoginModal from '@/components/buyer/BuyerLoginModal';
 import MobileStorefrontHome from '@/components/buyer/MobileStorefrontHome';
 import { Product, ProductVariant, StoreData } from '@/components/templates/types';
 import { BuyerNavbar } from '@/components/buyer/BuyerTheme';
+import { toast } from 'sonner';
 
 export default function StorefrontClient({
   storeSlug,
@@ -63,6 +64,10 @@ export default function StorefrontClient({
   const [trackError, setTrackError] = useState('');
 
   const handleAddToCart = (product: Product, variant: ProductVariant) => {
+    if (typeof variant?.stock === 'number' && variant.stock <= 0) {
+      toast.error('Stok habis untuk varian ini.');
+      return;
+    }
     addItem({
       productId: product.id,
       variantId: variant.id,

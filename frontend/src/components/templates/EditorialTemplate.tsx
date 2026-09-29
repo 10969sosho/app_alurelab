@@ -338,10 +338,13 @@ export default function EditorialTemplate({
                      VIEW →
                   </Link>
                   <button
+                    disabled={typeof product.variants?.[0]?.stock === 'number' && product.variants[0].stock <= 0}
                     onClick={() => onAddToCart(product, product.variants[0])}
-                    className="text-[11px] uppercase tracking-[0.14em] font-semibold hover:underline"
+                    className="text-[11px] uppercase tracking-[0.14em] font-semibold hover:underline disabled:no-underline disabled:text-stone-400 disabled:cursor-not-allowed"
                   >
-                     ADD TO BAG
+                    {typeof product.variants?.[0]?.stock === 'number' && product.variants[0].stock <= 0
+                      ? 'Stok Habis'
+                      : 'ADD TO BAG'}
                   </button>
                 </div>
               </div>

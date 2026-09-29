@@ -22,7 +22,7 @@ import {
   Send,
 } from 'lucide-react';
 import api from '@/lib/api';
-import { formatRupiah, formatDateTime, formatPhone } from '@/lib/utils';
+import { formatRupiah, formatDateTime, formatPhone, paymentMethodLabel } from '@/lib/utils';
 
 const STATUS_BADGES: Record<string, { label: string; color: string; icon: any }> = {
   pending_payment: { label: 'Menunggu Pembayaran', color: 'bg-yellow-50 text-yellow-700 border-yellow-200', icon: Clock },
@@ -371,6 +371,10 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             </h2>
 
             <div className="space-y-2.5 text-sm">
+              <div className="flex justify-between text-slate-600">
+                <span>Metode Pembayaran</span>
+                <span className="font-medium text-slate-800">{paymentMethodLabel(order)}</span>
+              </div>
               <div className="flex justify-between text-slate-600">
                 <span>Subtotal Produk</span>
                 <span>{formatRupiah(Number(order.items_subtotal))}</span>

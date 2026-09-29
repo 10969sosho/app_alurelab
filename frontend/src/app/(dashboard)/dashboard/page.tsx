@@ -29,6 +29,7 @@ interface DashboardStats {
   orders_shipped:       number;
   products_active:      number;
   products_low_stock:   number;
+  new_customers?:       number;
 }
 
 interface RecentOrder {
@@ -151,7 +152,7 @@ export default function DashboardPage() {
         />
         <MetricCard
           label="Pelanggan Baru"
-          value="—"
+          value={stats.new_customers != null ? String(stats.new_customers) : '—'}
           icon={Users}
           iconBg="bg-slate-100"
           iconColor="text-slate-600"

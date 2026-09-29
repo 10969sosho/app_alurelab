@@ -72,6 +72,15 @@ class IdentifyTenant
             }
         }
 
+        // ── Guard: Block buyer (Customer) tokens from merchant routes ──
+        $isMerchantRoute = str_contains($request->path(), 'merchant/') || str_contains($request->path(), 'merchant');
+        if ($isMerchantRoute && $request->user() && ! ($request->user() instanceof User)) {
+            return response()->json([
+                'error' => 'Unauthorized',
+                'message' => 'Akses merchant tidak diizinkan untuk akun pembeli.',
+            ], 403);
+        }
+
         if ($store
             && $request->user() instanceof User
             && ! $request->user()->is_superadmin

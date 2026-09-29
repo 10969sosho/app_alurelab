@@ -17,6 +17,12 @@ export default function BuyerProductCard({
 }: BuyerProductCardProps) {
   const addItem = useCartStore((state) => state.addItem);
 
+  const hasVariants = Array.isArray(product.variants) && product.variants.length > 0;
+  const totalStock = hasVariants
+    ? product.variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0)
+    : null;
+  const isOutOfStock = totalStock !== null && totalStock <= 0;
+
   const discountPercent =
     product.compare_at_price && product.compare_at_price > product.price
       ? Math.round(
@@ -29,6 +35,7 @@ export default function BuyerProductCard({
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (isOutOfStock) return;
 
     const variant = product.variants?.[0];
     addItem({
@@ -102,14 +109,23 @@ export default function BuyerProductCard({
               )}
           </div>
 
-          <button
-            type="button"
-            onClick={handleQuickAdd}
-            aria-label={`Tambah ${product.title} ke keranjang`}
-            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-900 hover:bg-black text-white flex items-center justify-center shrink-0 shadow-xs active:scale-95 transition-transform"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
+          {isOutOfStock ? (
+            <span
+              aria-label="Stok habis"
+              className="shrink-0 rounded-full bg-stone-200 text-stone-500 text-[10px] font-bold uppercase tracking-wide px-2 py-1.5 select-none"
+            >
+              Stok Habis
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={handleQuickAdd}
+              aria-label={`Tambah ${product.title} ke keranjang`}
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-900 hover:bg-black text-white flex items-center justify-center shrink-0 shadow-xs active:scale-95 transition-transform"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
     </article>

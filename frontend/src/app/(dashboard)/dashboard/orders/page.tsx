@@ -21,7 +21,7 @@ import {
   FileText,
 } from 'lucide-react';
 import api from '@/lib/api';
-import { formatRupiah, formatDateTime } from '@/lib/utils';
+import { formatRupiah, formatDateTime, paymentMethodLabel } from '@/lib/utils';
 
 const STATUS_TABS = [
   { key: '',                label: 'Semua' },
@@ -203,7 +203,7 @@ function OrdersContent() {
                           {formatRupiah(Number(item.total_amount))}
                         </p>
                         <span className="text-[10px] text-slate-400">
-                          {item.payment_method === 'cod' ? 'COD' : 'Escrow (Online)'}
+                          {paymentMethodLabel(item)}
                         </span>
                       </td>
 
