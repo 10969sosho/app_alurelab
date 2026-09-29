@@ -84,6 +84,8 @@ Route::prefix('v1')->group(function () {
 
         // ── Akun Pembeli (Buyer Auth, Profile, & Orders) ─────────────
         Route::post('/buyer/login', [CustomerAuthController::class, 'login']);
+        Route::post('/buyer/request-otp', [CustomerAuthController::class, 'requestOtp']);
+        Route::post('/buyer/verify-otp', [CustomerAuthController::class, 'verifyOtp']);
         Route::middleware('auth:sanctum')->group(function () {
             Route::get('/buyer/profile', [CustomerAuthController::class, 'getProfile']);
             Route::put('/buyer/profile', [CustomerAuthController::class, 'updateProfile']);
