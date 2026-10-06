@@ -23,6 +23,29 @@ use Illuminate\Support\Facades\URL;
 */
 
 Route::prefix('v1')->group(function () {
+    // ═══════════════════════════════════════════════════════════════════════
+    // 0. HEALTH CHECK — Monitoring Server, DB, & Redis
+    // ═══════════════════════════════════════════════════════════════════════
+    Route::get('/health', function () {
+        $status = ['status' => 'ok', 'timestamp' => now()->toIso8601String()];
+
+        try {
+            \Illuminate\Support\Facades\DB::connection()->getPdo();
+            $status['database'] = 'connected';
+        } catch (\Throwable $e) {
+            $status['database'] = 'error: ' . $e->getMessage();
+            $status['status'] = 'degraded';
+        }
+
+        try {
+            \Illuminate\Support\Facades\Redis::ping();
+            $status['redis'] = 'connected';
+        } catch (\Throwable $e) {
+            $status['redis'] = 'optional/disabled';
+        }
+
+        return response()->json($status, $status['status'] === 'ok' ? 200 : 503);
+    });
 
     // ═══════════════════════════════════════════════════════════════════════
     // 1. AUTHENTICATION — Public (no tenant, no auth middleware)
