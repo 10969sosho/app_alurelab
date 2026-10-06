@@ -11,11 +11,11 @@ import {
   ShoppingBag,
   ShieldCheck,
   Truck,
-  CheckCircle2,
 } from 'lucide-react';
 import { useCartStore } from '@/store/cart-store';
-import { useBuyerCms } from '@/components/buyer/useBuyerCms';
-import { BuyerNavbar, BuyerThemeFrame, BuyerFooter } from '@/components/buyer/BuyerTheme';
+import BuyerTopBar from '@/components/buyer/BuyerTopBar';
+import BuyerBottomNav from '@/components/buyer/BuyerBottomNav';
+import { UniversalImage } from '@/components/templates/ImagePlaceholder';
 
 export default function CartPage({
   params,
@@ -24,226 +24,191 @@ export default function CartPage({
 }) {
   const { store_slug: storeSlug } = use(params);
   const { items, updateQuantity, removeItem, clearCart, getSubtotal, getTotalItems } = useCartStore();
-  const copy = useBuyerCms(storeSlug);
 
   const subtotal = getSubtotal();
   const totalItems = getTotalItems();
-  const storeDisplayName = storeSlug.replace(/-/g, ' ').toUpperCase();
-  const hasStockIssue = items.some(
-    (item) => typeof item.stock === 'number' && (item.stock <= 0 || item.quantity > item.stock)
-  );
+  const storeDisplayName = storeSlug.replace(/-/g, ' ');
 
   return (
-     <BuyerThemeFrame storeSlug={storeSlug} className="text-[#111111] font-sans antialiased flex flex-col">
-       <BuyerNavbar storeSlug={storeSlug} storeName={storeDisplayName} />
+    <div className="min-h-screen bg-stone-50/50 text-neutral-900 flex flex-col font-sans antialiased pb-28 md:pb-16">
+      {/* ── Top Bar ── */}
+      <BuyerTopBar
+        storeSlug={storeSlug}
+        storeName={storeDisplayName}
+        showBackButton={true}
+      />
 
-      {/* ── Main Cart Content ───────────────────────────────── */}
-      <main className="max-w-6xl mx-auto w-full px-6 md:px-10 py-12 flex-1">
-        <div className="pb-8 border-b border-[#DADADA] flex flex-col sm:flex-row sm:items-baseline justify-between gap-3">
-          <div>
-            <span className="text-[11px] font-semibold tracking-[0.24em] text-[#666666] uppercase block mb-1">
-            </span>
-            <h1 className="font-bebas text-5xl md:text-6xl tracking-wide uppercase text-[#111111]">
-               {copy.cartTitle}
-            </h1>
-             </div>
+      <main className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 flex-1 space-y-6">
+        {/* Header Title */}
+        <div className="flex items-center justify-between border-b border-stone-200/80 pb-4">
+          <div className="flex items-center gap-3">
+            <Link
+              href={`/${storeSlug}/shop`}
+              className="w-8 h-8 rounded-full bg-white border border-stone-200 flex items-center justify-center text-neutral-600 hover:text-black transition-colors"
+              aria-label="Kembali ke Katalog"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+            <div>
+              <h1 className="text-lg sm:text-2xl font-extrabold text-neutral-900">
+                Keranjang Belanja
+              </h1>
+              <p className="text-xs text-neutral-500">
+                {totalItems} barang terpilih
+              </p>
+            </div>
+          </div>
+
           {items.length > 0 && (
             <button
+              type="button"
               onClick={clearCart}
-              className="text-[11px] uppercase tracking-[0.16em] text-[#666666] hover:text-rose-600 transition-colors"
+              className="text-xs font-semibold text-rose-600 hover:text-rose-700 hover:underline"
             >
               Kosongkan Keranjang
             </button>
-           )}
-         </div>
+          )}
+        </div>
 
         {items.length === 0 ? (
-          /* Empty Bag State */
-          <div className="py-24 text-center space-y-6 max-w-md mx-auto">
-            <div className="w-16 h-16 border border-[#DADADA] flex items-center justify-center mx-auto text-[#666666]">
-              <ShoppingBag className="w-7 h-7 stroke-[1.4]" />
+          /* Empty Cart State */
+          <div className="py-20 text-center space-y-4 max-w-sm mx-auto">
+            <div className="w-16 h-16 rounded-full bg-neutral-100 flex items-center justify-center mx-auto text-neutral-400">
+              <ShoppingBag className="w-8 h-8 stroke-[1.5]" />
             </div>
-            <div className="space-y-2">
-              <h2 className="font-bebas text-3xl uppercase tracking-wide text-[#111111]">
-                 {copy.cartEmptyTitle}
+            <div className="space-y-1">
+              <h2 className="text-base font-bold text-neutral-900">
+                Keranjang Masih Kosong
               </h2>
-              <p className="text-xs text-[#666666] leading-relaxed">
-                 {copy.cartEmptyDescription}
+              <p className="text-xs text-neutral-500">
+                Belum ada produk yang Anda tambahkan ke keranjang belanja.
               </p>
             </div>
             <Link
-              href={`/${storeSlug}`}
-              className="inline-flex items-center gap-3 bg-[#111111] text-[#F5F5F3] px-8 py-3.5 text-xs font-semibold uppercase tracking-[0.2em] hover:bg-black transition-all"
+              href={`/${storeSlug}/shop`}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-neutral-900 hover:bg-black text-white text-xs font-bold transition-all shadow-xs"
             >
-                <span>{copy.cartContinueShopping}</span>
+              <span>Mulai Belanja</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         ) : (
-          /* Cart Grid: Items on Left, Order Summary on Right */
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 pt-10">
+          /* Cart Grid: Items List + Order Summary */
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Left: Cart Items List */}
-            <div className="lg:col-span-8 space-y-6">
-              <div className="divide-y divide-[#DADADA] border-y border-[#DADADA]">
-                {items.map((item, idx) => (
-                  <div
-                    key={`${item.productId}-${item.variantId || idx}`}
-                    className="py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6"
-                  >
-                    {/* Image & Title */}
-                    <div className="flex gap-5 items-start">
-                      <div className="w-20 sm:w-24 aspect-[3/4] bg-stone-200 overflow-hidden shrink-0 border border-[#DADADA]">
-                        {item.imageUrl ? (
-                          <img
-                            src={item.imageUrl}
-                            alt={item.title}
-                            className="w-full h-full object-cover filter contrast-[1.03]"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-xs text-[#666666]">
-                            No IMG
-                          </div>
-                        )}
-                      </div>
+            <div className="lg:col-span-7 space-y-3">
+              {items.map((item) => (
+                <div
+                  key={`${item.productId}-${item.variantId}`}
+                  className="bg-white rounded-2xl border border-stone-200/80 p-3 sm:p-4 shadow-2xs flex gap-3 sm:gap-4 items-center"
+                >
+                  {/* Product Image */}
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-neutral-100 shrink-0 border border-stone-100">
+                    <UniversalImage
+                      src={item.imageUrl}
+                      alt={item.title}
+                      fallbackText={item.title}
+                      aspectRatio="square"
+                    />
+                  </div>
 
-                      <div className="space-y-1.5 min-w-0">
-                        <Link
-                          href={`/${storeSlug}`}
-                          className="font-bebas text-2xl tracking-wide uppercase text-[#111111] hover:opacity-75 transition-opacity block truncate"
-                        >
-                          {item.title}
-                        </Link>
-                        {item.variantTitle && (
-                          <div className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-                            {item.variantTitle}
-                          </div>
-                        )}
-                        {typeof item.stock === 'number' && item.stock <= 0 && (
-                          <div className="text-[11px] font-bold text-rose-600 uppercase tracking-wide">
-                            Stok habis — hapus item ini
-                          </div>
-                        )}
-                        {typeof item.stock === 'number' && item.stock > 0 && item.quantity > item.stock && (
-                          <div className="text-[11px] font-bold text-rose-600 uppercase tracking-wide">
-                            Melebihi stok tersedia ({item.stock})
-                          </div>
-                        )}
-                        <div className="text-xs font-semibold text-[#111111] pt-1">
-                          Rp {item.price.toLocaleString('id-ID')}
-                        </div>
-                      </div>
+                  {/* Info */}
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <h3 className="text-xs sm:text-sm font-bold text-neutral-900 truncate">
+                      {item.title}
+                    </h3>
+                    {item.variantTitle && (
+                      <p className="text-[11px] text-neutral-500">
+                        Varian: <span className="font-medium text-neutral-700">{item.variantTitle}</span>
+                      </p>
+                    )}
+                    <div className="text-xs sm:text-sm font-extrabold text-neutral-950 pt-0.5">
+                      Rp {item.price.toLocaleString('id-ID')}
                     </div>
 
-                    {/* Quantity & Actions */}
-                    <div className="flex items-center justify-between sm:justify-end gap-6 sm:gap-8 pt-2 sm:pt-0">
-                      {/* Stepper */}
-                      <div className="flex items-center border border-[#DADADA] bg-white">
+                    {/* Qty Controls */}
+                    <div className="flex items-center justify-between pt-2">
+                      <div className="flex items-center border border-stone-200 rounded-lg bg-stone-50 overflow-hidden">
                         <button
+                          type="button"
                           onClick={() => updateQuantity(item.productId, item.variantId, item.quantity - 1)}
-                          className="w-8 h-8 flex items-center justify-center text-[#111111] hover:bg-stone-100 transition-colors"
-                          aria-label="Kurangi kuantitas"
+                          className="w-7 h-7 flex items-center justify-center text-neutral-700 hover:bg-stone-200 transition-colors"
+                          aria-label="Kurangi"
                         >
                           <Minus className="w-3 h-3" />
                         </button>
-                        <span className="w-10 text-center font-bold text-xs">
+                        <span className="w-8 text-center text-xs font-bold text-neutral-900">
                           {item.quantity}
                         </span>
                         <button
-                          disabled={typeof item.stock === 'number' && item.quantity >= item.stock}
+                          type="button"
                           onClick={() => updateQuantity(item.productId, item.variantId, item.quantity + 1)}
-                          className="w-8 h-8 flex items-center justify-center text-[#111111] hover:bg-stone-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                          aria-label="Tambah kuantitas"
+                          className="w-7 h-7 flex items-center justify-center text-neutral-700 hover:bg-stone-200 transition-colors"
+                          aria-label="Tambah"
                         >
                           <Plus className="w-3 h-3" />
                         </button>
                       </div>
 
-                      {/* Total for item */}
-                      <div className="text-sm font-bold text-[#111111] sm:w-28 text-right">
-                        Rp {(item.price * item.quantity).toLocaleString('id-ID')}
-                      </div>
-
-                      {/* Remove */}
                       <button
+                        type="button"
                         onClick={() => removeItem(item.productId, item.variantId)}
-                        className="text-[#666666] hover:text-rose-600 transition-colors p-1"
-                        aria-label="Hapus item"
+                        className="text-neutral-400 hover:text-rose-600 transition-colors p-1"
+                        aria-label="Hapus"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
-                ))}
-              </div>
-
-              <div className="pt-2">
-                <Link
-                  href={`/${storeSlug}`}
-                  className="editorial-link text-[11px]"
-                >
-                    ← {copy.cartContinueShopping}
-                </Link>
-              </div>
+                </div>
+              ))}
             </div>
 
-            {/* Right: Order Summary Card */}
-            <div className="lg:col-span-4">
-              <div className="border border-[#DADADA] p-6 sm:p-8 bg-white space-y-6 sticky top-28">
-                <h3 className="font-bebas text-3xl tracking-wide uppercase text-[#111111] pb-4 border-b border-[#DADADA]">
-                  RINGKASAN PESANAN
-                </h3>
+            {/* Right: Order Summary */}
+            <div className="lg:col-span-5 bg-white rounded-2xl border border-stone-200/80 p-5 sm:p-6 shadow-2xs space-y-4 lg:sticky lg:top-24">
+              <h2 className="text-sm font-extrabold uppercase tracking-wider text-neutral-800">
+                Ringkasan Pesanan
+              </h2>
 
-                <div className="space-y-3 text-xs">
-                  <div className="flex justify-between">
-                    <span className="text-[#666666] uppercase tracking-[0.14em]">
-                      Total ({totalItems} Barang)
-                    </span>
-                    <span className="font-semibold text-[#111111]">
-                      Rp {subtotal.toLocaleString('id-ID')}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between">
-                    <span className="text-[#666666] uppercase tracking-[0.14em]">
-                      Estimasi Ongkir
-                    </span>
-                    <span className="text-[#666666] italic">
-                      Dihitung saat checkout
-                    </span>
-                  </div>
-
-                  <div className="pt-4 border-t border-[#DADADA] flex justify-between items-baseline">
-                    <span className="text-xs font-bold uppercase tracking-[0.14em] text-[#111111]">
-                       TOTAL
-                    </span>
-                    <span className="text-xl font-bold text-[#111111]">
-                      Rp {subtotal.toLocaleString('id-ID')}
-                    </span>
-                  </div>
+              <div className="space-y-2.5 text-xs text-neutral-600 border-b border-stone-100 pb-4">
+                <div className="flex justify-between">
+                  <span>Total Produk ({totalItems} item)</span>
+                  <span className="font-semibold text-neutral-900">
+                    Rp {subtotal.toLocaleString('id-ID')}
+                  </span>
                 </div>
+                <div className="flex justify-between">
+                  <span>Ongkos Kirim</span>
+                  <span className="text-emerald-600 font-semibold">
+                    Dihitung saat checkout
+                  </span>
+                </div>
+              </div>
 
-                {/* Checkout CTA */}
-          <Link
-            href={`/${storeSlug}/checkout`}
-            className={`flex items-center justify-between gap-3 bg-[#111111] hover:bg-black text-white w-full mt-5 py-4 px-6 rounded-xl transition-all group active:scale-[0.99] shadow-lg ${
-              hasStockIssue ? 'opacity-50 pointer-events-none' : ''
-            }`}
-            aria-disabled={hasStockIssue}
-          >
-                    <span>{copy.cartCheckout}</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
+              <div className="flex justify-between items-baseline pt-1">
+                <span className="text-sm font-bold text-neutral-900">Total Pembayaran</span>
+                <span className="text-lg sm:text-xl font-black text-neutral-950">
+                  Rp {subtotal.toLocaleString('id-ID')}
+                </span>
+              </div>
 
-                {/* Security badges */}
-                <div className="space-y-2 pt-4 border-t border-[#DADADA] text-[10px] text-[#666666] uppercase tracking-wider">
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                     <span>Secure payment</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Truck className="w-3.5 h-3.5 text-emerald-600" />
-                     <span>Delivery at checkout</span>
-                  </div>
+              <Link
+                href={`/${storeSlug}/checkout`}
+                className="w-full bg-neutral-900 hover:bg-black text-white font-bold py-3.5 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs transition-all"
+              >
+                <span>Lanjut ke Checkout</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+
+              {/* Trust Badges */}
+              <div className="pt-3 border-t border-stone-100 space-y-2 text-[11px] text-neutral-500">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Pembayaran aman dengan escrow resmi</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Truck className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Pengiriman resmi kurir terpercaya</span>
                 </div>
               </div>
             </div>
@@ -251,26 +216,8 @@ export default function CartPage({
         )}
       </main>
 
-      {/* ── Mobile Sticky "Checkout" ──────────────────────── */}
-      {items.length > 0 && (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-black/10 p-3 shadow-2xl pb-safe">
-          <Link
-            href={`/${storeSlug}/checkout`}
-            aria-disabled={hasStockIssue}
-            className={`w-full bg-[#111111] text-[#F5F5F3] py-3.5 text-xs font-bold uppercase tracking-[0.15em] flex justify-between items-center px-4 ${
-              hasStockIssue ? 'opacity-50 pointer-events-none' : ''
-            }`}
-          >
-            <span>{copy.cartCheckout}</span>
-            <span className="opacity-80">Rp {subtotal.toLocaleString('id-ID')}</span>
-          </Link>
-        </div>
-      )}
-
-      {/* ── Footer ─────────────────────────────────────────── */}
-      <div className="pb-20 md:pb-0">
-        <BuyerFooter storeSlug={storeSlug} storeName={storeDisplayName} />
-      </div>
-     </BuyerThemeFrame>
+      {/* Floating Bottom Nav */}
+      <BuyerBottomNav storeSlug={storeSlug} />
+    </div>
   );
 }
