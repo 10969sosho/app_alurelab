@@ -9,7 +9,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('messages', function (Blueprint $table) {
-            $table->uuid('id')->primary()->default(\Illuminate\Support\Facades\DB::raw('gen_random_uuid()'));
+            if (\Illuminate\Support\Facades\DB::getDriverName() === 'pgsql') {
+                $table->uuid('id')->primary()->default(\Illuminate\Support\Facades\DB::raw('gen_random_uuid()'));
+            } else {
+                $table->uuid('id')->primary();
+            }
             $table->uuid('conversation_id');
             $table->enum('sender_type', ['seller', 'buyer']);
             $table->uuid('sender_id');  // user_id (seller) or customer_id (buyer)

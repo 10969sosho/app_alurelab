@@ -9,7 +9,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('conversations', function (Blueprint $table) {
-            $table->uuid('id')->primary()->default(\Illuminate\Support\Facades\DB::raw('gen_random_uuid()'));
+            if (\Illuminate\Support\Facades\DB::getDriverName() === 'pgsql') {
+                $table->uuid('id')->primary()->default(\Illuminate\Support\Facades\DB::raw('gen_random_uuid()'));
+            } else {
+                $table->uuid('id')->primary();
+            }
             $table->uuid('store_id');
             $table->uuid('customer_id');
             $table->timestamp('last_message_at')->nullable();
