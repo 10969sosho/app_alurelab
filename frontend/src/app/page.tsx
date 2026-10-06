@@ -38,13 +38,13 @@ export default function HomePage() {
             href="#security"
             className="text-[13px] font-medium text-darkgray hover:text-charcoal-900 transition-colors hidden sm:block tracking-wide"
           >
-            SECURITY
+            KEAMANAN
           </a>
           <Link
             href="/dashboard"
             className="text-[13px] font-medium text-darkgray hover:text-charcoal-900 transition-colors hidden sm:block tracking-wide"
           >
-            MERCHANT PORTAL
+            PORTAL PENJUAL
           </Link>
           <Link
             href="/onboarding"
@@ -155,7 +155,7 @@ export default function HomePage() {
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-cloud bg-white/80 backdrop-blur-sm text-darkgray text-xs font-mono mb-8 shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-lime-accent shadow-lime-glow animate-pulse"></span>
             <Sparkles className="w-3.5 h-3.5 text-charcoal-900" />
-            Autonomous E-Commerce SaaS & Vibe Commerce Engine
+            Platform E-Commerce Cerdas & Vibe Commerce Engine
           </div>
 
           <h1 className="display-text text-charcoal-900 mb-6 text-balance">
@@ -192,10 +192,10 @@ export default function HomePage() {
       <section id="features" className="relative z-10 py-24 px-6 max-w-7xl mx-auto border-t border-cloud scroll-mt-20">
         <div className="flex flex-col md:flex-row justify-between items-start mb-16 gap-4">
           <div>
-            <h2 className="h2-text text-charcoal-900 mb-2">Core Capabilities</h2>
+            <h2 className="h2-text text-charcoal-900 mb-2">Fitur Unggulan</h2>
             <p className="body-text text-sm max-w-md">Arsitektur teruji untuk kecepatan, keamanan perbankan, dan reliabilitas skala enterprise.</p>
           </div>
-          <span className="micro-label border border-cloud px-3 py-1.5 rounded-full bg-white">Production Specs</span>
+          <span className="micro-label border border-cloud px-3 py-1.5 rounded-full bg-white">Spesifikasi Sistem</span>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-px bg-cloud">
@@ -319,8 +319,8 @@ export default function HomePage() {
           <span className="micro-label">© 2026 ALURELAB</span>
           <span className="w-1 h-1 rounded-full bg-cloud"></span>
           <a href="#features" className="micro-label hover:text-charcoal-900 transition-colors">Fitur</a>
-          <a href="#security" className="micro-label hover:text-charcoal-900 transition-colors">Security</a>
-          <Link href="/login" className="micro-label hover:text-charcoal-900 transition-colors">Portal</Link>
+          <a href="#security" className="micro-label hover:text-charcoal-900 transition-colors">Keamanan</a>
+          <Link href="/login" className="micro-label hover:text-charcoal-900 transition-colors">Portal Penjual</Link>
           <Link href="/register" className="micro-label hover:text-charcoal-900 transition-colors">Daftar</Link>
           <Link href="/onboarding" className="micro-label hover:text-charcoal-900 transition-colors">Onboarding</Link>
         </div>

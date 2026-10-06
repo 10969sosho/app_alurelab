@@ -125,7 +125,7 @@ export default function OnboardingPage() {
 
         <div className="text-center mb-10">
           <span className="inline-flex items-center gap-1.5 micro-label text-charcoal-900 bg-white px-3 py-1.5 rounded-sm border border-cloud mb-4 shadow-sm">
-            <Sparkles className="w-3.5 h-3.5" /> 60-Second Onboarding Wizard
+            <Sparkles className="w-3.5 h-3.5" /> Panduan Buka Toko 60 Detik
           </span>
           <h1 className="h2-text text-charcoal-900 mb-2">
             Mulai Jualan dengan ALURELAB
@@ -180,7 +180,7 @@ export default function OnboardingPage() {
 
           <div className="space-y-4 pt-4 border-t border-cloud">
             <h2 className="micro-label border-b border-cloud pb-2 text-charcoal-900 font-semibold">
-              2. AKUN PEMILIK (OWNER)
+              2. AKUN PEMILIK
             </h2>
 
             <div className="grid md:grid-cols-2 gap-4">
@@ -229,7 +229,7 @@ export default function OnboardingPage() {
               </div>
 
               <div>
-                <label className="micro-label block mb-1.5">Kata Sandi (Password)</label>
+                <label className="micro-label block mb-1.5">Kata Sandi</label>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
