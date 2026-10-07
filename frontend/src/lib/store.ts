@@ -89,7 +89,11 @@ export const getStoreData = cache(async (storeSlug: string): Promise<StoreData> 
         description: p.description || '',
         price: Number(p.price) || 0,
         compare_at_price: p.compare_at_price ? Number(p.compare_at_price) : undefined,
-        images: Array.isArray(p.images) ? p.images : [],
+        images: Array.isArray(p.images)
+          ? p.images
+          : typeof p.images === 'string' && p.images.startsWith('[')
+          ? (() => { try { return JSON.parse(p.images); } catch { return []; } })()
+          : [],
         variants:
           p.variants && p.variants.length > 0
             ? p.variants.map((v: any) => ({
