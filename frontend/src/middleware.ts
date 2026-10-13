@@ -8,6 +8,14 @@ export function middleware(req: NextRequest) {
     req.cookies.get('__Secure-authjs.session-token')?.value ||
     req.cookies.get('authjs.session-token')?.value;
 
+  // ── Root /: Redirect to dashboard if logged in, else to /login ─────────────
+  if (pathname === '/') {
+    if (sessionToken) {
+      return NextResponse.redirect(new URL('/dashboard', req.url));
+    }
+    return NextResponse.redirect(new URL('/login', req.url));
+  }
+
   // ── Guard: Dashboard ───────────────────────────────────────────────────────
   if (pathname.startsWith('/dashboard')) {
     if (!sessionToken) {
@@ -37,6 +45,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/admin/:path*', '/login', '/register'],
+  matcher: ['/', '/dashboard/:path*', '/admin/:path*', '/login', '/register'],
 };
-
