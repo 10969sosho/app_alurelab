@@ -47,6 +47,7 @@ export default function BuyerProductCard({
       price: variant ? variant.price : product.price,
       quantity: 1,
       imageUrl: product.images?.[0] || '',
+      weightGrams: product.weight_grams,
     });
 
     toast.success(`${product.title} ditambahkan ke keranjang`, {

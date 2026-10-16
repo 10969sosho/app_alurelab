@@ -202,6 +202,7 @@ class OrderController extends Controller
             'shipping_label_url' => $biteshipData['label_url'] ?? ($biteshipData['courier']['link'] ?? null),
             'is_cod' => $isCod,
             'cod_amount' => $isCod ? $order->total_amount : 0,
+            'shipped_at' => now(),
         ]);
 
         // Update order status ke shipped

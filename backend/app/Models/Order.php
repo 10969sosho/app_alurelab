@@ -51,4 +51,9 @@ class Order extends Model
     {
         return $this->hasOne(Shipment::class, 'order_id');
     }
+
+    public function refundRequests(): HasMany
+    {
+        return $this->hasMany(BuyerRefundRequest::class, 'order_id');
+    }
 }

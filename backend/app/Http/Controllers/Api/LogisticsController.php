@@ -24,7 +24,17 @@ class LogisticsController extends Controller
             return response()->json(['data' => []]);
         }
 
-        $areas = $this->biteshipService->searchAreas($query);
+        try {
+            $areas = $this->biteshipService->searchAreas($query);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'LOGISTICS_PROVIDER_UNAVAILABLE',
+                'message' => 'Pencarian alamat belum tersedia. Coba lagi.',
+            ], 503);
+        }
 
         return response()->json([
             'success' => true,
@@ -34,18 +44,20 @@ class LogisticsController extends Controller
 
     /**
      * Cek ongkir real-time multi-kurir.
+     * Bobot & value item diambil riil dari DB (bukan input client).
      */
     public function checkRates(Request $request): JsonResponse
     {
         /** @var Store $store */
         $store = app('current_tenant');
 
-        $destinationAreaId = $request->input('destination_area_id');
-        $items = $request->input('items', []);
-
-        if (! $destinationAreaId) {
-            return response()->json(['error' => 'destination_area_id is required'], 400);
-        }
+        $validated = $request->validate([
+            'destination_area_id' => 'required|string',
+            'items' => 'required|array|min:1',
+            'items.*.product_id' => 'required|uuid',
+            'items.*.variant_id' => 'nullable|uuid',
+            'items.*.quantity' => 'required|integer|min:1',
+        ]);
 
         if (! $store->address_area_id) {
             return response()->json([
@@ -55,13 +67,36 @@ class LogisticsController extends Controller
             ], 422);
         }
 
-        $originAreaId = $store->address_area_id;
+        $rateItems = $this->biteshipService->buildRateItems($store, $validated['items']);
 
-        $rates = $this->biteshipService->calculateRates($originAreaId, $destinationAreaId, $items, $store);
+        if ($rateItems === []) {
+            return response()->json([
+                'success' => false,
+                'error' => 'INVALID_ITEM',
+                'message' => 'Produk tidak tersedia di toko ini.',
+            ], 422);
+        }
+
+        try {
+            $rates = $this->biteshipService->calculateRates(
+                $store->address_area_id,
+                $validated['destination_area_id'],
+                $rateItems,
+                $store,
+            );
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'SHIPPING_PROVIDER_UNAVAILABLE',
+                'message' => 'Tarif pengiriman belum tersedia. Coba lagi.',
+            ], 503);
+        }
 
         return response()->json([
             'success' => true,
-            'origin_area_id' => $originAreaId,
+            'origin_area_id' => $store->address_area_id,
             'rates' => $rates,
         ]);
     }

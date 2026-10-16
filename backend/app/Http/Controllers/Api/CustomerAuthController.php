@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\Store;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class CustomerAuthController extends Controller
 {
@@ -48,16 +49,28 @@ class CustomerAuthController extends Controller
             'phone_number' => 'required|string|min:8|max:30',
         ]);
 
+        if (! app()->environment(['local', 'testing'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pengiriman OTP belum dikonfigurasi.',
+            ], 503);
+        }
+
         $normalizedPhone = $this->normalizePhone($validated['phone_number']);
         $otp = random_int(100000, 999999);
         // Store OTP for 5 minutes
-        \Illuminate\Support\Facades\Cache::put('otp_'.$normalizedPhone, $otp, 300);
+        Cache::put('otp_'.$normalizedPhone, $otp, 300);
 
-        return response()->json([
+        $response = [
             'success' => true,
             'message' => 'OTP sent',
-            'dev_otp' => $otp, // for testing only
-        ]);
+        ];
+
+        if (app()->environment(['local', 'testing'])) {
+            $response['dev_otp'] = $otp;
+        }
+
+        return response()->json($response);
     }
 
     /**
@@ -73,14 +86,14 @@ class CustomerAuthController extends Controller
         ]);
 
         $normalizedPhone = $this->normalizePhone($validated['phone_number']);
-        $cachedOtp = \Illuminate\Support\Facades\Cache::get('otp_'.$normalizedPhone);
+        $cachedOtp = Cache::get('otp_'.$normalizedPhone);
 
         if (! $cachedOtp || $cachedOtp != $validated['otp']) {
             return response()->json(['success' => false, 'message' => 'OTP tidak valid atau kadaluarsa.'], 422);
         }
 
         // OTP valid, remove it
-        \Illuminate\Support\Facades\Cache::forget('otp_'.$normalizedPhone);
+        Cache::forget('otp_'.$normalizedPhone);
 
         $customer = Customer::where('phone_number', $normalizedPhone)->first();
 
@@ -90,8 +103,11 @@ class CustomerAuthController extends Controller
                 'full_name' => $validated['full_name'] ?? 'Pelanggan '.substr($normalizedPhone, -4),
                 'email' => $validated['email'] ?? null,
                 'default_address' => [],
+                'phone_verified' => true,
             ]);
         } else {
+            $customer->update(['phone_verified' => true]);
+
             if (! empty($validated['full_name']) && (str_starts_with($customer->full_name, 'Pelanggan ') || empty($customer->full_name))) {
                 $customer->update(['full_name' => $validated['full_name']]);
             }
@@ -204,7 +220,12 @@ class CustomerAuthController extends Controller
 
         $order = Order::where('tenant_id', $store->id)
             ->where('customer_id', $customer->id)
-            ->with(['items.product', 'payment', 'shipment'])
+            ->with([
+                'items.product',
+                'payment',
+                'shipment',
+                'refundRequests:id,order_id,type,reason,amount,status,reviewed_at,created_at',
+            ])
             ->findOrFail($id);
 
         return response()->json([

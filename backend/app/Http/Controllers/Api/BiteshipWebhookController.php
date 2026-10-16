@@ -35,11 +35,21 @@ class BiteshipWebhookController extends Controller
 
         $payload = $request->all();
         $orderId = $payload['order_id'] ?? null;
-        $status = $payload['status'] ?? null; // allocated, picking_up, in_transit, delivered, return_to_shipper
+        $status = $payload['status'] ?? null;
         $waybillId = $payload['courier_waybill_id'] ?? null;
 
-        if (! in_array($status, ['allocated', 'picking_up', 'in_transit', 'delivered', 'return_to_shipper', 'rejected'], true)) {
+        // Status resmi Biteship + alias legacy yang masih dikirim courier partner.
+        $allowedStatuses = [
+            'allocated', 'picking_up', 'picked', 'dropping_off', 'in_transit',
+            'delivered', 'cancelled', 'returned', 'return_to_shipper', 'rejected',
+        ];
+
+        if (! in_array($status, $allowedStatuses, true)) {
             return response()->json(['error' => 'Unsupported shipment status'], 422);
+        }
+
+        if (! $orderId && ! $waybillId) {
+            return response()->json(['error' => 'order_id or courier_waybill_id is required'], 422);
         }
 
         Log::info('Biteship Tracking Webhook Event Received', [
@@ -49,32 +59,37 @@ class BiteshipWebhookController extends Controller
         ]);
 
         if (DB::getDriverName() === 'pgsql') {
-            DB::statement("SET app.is_system_bypass = 'on';");
+            DB::statement('SET app.is_system_bypass = on');
         }
 
-        $shipment = Shipment::where('biteship_order_id', $orderId)
-            ->orWhere('waybill_id', $waybillId)
+        $shipment = Shipment::when($orderId, fn ($q) => $q->where('biteship_order_id', $orderId))
+            ->when(! $orderId && $waybillId, fn ($q) => $q->where('waybill_id', $waybillId))
             ->first();
 
         if (! $shipment) {
             if (DB::getDriverName() === 'pgsql') {
-                DB::statement("SET app.is_system_bypass = 'off';");
+                DB::statement('SET app.is_system_bypass = off');
             }
 
             return response()->json(['message' => 'Shipment ignored or not found'], 200);
         }
 
         if (DB::getDriverName() === 'pgsql') {
-            DB::statement("SET app.current_tenant_id = '{$shipment->tenant_id}';");
-            DB::statement("SET app.is_system_bypass = 'off';");
+            // tenant_id berasal dari DB (uuid), aman untuk interpolasi literal SET.
+            $tenantId = $shipment->tenant_id;
+            DB::statement("SET app.current_tenant_id = '{$tenantId}'");
+            DB::statement('SET app.is_system_bypass = off');
         }
 
         $targetStatus = match ($status) {
             'allocated' => ShipmentStatus::ALLOCATED->value,
             'picking_up' => ShipmentStatus::PICKING_UP->value,
+            'picked' => ShipmentStatus::PICKED->value,
+            'dropping_off' => ShipmentStatus::DROPPING_OFF->value,
             'in_transit' => ShipmentStatus::IN_TRANSIT->value,
             'delivered' => ShipmentStatus::DELIVERED->value,
-            'return_to_shipper', 'rejected' => ShipmentStatus::RETURN_TO_SHIPPER->value,
+            'cancelled' => ShipmentStatus::CANCELLED->value,
+            'returned', 'return_to_shipper', 'rejected' => ShipmentStatus::RETURN_TO_SHIPPER->value,
         };
 
         if ($shipment->tracking_status === $targetStatus) {
@@ -86,11 +101,13 @@ class BiteshipWebhookController extends Controller
         switch ($status) {
             case 'allocated':
             case 'picking_up':
-                $shipment->update(['tracking_status' => $targetStatus]);
-                break;
+            case 'picked':
+            case 'dropping_off':
             case 'in_transit':
-                $shipment->update(['tracking_status' => ShipmentStatus::IN_TRANSIT->value]);
-                $order->update(['status' => OrderStatus::SHIPPED]);
+                $shipment->update(['tracking_status' => $targetStatus]);
+                if ($order && $order->status === OrderStatus::PROCESSING) {
+                    $order->update(['status' => OrderStatus::SHIPPED]);
+                }
                 break;
 
             case 'delivered':
@@ -102,6 +119,13 @@ class BiteshipWebhookController extends Controller
                 $this->antiRtsService->recordOrderOutcome($order->customer, true);
                 break;
 
+            case 'cancelled':
+                $shipment->update(['tracking_status' => ShipmentStatus::CANCELLED->value]);
+                $order->update(['status' => OrderStatus::CANCELLED]);
+                $this->antiRtsService->recordOrderOutcome($order->customer, false);
+                break;
+
+            case 'returned':
             case 'return_to_shipper':
             case 'rejected':
                 $shipment->update(['tracking_status' => ShipmentStatus::RETURN_TO_SHIPPER->value]);

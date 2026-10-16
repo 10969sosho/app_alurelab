@@ -6,6 +6,7 @@ export interface BuyerProfile {
   phoneNumber: string;
   fullName: string;
   email?: string | null;
+  phoneVerified?: boolean;
   defaultAddress?: {
     detail?: string;
     areaId?: string;

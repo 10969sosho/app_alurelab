@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -22,6 +22,7 @@ import axios from 'axios';
 import { formatRupiah, formatDateTime } from '@/lib/utils';
 import { useBuyerStore } from '@/store/buyer-store';
 import { BuyerNavbar, BuyerThemeFrame } from '@/components/buyer/BuyerTheme';
+import { fetchApi } from '@/lib/api-client';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
@@ -33,6 +34,37 @@ export default function BuyerOrderTrackingPage({
   const { store_slug: storeSlug, id: orderId } = use(params);
   const [copied, setCopied] = useState(false);
   const { token } = useBuyerStore();
+  const [kycStatus, setKycStatus] = useState('loading');
+  const [refundType, setRefundType] = useState<'return' | 'refund'>('return');
+  const [refundReason, setRefundReason] = useState('');
+  const [bankName, setBankName] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [accountHolderName, setAccountHolderName] = useState('');
+  const [refundSubmitting, setRefundSubmitting] = useState(false);
+  const [refundMessage, setRefundMessage] = useState('');
+  const [refundSubmitted, setRefundSubmitted] = useState(false);
+
+  useEffect(() => {
+    if (!token) return;
+    let isMounted = true;
+
+    Promise.all([
+      fetchApi('/buyer/kyc/status', { headers: { 'x-store-slug': storeSlug } }),
+      fetchApi('/buyer/bank-account', { headers: { 'x-store-slug': storeSlug } }),
+    ]).then(([kyc, bank]) => {
+      if (!isMounted) return;
+      setKycStatus(kyc.status || 'unverified');
+      setBankName(bank.data?.bank_name || '');
+      setAccountNumber(bank.data?.account_number || '');
+      setAccountHolderName(bank.data?.account_holder_name || '');
+    }).catch(() => {
+      if (isMounted) setKycStatus('unverified');
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [token, storeSlug]);
 
   // Fetch order data
   const { data: order, isLoading, isError } = useQuery({
@@ -76,7 +108,50 @@ export default function BuyerOrderTrackingPage({
   }
 
   const waybill = order?.shipment?.waybill_id;
+  const trackingStatus =
+    typeof order?.shipment?.tracking_status === 'object'
+      ? order?.shipment?.tracking_status?.value
+      : order?.shipment?.tracking_status;
   const statusStr = typeof order?.status === 'object' ? order?.status?.value : order?.status || 'processing';
+  const existingRefund = order?.refund_requests?.find((request: any) => ['pending', 'approved'].includes(request.status));
+
+  const submitRefund = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setRefundSubmitting(true);
+    setRefundMessage('');
+
+    try {
+      const result = await fetchApi(`/buyer/orders/${orderId}/refund`, {
+        method: 'POST',
+        headers: { 'x-store-slug': storeSlug },
+        body: JSON.stringify({
+          type: refundType,
+          reason: refundReason,
+          bank_name: bankName,
+          account_number: accountNumber,
+          account_holder_name: accountHolderName,
+        }),
+      });
+      setRefundSubmitted(true);
+      setRefundMessage(result.message || 'Pengajuan berhasil dikirim.');
+    } catch (error: any) {
+      setRefundMessage(error?.message || 'Pengajuan retur/refund gagal.');
+    } finally {
+      setRefundSubmitting(false);
+    }
+  };
+
+  const TRACKING_LABELS: Record<string, string> = {
+    allocated: 'Resi Diterbitkan',
+    picking_up: 'Kurir Menuju Pickup',
+    picked: 'Paket Diambil Kurir',
+    dropping_off: 'Sedang Diantar',
+    in_transit: 'Dalam Perjalanan',
+    delivered: 'Sudah Diterima',
+    cancelled: 'Dibatalkan',
+    return_to_shipper: 'Retur ke Pengirim',
+    rejected: 'Ditolak',
+  };
 
   return (
      <BuyerThemeFrame storeSlug={storeSlug} className="pb-16">
@@ -119,6 +194,11 @@ export default function BuyerOrderTrackingPage({
               <p className="font-mono text-sm text-emerald-700 font-bold tracking-wide">
                 {waybill}
               </p>
+              {trackingStatus && (
+                <p className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full inline-block mt-1">
+                  Status Resi: {TRACKING_LABELS[trackingStatus] || trackingStatus}
+                </p>
+              )}
             </div>
 
             <button
@@ -234,6 +314,52 @@ export default function BuyerOrderTrackingPage({
           <p className="font-semibold text-slate-800">{order.shipping_recipient_name} ({order.shipping_recipient_phone})</p>
           <p className="text-xs text-slate-600 leading-relaxed">{order.shipping_address_detail}</p>
         </div>
+
+        {['delivered', 'completed'].includes(statusStr) && (
+          <section className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4 shadow-xs">
+            <div>
+              <h2 className="font-bold text-slate-800 text-sm">Retur & Refund</h2>
+              <p className="mt-1 text-xs text-slate-500">Pengajuan ditinjau oleh toko. Rekening bank disimpan untuk proses pengembalian dana.</p>
+            </div>
+            {existingRefund ? (
+              <p className="rounded-xl bg-amber-50 p-3 text-xs text-amber-800">Pengajuan {existingRefund.type} Anda berstatus <strong>{existingRefund.status}</strong>.</p>
+            ) : refundSubmitted ? (
+              <p role="status" className="rounded-xl bg-emerald-50 p-3 text-xs text-emerald-800">{refundMessage}</p>
+            ) : kycStatus === 'loading' ? (
+              <p className="text-xs text-slate-500">Memuat status verifikasi identitas…</p>
+            ) : kycStatus !== 'approved' ? (
+              <div className="rounded-xl bg-amber-50 p-4 text-xs text-amber-900 space-y-2">
+                <p>Verifikasi identitas KTP perlu disetujui sebelum pengajuan retur/refund.</p>
+                <Link href={`/${storeSlug}/account`} className="inline-flex font-bold underline">Buka Verifikasi Identitas</Link>
+              </div>
+            ) : (
+              <form onSubmit={submitRefund} className="grid gap-3 sm:grid-cols-2 text-xs">
+                <label className="font-semibold text-slate-700">Jenis pengajuan
+                  <select value={refundType} onChange={(event) => setRefundType(event.target.value as 'return' | 'refund')} className="mt-1 w-full rounded-xl border border-slate-200 p-3">
+                    <option value="return">Retur barang</option>
+                    <option value="refund">Refund</option>
+                  </select>
+                </label>
+                <label className="font-semibold text-slate-700">Nama bank
+                  <input required value={bankName} onChange={(event) => setBankName(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 p-3" />
+                </label>
+                <label className="font-semibold text-slate-700">Nomor rekening
+                  <input required inputMode="numeric" value={accountNumber} onChange={(event) => setAccountNumber(event.target.value.replace(/\D/g, ''))} className="mt-1 w-full rounded-xl border border-slate-200 p-3" />
+                </label>
+                <label className="font-semibold text-slate-700">Nama pemilik rekening
+                  <input required value={accountHolderName} onChange={(event) => setAccountHolderName(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 p-3" />
+                </label>
+                <label className="sm:col-span-2 font-semibold text-slate-700">Alasan pengajuan
+                  <textarea required rows={3} value={refundReason} onChange={(event) => setRefundReason(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 p-3" />
+                </label>
+                {refundMessage && <p role="alert" className="sm:col-span-2 text-rose-700">{refundMessage}</p>}
+                <button disabled={refundSubmitting} className="sm:col-span-2 rounded-xl bg-slate-900 px-4 py-3 font-bold text-white disabled:opacity-50">
+                  {refundSubmitting ? 'Mengirim pengajuan…' : 'Ajukan Retur / Refund'}
+                </button>
+              </form>
+            )}
+          </section>
+        )}
 
         {/* Footer Actions */}
         <div className="text-center pt-4">

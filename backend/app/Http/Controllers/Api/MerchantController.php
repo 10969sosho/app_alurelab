@@ -13,16 +13,22 @@ use App\Models\Store;
 use App\Models\StoreUser;
 use App\Models\User;
 use App\Models\WalletTransaction;
+use App\Services\DokuService;
 use Carbon\Carbon;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class MerchantController extends Controller
 {
+    public function __construct(
+        protected DokuService $dokuService
+    ) {}
+
     /**
      * Merchant 60-Second Onboarding (The Cursor Effect).
      * Mendaftarkan toko, user, dompet escrow, dan produk perdana dalam 1 transaksi atomik.
@@ -45,7 +51,7 @@ class MerchantController extends Controller
             'password.min' => 'Password minimal 8 karakter.',
         ]);
 
-        return DB::transaction(function () use ($validated, $request) {
+        [$store, $user] = DB::transaction(function () use ($validated) {
             // 1. Buat Store
             $store = Store::create([
                 'name' => $validated['store_name'],
@@ -90,26 +96,90 @@ class MerchantController extends Controller
                 DB::statement("SET app.current_tenant_id = '{$store->id}';");
             }
 
-            $proto = $request->header('x-forwarded-proto') ?: $request->getScheme();
-            $host = $request->header('x-forwarded-host') ?: $request->getHost();
-            $storefrontUrl = "{$proto}://{$host}/{$store->slug}";
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Toko berhasil dibuat dalam hitungan detik!',
-                'store' => [
-                    'id' => $store->id,
-                    'name' => $store->name,
-                    'slug' => $store->slug,
-                    'storefront_url' => $storefrontUrl,
-                ],
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                ],
-            ], 201);
+            return [$store, $user];
         });
+
+        // 6. Registrasi sub-account DOKU (di luar transaksi; gagal = biarkan 'unregistered', retry saat setup payment)
+        $result = $this->dokuService->registerSubAccount($store, $validated['owner_email'], $validated['owner_phone']);
+        if (! $result['success']) {
+            Log::error('DOKU sub-account registration gagal saat onboard', [
+                'store_id' => $store->id,
+                'error' => $result['error'],
+            ]);
+        }
+
+        $proto = $request->header('x-forwarded-proto') ?: $request->getScheme();
+        $host = $request->header('x-forwarded-host') ?: $request->getHost();
+        $storefrontUrl = "{$proto}://{$host}/{$store->slug}";
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Toko berhasil dibuat dalam hitungan detik!',
+            'store' => [
+                'id' => $store->id,
+                'name' => $store->name,
+                'slug' => $store->slug,
+                'storefront_url' => $storefrontUrl,
+            ],
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+            ],
+        ], 201);
+    }
+
+    /**
+     * Setup pembayaran toko: registrasi sub-account DOKU bila belum ada,
+     * dan simpan/update rekening bank settlement ke settings['bank_account'].
+     */
+    public function setupPayment(Request $request): JsonResponse
+    {
+        /** @var Store $store */
+        $store = app('current_tenant');
+
+        $validated = $request->validate([
+            'bank_code' => 'nullable|string|max:20',
+            'account_number' => 'nullable|string|max:30',
+            'account_holder_name' => 'nullable|string|max:255',
+        ]);
+
+        if ($validated !== []) {
+            $settings = $store->settings ?? [];
+            $settings['bank_account'] = array_merge($settings['bank_account'] ?? [], $validated);
+            $store->settings = $settings;
+            $store->save();
+        }
+
+        $error = null;
+        if (empty($store->doku_sub_account_id)) {
+            $result = $this->dokuService->registerSubAccount($store);
+            $error = $result['error'];
+        }
+
+        return response()->json([
+            'success' => (bool) $store->doku_sub_account_id,
+            'payment_status' => $store->doku_account_status,
+            'doku_sub_account_id' => $store->doku_sub_account_id,
+            'bank_account' => $store->settings['bank_account'] ?? null,
+            'error' => $error,
+        ]);
+    }
+
+    /**
+     * Status pembayaran toko (sub-account DOKU & rekening bank).
+     */
+    public function getPaymentStatus(Request $request): JsonResponse
+    {
+        /** @var Store $store */
+        $store = app('current_tenant');
+
+        return response()->json([
+            'success' => true,
+            'payment_status' => $store->doku_account_status,
+            'doku_sub_account_id' => $store->doku_sub_account_id,
+            'bank_account' => $store->settings['bank_account'] ?? null,
+        ]);
     }
 
     /**

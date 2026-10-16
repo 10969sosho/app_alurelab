@@ -1,18 +1,23 @@
 <?php
 
+use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BiteshipWebhookController;
+use App\Http\Controllers\Api\BuyerFlowController;
+use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\CustomerAuthController;
+use App\Http\Controllers\Api\DokuWebhookController;
 use App\Http\Controllers\Api\LogisticsController;
 use App\Http\Controllers\Api\MerchantController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\StorefrontController;
 use App\Http\Controllers\Api\UploadController;
-use App\Http\Controllers\Api\XenditWebhookController;
 use App\Http\Middleware\IdentifyTenant;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
 
@@ -30,17 +35,17 @@ Route::prefix('v1')->group(function () {
         $status = ['status' => 'ok', 'timestamp' => now()->toIso8601String()];
 
         try {
-            \Illuminate\Support\Facades\DB::connection()->getPdo();
+            DB::connection()->getPdo();
             $status['database'] = 'connected';
-        } catch (\Throwable $e) {
-            $status['database'] = 'error: ' . $e->getMessage();
+        } catch (Throwable $e) {
+            $status['database'] = 'error: '.$e->getMessage();
             $status['status'] = 'degraded';
         }
 
         try {
-            \Illuminate\Support\Facades\Redis::ping();
+            Redis::ping();
             $status['redis'] = 'connected';
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $status['redis'] = 'optional/disabled';
         }
 
@@ -86,8 +91,10 @@ Route::prefix('v1')->group(function () {
     // ═══════════════════════════════════════════════════════════════════════
     // 2. WEBHOOKS — Public (verifikasi kriptografis internal)
     // ═══════════════════════════════════════════════════════════════════════
-    Route::post('/webhooks/xendit/invoice', [XenditWebhookController::class, 'handleInvoice']);
+    Route::post('/webhooks/doku/notification', [DokuWebhookController::class, 'handleNotification']);
     Route::post('/webhooks/biteship/tracking', [BiteshipWebhookController::class, 'handleTracking']);
+    // [DEPRECATED 2026-10-15] Xendit digantikan DOKU Checkout V1
+    // Route::post('/webhooks/xendit/invoice', [XenditWebhookController::class, 'handleInvoice']);
 
     // ═══════════════════════════════════════════════════════════════════════
     // 3. ONBOARDING — Public (buat toko + user sekaligus)
@@ -114,6 +121,10 @@ Route::prefix('v1')->group(function () {
             Route::put('/buyer/profile', [CustomerAuthController::class, 'updateProfile']);
             Route::get('/buyer/orders', [CustomerAuthController::class, 'getOrders']);
             Route::get('/buyer/orders/{id}', [CustomerAuthController::class, 'getOrder']);
+            Route::get('/buyer/kyc/status', [BuyerFlowController::class, 'kycStatus']);
+            Route::post('/buyer/kyc/submit', [BuyerFlowController::class, 'submitKyc']);
+            Route::get('/buyer/bank-account', [BuyerFlowController::class, 'bankAccount']);
+            Route::post('/buyer/orders/{id}/refund', [BuyerFlowController::class, 'requestRefund']);
         });
     });
 
@@ -167,6 +178,10 @@ Route::prefix('v1')->group(function () {
             Route::get('/finance', [MerchantController::class, 'getFinance'])->middleware('store.role:owner,manager');
             Route::post('/finance/withdraw', [MerchantController::class, 'requestPayout'])->middleware('store.role:owner');
 
+            // ── Setup Pembayaran (DOKU Sub-Account) ───────────────────────────
+            Route::post('/payment/setup', [MerchantController::class, 'setupPayment'])->middleware('store.role:owner');
+            Route::get('/payment/status', [MerchantController::class, 'getPaymentStatus'])->middleware('store.role:owner,manager');
+
             // ── Analisis Bisnis ───────────────────────────────────────────────
             Route::get('/analytics', [MerchantController::class, 'getAnalytics']);
 
@@ -185,25 +200,27 @@ Route::prefix('v1')->group(function () {
     // ═══════════════════════════════════════════════════════════════════════
     Route::prefix('chat')->group(function () {
         // Buyer starts a conversation (no Sanctum, uses X-Customer-Token)
-        Route::post('/start', [\App\Http\Controllers\Api\ChatController::class, 'start']);
+        Route::post('/start', [ChatController::class, 'start']);
 
         // List conversations (seller via Sanctum, buyer via X-Customer-Token)
-        Route::get('/conversations', [\App\Http\Controllers\Api\ChatController::class, 'index']);
+        Route::get('/conversations', [ChatController::class, 'index']);
 
         // Messages in a conversation
-        Route::get('/conversations/{id}/messages', [\App\Http\Controllers\Api\ChatController::class, 'messages']);
-        Route::post('/conversations/{id}/messages', [\App\Http\Controllers\Api\ChatController::class, 'send']);
+        Route::get('/conversations/{id}/messages', [ChatController::class, 'messages']);
+        Route::post('/conversations/{id}/messages', [ChatController::class, 'send']);
     });
 
     // ═══════════════════════════════════════════════════════════════════════
     // 7. ADMIN — Protected (Sanctum Auth, role check in controller)
     // ═══════════════════════════════════════════════════════════════════════
     Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
-        Route::get('/stats',          [\App\Http\Controllers\Api\AdminController::class, 'stats']);
-        Route::get('/sellers',        [\App\Http\Controllers\Api\AdminController::class, 'sellers']);
-        Route::get('/sellers/{id}',   [\App\Http\Controllers\Api\AdminController::class, 'sellerDetail']);
-        Route::get('/buyers',         [\App\Http\Controllers\Api\AdminController::class, 'buyers']);
-        Route::get('/buyers/{id}',    [\App\Http\Controllers\Api\AdminController::class, 'buyerDetail']);
+        Route::get('/stats', [AdminController::class, 'stats']);
+        Route::get('/sellers', [AdminController::class, 'sellers']);
+        Route::get('/sellers/{id}', [AdminController::class, 'sellerDetail']);
+        Route::get('/buyers', [AdminController::class, 'buyers']);
+        Route::get('/buyers/{id}', [AdminController::class, 'buyerDetail']);
+        Route::get('/buyers/{id}/kyc', [BuyerFlowController::class, 'adminKycStatus']);
+        Route::get('/buyers/{id}/kyc/documents/{document}', [BuyerFlowController::class, 'kycDocument']);
+        Route::patch('/buyers/{id}/kyc', [BuyerFlowController::class, 'reviewKyc']);
     });
 });
-

@@ -155,6 +155,7 @@ export default function ProductDetailPage({
       quantity,
       imageUrl: images[0],
       stock: stockAvailable,
+      weightGrams: product.weight_grams,
     });
     toast.success(`${product.title} (${quantity} barang) masuk ke keranjang!`, {
       duration: 2500,
@@ -175,6 +176,7 @@ export default function ProductDetailPage({
       quantity,
       imageUrl: images[0],
       stock: stockAvailable,
+      weightGrams: product.weight_grams,
     });
     router.push(`/${storeSlug}/checkout`);
   };

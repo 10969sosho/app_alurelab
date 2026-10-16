@@ -21,9 +21,12 @@ export async function fetchApi<T = any>(
 
   const defaultHeaders: Record<string, string> = {
     'Accept': 'application/json',
-    'Content-Type': 'application/json',
     ...(headers as Record<string, string>),
   };
+
+  if (typeof FormData === 'undefined' || !(rest.body instanceof FormData)) {
+    defaultHeaders['Content-Type'] = 'application/json';
+  }
 
   if (tenantIdOrSlug) {
     defaultHeaders['x-tenant-id'] = tenantIdOrSlug;

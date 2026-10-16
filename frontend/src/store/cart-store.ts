@@ -10,6 +10,7 @@ export interface CartItem {
   quantity: number;
   imageUrl?: string;
   stock?: number;
+  weightGrams?: number;
 }
 
 interface CartState {

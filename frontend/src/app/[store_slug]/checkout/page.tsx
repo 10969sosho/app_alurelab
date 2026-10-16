@@ -12,9 +12,9 @@ import { BuyerNavbar, BuyerThemeFrame } from '@/components/buyer/BuyerTheme';
 
 function buildAreaId(wilayah: WilayahAddressValue): string {
   if (wilayah.areaId) return wilayah.areaId;
-  const { provinceCode, regencyCode, districtCode, villageCode } = wilayah;
-  if (provinceCode && regencyCode && districtCode && villageCode) {
-    return `${provinceCode}.${regencyCode}.${districtCode}.${villageCode}`;
+  const { regencyCode, districtCode } = wilayah;
+  if (regencyCode && districtCode) {
+    return `ID_ID_${regencyCode.replaceAll('.', '')}_${districtCode.replaceAll('.', '')}`;
   }
   return '';
 }
@@ -101,12 +101,12 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
         method: 'POST',
         tenantIdOrSlug: storeSlug,
         body: JSON.stringify({
-          destination_area_id: destinationAreaId,
+          destination_area_id: nextAreaId,
           items: items.map((item) => ({
-            name: item.title,
-            value: item.price,
+            product_id: item.productId,
+            variant_id: item.variantId,
             quantity: item.quantity,
-            weight: 200,
+            weight_grams: item.weightGrams,
           })),
         }),
       });
@@ -234,7 +234,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">Metode:</span>
-              <span className="font-bold text-slate-900">{form.paymentMethod === 'ONLINE' ? 'QRIS / VA (Xendit)' : 'Bayar di Tempat (COD)'}</span>
+              <span className="font-bold text-slate-900">{form.paymentMethod === 'ONLINE' ? 'QRIS / VA (DOKU)' : 'Bayar di Tempat (COD)'}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">Kurir Logistik:</span>
@@ -251,7 +251,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
               }}
               className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow mb-3 text-sm transition-all"
             >
-              Bayar Sekarang via Xendit →
+              Bayar Sekarang via DOKU →
             </Link>
           )}
 

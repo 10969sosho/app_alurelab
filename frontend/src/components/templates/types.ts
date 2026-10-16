@@ -14,6 +14,7 @@ export interface Product {
   description: string;
   price: number;
   compare_at_price?: number;
+  weight_grams?: number;
   images: string[];
   variants: ProductVariant[];
   details?: string[];

@@ -60,6 +60,37 @@ export default function AccountPage({
   // Orders State
   const [orders, setOrders] = useState<any[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
+  const [kycStatus, setKycStatus] = useState('loading');
+  const [kycRejectionReason, setKycRejectionReason] = useState('');
+  const [kycFormOpen, setKycFormOpen] = useState(false);
+  const [kycSubmitting, setKycSubmitting] = useState(false);
+  const [ktpNumber, setKtpNumber] = useState('');
+  const [identityName, setIdentityName] = useState('');
+  const [ktpImage, setKtpImage] = useState<File | null>(null);
+  const [selfieImage, setSelfieImage] = useState<File | null>(null);
+
+  useEffect(() => {
+    if (!buyer?.id) return;
+    let isMounted = true;
+
+    Promise.all([
+      fetchApi('/buyer/profile', { headers: { 'x-store-slug': storeSlug } }),
+      fetchApi('/buyer/kyc/status', { headers: { 'x-store-slug': storeSlug } }),
+    ]).then(([profile, kyc]) => {
+      if (!isMounted) return;
+      if (profile.customer) {
+        setBuyer({ ...buyer, phoneVerified: Boolean(profile.customer.phone_verified) });
+      }
+      setKycStatus(kyc.status || 'unverified');
+      setKycRejectionReason(kyc.rejection_reason || '');
+    }).catch(() => {
+      if (isMounted) setKycStatus('unverified');
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [buyer?.id, storeSlug]);
 
   useEffect(() => {
     if (buyer) {
@@ -160,6 +191,38 @@ export default function AccountPage({
     }
   };
 
+  const handleSubmitKyc = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!ktpImage || !selfieImage) return;
+    setKycSubmitting(true);
+
+    const formData = new FormData();
+    formData.set('full_name', identityName);
+    formData.set('ktp_number', ktpNumber);
+    formData.set('ktp_image', ktpImage);
+    formData.set('selfie_image', selfieImage);
+
+    try {
+      const result = await fetchApi('/buyer/kyc/submit', {
+        method: 'POST',
+        body: formData,
+        headers: { 'x-store-slug': storeSlug },
+      });
+      setKycStatus(result.status || 'pending');
+      setKycRejectionReason('');
+      setKycFormOpen(false);
+      setKtpNumber('');
+      setIdentityName('');
+      setKtpImage(null);
+      setSelfieImage(null);
+      toast.success('Dokumen identitas dikirim untuk ditinjau.');
+    } catch (error: any) {
+      toast.error(error?.message || 'Gagal mengirim dokumen identitas.');
+    } finally {
+      setKycSubmitting(false);
+    }
+  };
+
   const handleLogout = () => {
     logout();
     toast.success('Berhasil keluar dari akun.');
@@ -218,9 +281,9 @@ export default function AccountPage({
                     <h2 className="text-base font-bold text-slate-900 truncate">
                       {buyer.fullName || 'Pelanggan ALURELAB'}
                     </h2>
-                    <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200 shrink-0">
+                    <span className={`inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full border shrink-0 ${buyer.phoneVerified ? 'text-blue-700 bg-blue-50 border-blue-200' : 'text-stone-600 bg-stone-100 border-stone-200'}`}>
                       <ShieldCheck className="w-3 h-3" />
-                      Verified
+                      {buyer.phoneVerified ? 'Phone Verified' : 'Phone Unverified'}
                     </span>
                   </div>
                   <p className="text-xs text-stone-500 font-mono mt-0.5">
@@ -240,6 +303,50 @@ export default function AccountPage({
                   Edit
                 </button>
               </div>
+            </section>
+
+            <section className="bg-white rounded-2xl border border-stone-200/80 p-4 shadow-2xs space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-800">Verifikasi Identitas</h3>
+                  <p className="text-[11px] text-stone-500 mt-1">KTP hanya diperlukan untuk menjadi verified user atau mengajukan refund.</p>
+                </div>
+                <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${kycStatus === 'approved' ? 'text-emerald-700 bg-emerald-50' : kycStatus === 'pending' ? 'text-amber-700 bg-amber-50' : kycStatus === 'rejected' ? 'text-rose-700 bg-rose-50' : 'text-stone-600 bg-stone-100'}`}>
+                  {kycStatus === 'loading' ? 'Checking…' : kycStatus === 'approved' ? 'Identity Verified' : kycStatus === 'pending' ? 'KYC Pending' : kycStatus === 'rejected' ? 'KYC Rejected' : 'Unverified'}
+                </span>
+              </div>
+              {kycStatus === 'loading' && <p className="text-xs text-stone-500">Memuat status verifikasi…</p>}
+              {kycStatus === 'pending' && <p className="text-xs text-amber-800 bg-amber-50 rounded-xl p-3">Dokumen Anda sedang ditinjau. Akun biasa tetap dapat digunakan.</p>}
+              {kycStatus === 'approved' && <p className="text-xs text-emerald-800 bg-emerald-50 rounded-xl p-3">Identitas Anda telah disetujui.</p>}
+              {['unverified', 'rejected'].includes(kycStatus) && (
+                <div className="space-y-3">
+                  {kycRejectionReason && <p className="text-xs text-rose-800 bg-rose-50 rounded-xl p-3">Pengajuan ditolak: {kycRejectionReason}</p>}
+                  {kycFormOpen ? (
+                    <form onSubmit={handleSubmitKyc} className="grid gap-3 sm:grid-cols-2 text-xs">
+                      <label className="sm:col-span-2 font-semibold text-slate-700">
+                        Nama lengkap sesuai KTP
+                        <input required value={identityName} onChange={(event) => setIdentityName(event.target.value)} className="mt-1 w-full rounded-xl border border-stone-200 p-3" />
+                      </label>
+                      <label className="sm:col-span-2 font-semibold text-slate-700">
+                        NIK (16 digit)
+                        <input required inputMode="numeric" pattern="[0-9]{16}" maxLength={16} value={ktpNumber} onChange={(event) => setKtpNumber(event.target.value.replace(/\D/g, ''))} className="mt-1 w-full rounded-xl border border-stone-200 p-3" />
+                      </label>
+                      <label className="font-semibold text-slate-700">Foto KTP<input required type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => setKtpImage(event.target.files?.[0] || null)} className="mt-1 block w-full text-[11px]" /></label>
+                      <label className="font-semibold text-slate-700">Foto selfie dengan KTP<input required type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => setSelfieImage(event.target.files?.[0] || null)} className="mt-1 block w-full text-[11px]" /></label>
+                      <button disabled={kycSubmitting} className="sm:col-span-2 rounded-xl bg-slate-900 px-4 py-3 text-xs font-bold text-white disabled:opacity-50">
+                        {kycSubmitting ? 'Mengirim dokumen…' : 'Kirim Dokumen Verifikasi'}
+                      </button>
+                      <button type="button" onClick={() => setKycFormOpen(false)} className="sm:col-span-2 rounded-xl bg-stone-100 px-4 py-3 text-xs font-bold text-slate-700">
+                        Batal
+                      </button>
+                    </form>
+                  ) : (
+                    <button type="button" onClick={() => setKycFormOpen(true)} className="rounded-xl bg-slate-900 px-4 py-3 text-xs font-bold text-white">
+                      {kycStatus === 'rejected' ? 'Kirim Ulang Verifikasi' : 'Mulai Verifikasi Identitas'}
+                    </button>
+                  )}
+                </div>
+              )}
             </section>
 
             {/* ── 3. Voucher & Promo Saya ── */}

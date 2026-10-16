@@ -97,6 +97,7 @@ export default function BuyerLoginModal({
             phoneNumber: res.customer.phone_number,
             fullName: res.customer.full_name || fullName || 'Pelanggan',
             email: res.customer.email,
+            phoneVerified: Boolean(res.customer.phone_verified),
             defaultAddress: res.customer.default_address,
             riskScore: res.customer.risk_score,
           },

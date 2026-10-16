@@ -148,6 +148,7 @@ class AuthController extends Controller
             'custom_domain' => $store->custom_domain,
             'custom_domain_status' => $store->custom_domain_status,
             'xendit_account_status' => $store->xendit_account_status,
+            'doku_account_status' => $store->doku_account_status,
         ];
     }
 }

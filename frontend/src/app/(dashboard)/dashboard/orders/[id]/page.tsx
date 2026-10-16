@@ -50,6 +50,9 @@ const COURIER_OPTIONS: Record<string, { value: string; label: string }[]> = {
   jnt: [
     { value: 'ez', label: 'EZ' },
   ],
+  anteraja: [
+    { value: 'standard', label: 'Standard' },
+  ],
 };
 
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -306,6 +309,11 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 <p className="font-mono font-bold text-slate-800">
                   {order.shipment?.waybill_id || 'Resi belum terbit'}
                 </p>
+                {order.shipment?.tracking_status && (
+                  <p className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full inline-block">
+                    Status Resi: {String(order.shipment.tracking_status).replace(/_/g, ' ')}
+                  </p>
+                )}
                 {order.shipment?.shipping_label_url && (
                   <a
                     href={order.shipment.shipping_label_url}

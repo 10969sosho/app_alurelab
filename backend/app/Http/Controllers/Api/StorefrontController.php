@@ -17,8 +17,8 @@ use App\Models\Store;
 use App\Models\WalletTransaction;
 use App\Services\AntiRtsService;
 use App\Services\BiteshipService;
+use App\Services\DokuService;
 use App\Services\InventoryService;
-use App\Services\XenditService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -30,7 +30,7 @@ class StorefrontController extends Controller
         protected InventoryService $inventoryService,
         protected AntiRtsService $antiRtsService,
         protected BiteshipService $biteshipService,
-        protected XenditService $xenditService
+        protected DokuService $dokuService
     ) {}
 
     /**
@@ -168,7 +168,7 @@ class StorefrontController extends Controller
             ], 422);
         }
 
-        if ($validated['payment_method'] === 'ONLINE' && ! $this->isQaSimulationEnabled($store) && ! $this->xenditService->isConfigured()) {
+        if ($validated['payment_method'] === 'ONLINE' && ! $this->isQaSimulationEnabled($store) && ! $this->dokuService->isConfigured()) {
             return response()->json([
                 'success' => false,
                 'error' => 'PAYMENT_UNAVAILABLE',
@@ -240,7 +240,7 @@ class StorefrontController extends Controller
                     ['phone_number' => $cleanPhone],
                     [
                         'full_name' => $validated['customer_name'],
-                        'email' => $validated['customer_email'],
+                        'email' => $validated['customer_email'] ?? null,
                         'default_address' => [
                             'area_id' => $validated['destination_area_id'],
                             'detail' => $validated['address_detail'],
@@ -331,15 +331,24 @@ class StorefrontController extends Controller
                     OrderItem::create($item);
                 }
 
-                // 6. Integrasi Pembayaran
+                // 6. Integrasi Pembayaran (DOKU Checkout V1)
                 $paymentResponse = null;
                 if ($validated['payment_method'] === 'ONLINE') {
-                    $invoice = $this->xenditService->createInvoice($order, $store);
+                    $invoice = $this->dokuService->createCheckoutInvoice($order, $store);
+
+                    if (! ($invoice['success'] ?? false)) {
+                        return response()->json([
+                            'success' => false,
+                            'error' => 'PAYMENT_GATEWAY_ERROR',
+                            'message' => $invoice['error'] ?? 'Gagal membuat tagihan pembayaran.',
+                        ], 502);
+                    }
 
                     Payment::create([
                         'tenant_id' => $store->id,
                         'order_id' => $order->id,
-                        'xendit_invoice_id' => $invoice['id'],
+                        'doku_invoice_id' => $invoice['invoice_id'],
+                        'payment_url' => $invoice['invoice_url'] ?? null,
                         'payment_method' => 'ONLINE',
                         'amount' => $totalAmount,
                         'status' => PaymentStatus::PENDING,
@@ -347,14 +356,15 @@ class StorefrontController extends Controller
 
                     $paymentResponse = [
                         'invoice_url' => $invoice['invoice_url'] ?? null,
-                        'invoice_id' => $invoice['id'],
+                        'payment_url' => $invoice['invoice_url'] ?? null,
+                        'invoice_id' => $invoice['invoice_id'],
                         'expiry_date' => $invoice['expiry_date'] ?? null,
                     ];
                 } else {
                     Payment::create([
                         'tenant_id' => $store->id,
                         'order_id' => $order->id,
-                        'xendit_invoice_id' => 'COD-'.$order->order_number,
+                        'doku_invoice_id' => 'COD-'.$order->order_number,
                         'payment_method' => 'COD',
                         'amount' => $totalAmount,
                         'status' => PaymentStatus::PENDING,
@@ -365,7 +375,7 @@ class StorefrontController extends Controller
                     $store->id,
                     $order->id,
                     $lockedItems,
-                    now()->addMinutes(config('services.xendit.invoice_expiry_minutes', 1440)),
+                    now()->addMinutes(config('doku.invoice_expiry_minutes', 1440)),
                     $validated['payment_method'] === 'COD',
                 );
 
