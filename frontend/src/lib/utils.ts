@@ -82,6 +82,7 @@ const PAYMENT_METHOD_LABELS: Record<string, string> = {
   cod: 'Bayar di Tempat (COD)',
   online: 'Transfer Bank / Online',
   bank_transfer: 'Transfer Bank / Online',
+  doku: 'Transfer Bank / Online',
   xendit: 'Transfer Bank / Online',
   qris: 'QRIS / Online',
   ewallet: 'E-Wallet / Online',

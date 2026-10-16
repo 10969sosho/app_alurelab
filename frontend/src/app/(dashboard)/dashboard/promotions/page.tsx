@@ -33,7 +33,7 @@ export default function PromotionsPage() {
   const [quota, setQuota] = useState(100);
 
   // Fetch promotions
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['merchant-promotions'],
     queryFn: async () => {
       const res = await api.get('/merchant/promotions');
@@ -57,8 +57,8 @@ export default function PromotionsPage() {
       setQuota(100);
       queryClient.invalidateQueries({ queryKey: ['merchant-promotions'] });
     },
-    onError: () => {
-      toast.error('Gagal menyimpan promosi');
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || 'Gagal menyimpan promosi');
     },
   });
 
@@ -77,10 +77,6 @@ export default function PromotionsPage() {
   });
 
   const promotions = data || [];
-
-  if (isError) {
-    return <div className="p-6 text-sm text-slate-600">Promosi sementara dinonaktifkan sampai voucher aman di checkout.</div>;
-  }
 
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();

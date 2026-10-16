@@ -176,7 +176,7 @@ export default function FinancePage() {
              <p className="text-[10px] text-slate-500">{bankAccount ? `a/n ${bankAccount.account_holder}` : 'Tambahkan rekening di pengaturan toko'}</p>
           </div>
           <span className="text-[10px] text-slate-400 mt-2 block">
-            Diproses instan via Xendit Disbursement
+            Diproses instan via DOKU Disbursement
           </span>
         </div>
       </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
@@ -14,13 +15,20 @@ import {
   Loader2,
   Phone,
   ShieldCheck,
+  Globe,
+  QrCode,
+  Landmark,
+  Zap,
 } from 'lucide-react';
 import api from '@/lib/api';
 import { WilayahAddressFields, type WilayahAddressValue } from '@/components/address/WilayahAddressFields';
 
+type SettingsTab = 'profile' | 'address' | 'couriers' | 'payment' | 'domain';
+
 export default function SettingsPage() {
+  const { data: session } = useSession();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'profile' | 'address' | 'couriers' | 'payment'>('profile');
+  const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
 
   // Form states
   const [storeName, setStoreName] = useState('');
@@ -57,6 +65,40 @@ export default function SettingsPage() {
       return res.data?.store;
     },
   });
+
+  // Deep-link tab aktif dari URL (?tab=payment, ?tab=domain, dst)
+  useEffect(() => {
+    const tab = new URLSearchParams(window.location.search).get('tab') as SettingsTab | null;
+    if (tab && ['profile', 'address', 'couriers', 'payment', 'domain'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, []);
+
+  // Status & aktivasi pembayaran DOKU
+  const { data: dokuStatus, isLoading: loadingDoku } = useQuery({
+    queryKey: ['merchant-payment-status'],
+    queryFn: async () => (await api.get('/merchant/payment/status')).data,
+    enabled: activeTab === 'payment',
+  });
+
+  const dokuSetupMutation = useMutation({
+    mutationFn: async () => (await api.post('/merchant/payment/setup')).data,
+    onSuccess: (res) => {
+      if (res?.success) {
+        toast.success('Pembayaran DOKU berhasil diaktifkan! QRIS & Virtual Account siap dipakai.');
+      } else {
+        toast.error(res?.error || 'Aktivasi DOKU belum berhasil. Coba lagi nanti.');
+      }
+      queryClient.invalidateQueries({ queryKey: ['merchant-payment-status'] });
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.error || 'Gagal mengaktifkan pembayaran DOKU');
+    },
+  });
+
+  const dokuActive = Boolean(dokuStatus?.doku_sub_account_id);
+  const customDomain = (session as any)?.store?.custom_domain ?? null;
+  const customDomainStatus = (session as any)?.store?.custom_domain_status ?? 'pending';
 
   useEffect(() => {
     if (data) {
@@ -243,6 +285,19 @@ export default function SettingsPage() {
             <CreditCard className="w-3.5 h-3.5" />
             <span>Pembayaran & Rekening</span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('domain')}
+            className={`py-2.5 font-medium border-b-2 whitespace-nowrap flex items-center gap-1.5 transition-colors ${
+              activeTab === 'domain'
+                ? 'border-[#EE4D2D] text-[#EE4D2D] font-bold'
+                : 'border-transparent text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Globe className="w-3.5 h-3.5" />
+            <span>Domain</span>
+          </button>
         </div>
 
         {isLoading ? (
@@ -381,6 +436,74 @@ export default function SettingsPage() {
             {/* 4. Payment & Bank Tab */}
             {activeTab === 'payment' && (
               <div className="space-y-3">
+                {/* Kartu DOKU Merchant Gateway */}
+                <div
+                  className={`border rounded-xs p-3 ${
+                    dokuActive ? 'border-emerald-200 bg-emerald-50/40' : 'border-slate-200'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <Landmark className="w-4 h-4 text-[#EE4D2D] shrink-0" />
+                        <p className="font-bold text-slate-800">DOKU Merchant Gateway</p>
+                        {loadingDoku ? (
+                          <Loader2 className="w-3 h-3 animate-spin text-slate-400" />
+                        ) : (
+                          <span
+                            className={`inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-xs border ${
+                              dokuActive
+                                ? 'text-emerald-600 bg-emerald-50 border-emerald-200'
+                                : 'text-amber-600 bg-amber-50 border-amber-200'
+                            }`}
+                          >
+                            {dokuActive ? 'AKTIF' : 'BELUM AKTIF'}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                        Terima pembayaran pembeli melalui QRIS dan Virtual Account dengan skema escrow ALURELAB.
+                      </p>
+
+                      <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded-xs">
+                          <QrCode className="w-3 h-3" /> QRIS
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded-xs">
+                          <Zap className="w-3 h-3" /> Virtual Account
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded-xs">
+                          <Truck className="w-3 h-3" /> COD
+                        </span>
+                      </div>
+
+                      {dokuStatus?.doku_sub_account_id && (
+                        <p className="text-[10px] text-slate-400 font-mono mt-2">
+                          Sub-Account: {dokuStatus.doku_sub_account_id}
+                        </p>
+                      )}
+                    </div>
+
+                    {!dokuActive && (
+                      <button
+                        type="button"
+                        onClick={() => dokuSetupMutation.mutate()}
+                        disabled={dokuSetupMutation.isPending}
+                        className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#EE4D2D] hover:bg-[#d73f20] text-white text-xs font-bold rounded-xs transition-colors disabled:opacity-50 shadow-2xs"
+                      >
+                        {dokuSetupMutation.isPending ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            Mengaktifkan...
+                          </>
+                        ) : (
+                          'Aktivasi DOKU Payment'
+                        )}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
                 <div className="border border-slate-200 rounded-xs p-3 flex items-center justify-between">
                   <div>
                     <p className="font-semibold text-slate-800">Bayar di Tempat (COD)</p>
@@ -433,6 +556,59 @@ export default function SettingsPage() {
                       className="w-full px-3 py-1.5 border border-slate-300 rounded-xs outline-none focus:border-[#EE4D2D]"
                       required
                     />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 5. Domain Tab */}
+            {activeTab === 'domain' && (
+              <div className="space-y-3">
+                <div className="bg-slate-50 border border-slate-200 rounded-xs p-2.5">
+                  <p className="text-[11px] text-slate-700 font-medium">Alamat Publik Toko Anda</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">
+                    Setiap toko ALURELAB otomatis mendapat subdomain gratis. Domain khusus (custom domain)
+                    dapat diajukan melalui tim support.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block font-medium text-slate-700 mb-1">Subdomain Aktif</label>
+                  <div className="flex items-stretch">
+                    <input
+                      type="text"
+                      readOnly
+                      value={(session as any)?.store?.slug || ''}
+                      className="w-full px-3 py-1.5 border border-slate-200 bg-slate-50 text-slate-600 rounded-l-xs outline-none font-mono cursor-not-allowed"
+                    />
+                    <span className="inline-flex items-center bg-slate-50 border border-l-0 border-slate-200 text-[11px] text-slate-500 px-3 rounded-r-xs select-none font-mono whitespace-nowrap">
+                      .alurelab.com
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-medium text-slate-700 mb-1">Custom Domain</label>
+                  <input
+                    type="text"
+                    readOnly
+                    value={customDomain || ''}
+                    placeholder="Belum terpasang — hubungi tim support ALURELAB"
+                    className="w-full px-3 py-1.5 border border-slate-200 bg-slate-50 text-slate-600 rounded-xs outline-none font-mono cursor-not-allowed"
+                  />
+                  <div className="flex items-center gap-1.5 mt-1.5">
+                    <span
+                      className={`inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-xs border ${
+                        customDomainStatus === 'active'
+                          ? 'text-emerald-600 bg-emerald-50 border-emerald-200'
+                          : 'text-amber-600 bg-amber-50 border-amber-200'
+                      }`}
+                    >
+                      {customDomainStatus === 'active' ? 'TERVERIFIKASI' : 'MENUNGGU VERIFIKASI'}
+                    </span>
+                    <span className="text-[10px] text-slate-400">
+                      Domain khusus dipakai bila status sudah aktif.
+                    </span>
                   </div>
                 </div>
               </div>

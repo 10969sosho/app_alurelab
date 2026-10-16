@@ -6,7 +6,9 @@ export function middleware(req: NextRequest) {
 
   const sessionToken =
     req.cookies.get('__Secure-authjs.session-token')?.value ||
-    req.cookies.get('authjs.session-token')?.value;
+    req.cookies.get('authjs.session-token')?.value ||
+    req.cookies.get('__Secure-next-auth.session-token')?.value ||
+    req.cookies.get('next-auth.session-token')?.value;
 
   // ── Root /: Redirect to dashboard if logged in, else to /login ─────────────
   if (pathname === '/') {
@@ -34,6 +36,15 @@ export function middleware(req: NextRequest) {
     }
   }
 
+  // ── Guard: Create Store (wajib login) ──────────────────────────────────────
+  if (pathname.startsWith('/create-store')) {
+    if (!sessionToken) {
+      const loginUrl = new URL('/login', req.url);
+      loginUrl.searchParams.set('callbackUrl', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
   // ── Redirect authenticated users away from auth pages ─────────────────────
   if (pathname === '/login' || pathname === '/register') {
     if (sessionToken) {
@@ -45,5 +56,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/dashboard/:path*', '/admin/:path*', '/login', '/register'],
+  matcher: ['/', '/dashboard/:path*', '/admin/:path*', '/create-store', '/login', '/register'],
 };

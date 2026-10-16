@@ -101,6 +101,9 @@ Route::prefix('v1')->group(function () {
     // ═══════════════════════════════════════════════════════════════════════
     Route::post('/merchants/onboard', [MerchantController::class, 'onboard']);
 
+    // Buat toko untuk user yang sudah login (user-first flow) — tanpa IdentifyTenant
+    Route::post('/stores', [MerchantController::class, 'createStore'])->middleware('auth:sanctum');
+
     // ═══════════════════════════════════════════════════════════════════════
     // 4. STOREFRONT (BUYER) — Tenant-aware, public
     // ═══════════════════════════════════════════════════════════════════════
@@ -137,6 +140,7 @@ Route::prefix('v1')->group(function () {
 
             // Overview
             Route::get('/dashboard', [MerchantController::class, 'getDashboardOverview']);
+            Route::get('/setup-guide', [MerchantController::class, 'getSetupGuide']);
             Route::get('/orders/stats', [OrderController::class, 'stats']);
             Route::get('/categories', [MerchantController::class, 'getCategories'])->middleware('store.role:owner,manager');
             Route::put('/categories', [MerchantController::class, 'updateCategories'])->middleware('store.role:owner,manager');

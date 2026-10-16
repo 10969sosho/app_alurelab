@@ -88,7 +88,7 @@ const DEFAULT_EDITORIAL_CMS: CmsSettings = {
   },
   highlights: {
     announcementText:
-      "⚡ Garansi Pengiriman Cepat Multi-Kurir Biteship • Pembayaran Aman Berlisensi Xendit (PJP BI)",
+      "⚡ Garansi Pengiriman Cepat Multi-Kurir Biteship • Pembayaran Aman Berlisensi DOKU (PJP BI)",
     featuredCategory: "Semua",
      aboutHeading: "CURATED COMFORT FOR CURIOUS MINDS",
      aboutStory:

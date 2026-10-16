@@ -15,6 +15,11 @@ export default async function DashboardLayout({
     redirect('/login');
   }
 
+  // User login tapi belum punya toko → arahkan ke halaman Buat Toko (jangan 404/crash)
+  if (!session.store?.slug) {
+    redirect('/create-store');
+  }
+
   return (
     <div className="flex h-screen overflow-hidden bg-[#F6F6F6] text-[#333333]">
       {/* Sidebar (desktop) */}

@@ -9,7 +9,7 @@ export default function TermsPage() {
           informasi toko, dan pemenuhan pesanan pembeli.
         </p>
         <p className="body-text text-sm">
-          Pembayaran diproses melalui penyedia resmi (Xendit) dengan skema escrow, dan pengiriman
+          Pembayaran diproses melalui penyedia resmi (DOKU) dengan skema escrow, dan pengiriman
           dilakukan melalui mitra logistik terintegrasi (Biteship). ALURELAB berhak menangguhkan
           akun yang melanggar ketentuan platform.
         </p>

@@ -7,6 +7,9 @@ import { getSession, signOut } from 'next-auth/react';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1';
 
+/** Kunci localStorage untuk header tenant X-Store-Slug. */
+export const STORE_SLUG_KEY = 'alurelab_store_slug';
+
 export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -20,7 +23,7 @@ export const api = axios.create({
 api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
   // Inject store slug sebagai header (tenant identification)
   if (typeof window !== 'undefined') {
-    const storeSlug = localStorage.getItem('alurelab_store_slug');
+    const storeSlug = localStorage.getItem(STORE_SLUG_KEY);
     if (storeSlug) {
       config.headers['X-Store-Slug'] = storeSlug;
     }

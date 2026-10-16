@@ -750,7 +750,7 @@ export default function AccountPage({
             </h3>
             <div className="space-y-2 text-xs text-stone-600 leading-relaxed">
               <p>
-                Data pribadi dan riwayat pesanan Anda dilindungi dan hanya digunakan untuk keperluan pemrosesan pembayaran (Xendit) serta pengiriman ekspedisi (Biteship).
+                Data pribadi dan riwayat pesanan Anda dilindungi dan hanya digunakan untuk keperluan pemrosesan pembayaran (DOKU) serta pengiriman ekspedisi (Biteship).
               </p>
               <p>
                 ALURELAB tidak membagikan atau menjual data pelanggan kepada pihak ketiga.

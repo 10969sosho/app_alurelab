@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { getSession, signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -9,6 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { STORE_SLUG_KEY } from '@/lib/api';
 
 const loginSchema = z.object({
   email: z.string().email('Format email tidak valid'),
@@ -65,6 +66,19 @@ function LoginFormContent() {
       if (result?.error) {
         toast.error(resolveLoginErrorMessage(result.error, (result as any).code));
       } else {
+        // Simpan slug toko agar header X-Store-Slug selalu terkirim di request dashboard
+        try {
+          const freshSession: any = await getSession();
+          const slug = freshSession?.store?.slug;
+          if (slug) {
+            localStorage.setItem(STORE_SLUG_KEY, slug);
+          } else {
+            localStorage.removeItem(STORE_SLUG_KEY);
+          }
+        } catch {
+          // abaikan — dashboard layout tetap handle user tanpa toko
+        }
+
         toast.success('Login berhasil! Mengalihkan ke dashboard...');
         router.push(callbackUrl);
         router.refresh();

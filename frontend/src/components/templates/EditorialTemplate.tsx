@@ -388,7 +388,7 @@ export default function EditorialTemplate({
 
         <div className="max-w-6xl mx-auto pt-8 mt-8 border-t border-[#DADADA] text-[11px] opacity-60 uppercase tracking-[0.14em] flex flex-col sm:flex-row justify-between gap-4">
           <span>© 2026 {store.storeName}. All rights reserved.</span>
-          <span>Secured with Xendit Escrow & Biteship Logistics</span>
+          <span>Secured with DOKU Escrow & Biteship Logistics</span>
         </div>
       </footer>
     </div>

@@ -72,6 +72,20 @@ export const authConfig: NextAuthConfig = {
         token.phoneNumber  = (user as any).phoneNumber;
         token.isSuperadmin = (user as any).isSuperadmin;
       }
+
+      // User tanpa toko (mis. baru mendaftar / baru membuat toko) → tarik ulang dari backend
+      if (!user && !token.store && token.backendToken) {
+        try {
+          const me = await axios.get(`${API_URL}/auth/me`, {
+            headers: { Authorization: `Bearer ${token.backendToken}` },
+            timeout: 8000,
+          });
+          token.store = me.data?.store ?? null;
+        } catch {
+          // backend tidak terjangkau — biarkan null, layout akan arahkan ke /create-store
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {

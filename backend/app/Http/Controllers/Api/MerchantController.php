@@ -130,6 +130,118 @@ class MerchantController extends Controller
     }
 
     /**
+     * Buat toko baru untuk user yang SUDAH login (user-first flow).
+     * Berbeda dengan onboard(): tidak membuat user baru, hanya Store + pivot owner + wallet.
+     */
+    public function createStore(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'name' => 'required|string|min:3|max:255',
+            'slug' => 'required|string|max:100|unique:stores,slug',
+            'category' => 'nullable|string|max:100',
+        ], [
+            'name.min' => 'Nama toko minimal 3 karakter.',
+            'slug.unique' => 'Subdomain toko sudah dipakai. Pilih subdomain lain.',
+        ]);
+
+        $slug = Str::slug($validated['slug']);
+
+        [$store] = DB::transaction(function () use ($validated, $slug, $user) {
+            $store = Store::create([
+                'name' => $validated['name'],
+                'slug' => $slug,
+                'phone_number' => $user->phone_number ?: '-',
+                'plan_tier' => 'starter',
+                'custom_domain_status' => 'pending',
+                'settings' => [
+                    'template' => 'default',
+                    'theme' => 'default',
+                    'status' => 'active',
+                    'business_category' => $validated['category'] ?? null,
+                    'theme_color' => '#0F172A',
+                    'tagline' => 'Toko Resmi '.$validated['name'],
+                    'allow_cod' => true,
+                ],
+            ]);
+
+            StoreUser::firstOrCreate(
+                ['store_id' => $store->id, 'user_id' => $user->id],
+                ['role' => 'owner']
+            );
+
+            MerchantWallet::firstOrCreate(
+                ['store_id' => $store->id],
+                ['available_balance' => 0.00, 'escrow_held_balance' => 0.00]
+            );
+
+            if (DB::getDriverName() === 'pgsql') {
+                DB::statement("SET app.current_tenant_id = '{$store->id}';");
+            }
+
+            return [$store];
+        });
+
+        // Registrasi sub-account DOKU (gagal = biarkan 'unregistered', retry via /merchant/payment/setup)
+        $result = $this->dokuService->registerSubAccount($store, $user->email, $user->phone_number);
+        if (! $result['success']) {
+            Log::error('DOKU sub-account registration gagal saat createStore', [
+                'store_id' => $store->id,
+                'error' => $result['error'],
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Toko berhasil dibuat!',
+            'store' => [
+                'id' => $store->id,
+                'name' => $store->name,
+                'slug' => $store->slug,
+                'settings' => $store->settings,
+            ],
+        ], 201);
+    }
+
+    /**
+     * Status Setup Guide — 5 pilar onboarding seller (gaya Shopify).
+     * Dihitung real-time dari data toko, bukan state tersimpan.
+     */
+    public function getSetupGuide(Request $request): JsonResponse
+    {
+        /** @var Store $store */
+        $store = app('current_tenant') ?? $request->attributes->get('current_store');
+
+        $settings = $store->settings ?? [];
+        $codEnabled = (bool) ($settings['cod_enabled'] ?? $settings['allow_cod'] ?? false);
+        $originAreaId = $settings['origin_address']['area_id'] ?? null;
+
+        $steps = [
+            'products_added' => $store->products()->count() > 0,
+            'design_chosen' => ! empty($settings['template']) || ! empty($settings['theme']),
+            'payments_configured' => ! empty($store->doku_sub_account_id)
+                || ! empty($settings['payment_methods'])
+                || $codEnabled,
+            'shipping_configured' => ! empty($store->address_area_id)
+                || ! empty($store->address_raw)
+                || ! empty($originAreaId),
+            'domain_connected' => ! empty($store->custom_domain) && $store->custom_domain_status === 'active',
+        ];
+
+        $completed = count(array_filter($steps));
+
+        return response()->json([
+            'success' => true,
+            'completed' => $completed,
+            'total' => count($steps),
+            'percent' => (int) round(($completed / count($steps)) * 100),
+            'steps' => $steps,
+        ]);
+    }
+
+    /**
      * Setup pembayaran toko: registrasi sub-account DOKU bila belum ada,
      * dan simpan/update rekening bank settlement ke settings['bank_account'].
      */
@@ -401,16 +513,69 @@ class MerchantController extends Controller
     }
 
     /**
-     * Ajukan Penarikan Saldo (Payout XenDisburse).
+     * Ajukan Penarikan Saldo (Payout DOKU Disbursement).
+     * Menyimpan record Payout berstatus PENDING; pencairan disbursement
+     * diproses terpisah setelah settlement escrow siap.
      */
     public function requestPayout(Request $request): JsonResponse
     {
-        return response()->json([
-            'success' => false,
-            'error' => 'PAYOUT_UNAVAILABLE',
-            'message' => 'Payout dinonaktifkan sampai integrasi disbursement dan rekonsiliasi siap.',
-        ], 503);
+        $store = app('current_tenant') ?? $request->attributes->get('current_store');
 
+        $validated = $request->validate([
+            'amount' => 'required|numeric|min:1',
+            'bank_code' => 'nullable|string|max:50',
+            'account_number' => 'nullable|string|max:50',
+            'account_holder_name' => 'nullable|string|max:255',
+        ]);
+
+        $bankSettings = $store->settings['bank_account'] ?? [];
+        $bankCode = $validated['bank_code'] ?? ($bankSettings['bank_code'] ?? $bankSettings['bank_name'] ?? null);
+        $accountNumber = $validated['account_number'] ?? ($bankSettings['account_number'] ?? null);
+        $accountHolder = $validated['account_holder_name'] ?? ($bankSettings['account_holder_name'] ?? $bankSettings['account_holder'] ?? null);
+
+        if (empty($bankCode) || empty($accountNumber) || empty($accountHolder)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lengkapi rekening bank penarikan di Pengaturan Toko terlebih dahulu.',
+            ], 422);
+        }
+
+        $amount = (int) round((float) $validated['amount']);
+
+        if ($amount < 50000) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Minimal penarikan saldo adalah Rp 50.000.',
+            ], 422);
+        }
+
+        $wallet = MerchantWallet::firstOrCreate(
+            ['store_id' => $store->id],
+            ['available_balance' => 0, 'escrow_held_balance' => 0]
+        );
+
+        // ponytail: tanpa lock baris — saldo hanya didebet saat disbursement benar-benar diproses
+        if ($amount > (float) $wallet->available_balance) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Saldo tersedia tidak mencukupi untuk nominal penarikan ini.',
+            ], 422);
+        }
+
+        $payout = Payout::create([
+            'tenant_id' => $store->id,
+            'bank_code' => $bankCode,
+            'account_number' => $accountNumber,
+            'account_holder_name' => $accountHolder,
+            'amount' => $amount,
+            'status' => 'PENDING',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Permintaan penarikan dana berhasil diajukan dan sedang diproses.',
+            'payout' => $payout,
+        ], 201);
     }
 
     /**
@@ -622,12 +787,6 @@ class MerchantController extends Controller
      */
     public function getPromotions(Request $request): JsonResponse
     {
-        return response()->json([
-            'success' => false,
-            'error' => 'PROMOTIONS_UNAVAILABLE',
-            'message' => 'Promosi dinonaktifkan sampai voucher dihitung atomik saat checkout.',
-        ], 503);
-
         /** @var Store $store */
         $store = app('current_tenant') ?? $request->attributes->get('current_store');
 
@@ -644,12 +803,6 @@ class MerchantController extends Controller
      */
     public function savePromotion(Request $request): JsonResponse
     {
-        return response()->json([
-            'success' => false,
-            'error' => 'PROMOTIONS_UNAVAILABLE',
-            'message' => 'Promosi dinonaktifkan sampai voucher dihitung atomik saat checkout.',
-        ], 503);
-
         /** @var Store $store */
         $store = app('current_tenant') ?? $request->attributes->get('current_store');
 
@@ -714,12 +867,6 @@ class MerchantController extends Controller
      */
     public function deletePromotion(Request $request, string $id): JsonResponse
     {
-        return response()->json([
-            'success' => false,
-            'error' => 'PROMOTIONS_UNAVAILABLE',
-            'message' => 'Promosi dinonaktifkan sampai voucher dihitung atomik saat checkout.',
-        ], 503);
-
         /** @var Store $store */
         $store = app('current_tenant') ?? $request->attributes->get('current_store');
 

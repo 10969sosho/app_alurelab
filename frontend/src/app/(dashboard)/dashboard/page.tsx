@@ -18,6 +18,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import Link from 'next/link';
+import { SetupGuide } from '@/components/dashboard/SetupGuide';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface DashboardStats {
@@ -95,6 +96,9 @@ export default function DashboardPage() {
         </h1>
         <p className="text-slate-400 text-xs mt-0.5">{storeName} — ringkasan performa hari ini</p>
       </div>
+
+      {/* Setup Guide — Checklist onboarding ala Shopify */}
+      <SetupGuide />
 
       {/* Hal yang Perlu Dilakukan (To-Do List Widget) */}
       <div className="bg-white border border-slate-200 rounded-xs p-3.5 shadow-2xs">

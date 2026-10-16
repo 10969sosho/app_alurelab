@@ -12,7 +12,8 @@ declare module 'next-auth' {
       plan_expires_at:       string | null;
       custom_domain:         string | null;
       custom_domain_status:  string;
-      xendit_account_status: string;
+      doku_sub_account_id:   string | null;
+      doku_account_status:   string;
     } | null;
     user: DefaultSession['user'] & {
       role:         string;

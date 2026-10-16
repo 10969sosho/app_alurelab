@@ -241,7 +241,7 @@ export default function StorefrontCustomPage({
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] uppercase tracking-[0.16em] opacity-60">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            <span>Escrow Guarantee Protected by Xendit & Biteship</span>
+            <span>Escrow Guarantee Protected by DOKU & Biteship</span>
           </div>
           <div>
             © {new Date().getFullYear()} {storeName}. All rights reserved.

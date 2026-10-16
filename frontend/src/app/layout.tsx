@@ -18,7 +18,7 @@ const bebasNeue = Bebas_Neue({
 
 export const metadata: Metadata = {
   title: 'ALURELAB - Autonomous E-Commerce SaaS & Vibe Commerce',
-  description: 'Bangun toko online sub-detik bertenaga AI dengan integrasi Escrow Xendit & Biteship Logistics se-Indonesia.',
+  description: 'Bangun toko online sub-detik bertenaga AI dengan integrasi Escrow DOKU & Biteship Logistics se-Indonesia.',
   icons: {
     icon: '/favicon.png',
   },
