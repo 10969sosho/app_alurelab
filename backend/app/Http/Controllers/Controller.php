@@ -10,7 +10,7 @@ abstract class Controller
     /**
      * Resolusi aman Store / Tenant aktif dari konteks request.
      */
-    protected function getStore(Request $request): ?Store
+    protected function resolveCurrentStore(Request $request): ?Store
     {
         if (app()->bound('current_tenant')) {
             $store = app('current_tenant');

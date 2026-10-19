@@ -370,7 +370,7 @@ class MerchantController extends Controller
     public function getCmsSettings(Request $request): JsonResponse
     {
         /** @var Store|null $store */
-        $store = $this->getStore($request);
+        $store = $this->resolveCurrentStore($request);
         if (! $store) {
             return response()->json([
                 'success' => false,
@@ -394,7 +394,7 @@ class MerchantController extends Controller
     public function updateCmsSettings(Request $request): JsonResponse
     {
         /** @var Store|null $store */
-        $store = $this->getStore($request);
+        $store = $this->resolveCurrentStore($request);
         if (! $store) {
             return response()->json([
                 'success' => false,

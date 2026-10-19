@@ -39,7 +39,7 @@ class StorefrontController extends Controller
     public function getStore(Request $request): JsonResponse
     {
         /** @var Store|null $store */
-        $store = $this->getStore($request);
+        $store = $this->resolveCurrentStore($request);
         if (! $store) {
             return response()->json([
                 'success' => false,
@@ -79,7 +79,7 @@ class StorefrontController extends Controller
     public function listProducts(Request $request): JsonResponse
     {
         /** @var Store|null $store */
-        $store = $this->getStore($request);
+        $store = $this->resolveCurrentStore($request);
         if (! $store) {
             return response()->json([
                 'success' => false,
@@ -104,7 +104,7 @@ class StorefrontController extends Controller
      */
     public function getProduct(Request $request, string $slug): JsonResponse
     {
-        $store = $this->getStore($request);
+        $store = $this->resolveCurrentStore($request);
         if (! $store) {
             return response()->json([
                 'success' => false,

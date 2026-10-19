@@ -44,7 +44,7 @@ class SubscriptionController extends Controller
      */
     public function plans(Request $request): JsonResponse
     {
-        $store = $this->getStore($request);
+        $store = $this->resolveCurrentStore($request);
 
         $plans = [];
         foreach (self::PLANS as $tier => $plan) {
@@ -76,7 +76,7 @@ class SubscriptionController extends Controller
      */
     public function checkout(Request $request): JsonResponse
     {
-        $store = $this->getStore($request);
+        $store = $this->resolveCurrentStore($request);
 
         if (! $store) {
             return response()->json([
@@ -136,7 +136,7 @@ class SubscriptionController extends Controller
      */
     public function history(Request $request): JsonResponse
     {
-        $store = $this->getStore($request);
+        $store = $this->resolveCurrentStore($request);
 
         if (! $store) {
             return response()->json([
