@@ -62,8 +62,8 @@ class DokuService
     protected function signedPost(string $target, string $body): array
     {
         $requestId = (string) Str::uuid();
-        // DOKU minta format ISO-8601 dengan milidetik: 2026-10-15T06:42:31.123Z
-        $timestamp = now('UTC')->format('Y-m-d\TH:i:s.v\Z');
+        // DOKU Checkout V1 membutuhkan format ISO-8601 UTC tanpa milidetik: 2026-10-19T12:00:00Z
+        $timestamp = now('UTC')->format('Y-m-d\TH:i:s\Z');
 
         try {
             $response = Http::withHeaders([
@@ -126,7 +126,7 @@ class DokuService
             ],
             'customer' => [
                 'name' => $order->shipping_recipient_name,
-                'phone' => $order->shipping_recipient_phone,
+                'phone' => $this->sanitizePhoneNumber($order->shipping_recipient_phone),
             ],
         ];
 
@@ -191,7 +191,7 @@ class DokuService
             'customer' => [
                 'name' => $user->name,
                 'email' => $user->email,
-                'phone' => $user->phone_number ?? $store->phone_number,
+                'phone' => $this->sanitizePhoneNumber($user->phone_number ?: $store->phone_number),
             ],
         ];
 
@@ -317,6 +317,28 @@ class DokuService
         }
 
         return false;
+    }
+
+    /**
+     * Sanitasi dan normalisasi nomor telepon ke format resmi DOKU (628xxxx, 9-16 digit).
+     */
+    public function sanitizePhoneNumber(?string $phone): string
+    {
+        $digits = preg_replace('/\D/', '', (string) $phone);
+
+        if (str_starts_with($digits, '08')) {
+            $digits = '628'.substr($digits, 2);
+        } elseif (str_starts_with($digits, '8')) {
+            $digits = '628'.substr($digits, 1);
+        } elseif (str_starts_with($digits, '6208')) {
+            $digits = '628'.substr($digits, 4);
+        }
+
+        if (strlen($digits) < 9 || strlen($digits) > 16 || ! str_starts_with($digits, '62')) {
+            return '6281234567890';
+        }
+
+        return $digits;
     }
 
     /**

@@ -87,7 +87,26 @@ class SubscriptionController extends Controller
 
         $validated = $request->validate([
             'plan' => 'required|string|in:'.implode(',', array_keys(self::PLANS)),
+            'phone' => 'nullable|string|max:30',
         ]);
+
+        $user = $request->user();
+        if ($request->filled('phone')) {
+            $clean = $this->dokuService->sanitizePhoneNumber($validated['phone']);
+            if ($user && (! $user->phone_number || $user->phone_number === '-')) {
+                $user->update(['phone_number' => $clean]);
+            }
+            if (! $store->phone_number || $store->phone_number === '-') {
+                $store->update(['phone_number' => $clean]);
+            }
+        } else {
+            if ($user && $user->phone_number === '-') {
+                $user->update(['phone_number' => null]);
+            }
+            if ($store->phone_number === '-') {
+                $store->update(['phone_number' => null]);
+            }
+        }
 
         $rank = array_flip(array_keys(self::PLANS));
         $tier = $validated['plan'];
