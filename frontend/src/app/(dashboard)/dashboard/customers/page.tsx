@@ -52,7 +52,7 @@ export default function CustomersPage() {
   };
 
   return (
-    <div className="space-y-2.5 select-none font-sans pb-10">
+    <div className="space-y-2.5 font-sans pb-10">
       {/* ─── 1. Header Bar ─── */}
       <div className="pt-1">
         <h1 className="text-base sm:text-lg font-bold text-slate-800 leading-tight">

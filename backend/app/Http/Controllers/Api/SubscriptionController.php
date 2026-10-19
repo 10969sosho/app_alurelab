@@ -44,7 +44,7 @@ class SubscriptionController extends Controller
      */
     public function plans(Request $request): JsonResponse
     {
-        $store = app('current_tenant') ?? $request->attributes->get('current_store');
+        $store = $this->getStore($request);
 
         $plans = [];
         foreach (self::PLANS as $tier => $plan) {
@@ -57,14 +57,16 @@ class SubscriptionController extends Controller
             ];
         }
 
+        $activeTier = $store?->plan_tier ?? 'starter';
+
         return response()->json([
             'success' => true,
             'plans' => $plans,
             'active_plan' => [
-                'tier' => $store->plan_tier,
-                'name' => self::PLANS[$store->plan_tier]['name'] ?? ucfirst((string) $store->plan_tier),
-                'amount' => self::PLANS[$store->plan_tier]['amount'] ?? 0,
-                'expires_at' => $store->plan_expires_at?->toIso8601String(),
+                'tier' => $activeTier,
+                'name' => self::PLANS[$activeTier]['name'] ?? ucfirst((string) $activeTier),
+                'amount' => self::PLANS[$activeTier]['amount'] ?? 0,
+                'expires_at' => $store?->plan_expires_at?->toIso8601String(),
             ],
         ]);
     }
@@ -74,7 +76,14 @@ class SubscriptionController extends Controller
      */
     public function checkout(Request $request): JsonResponse
     {
-        $store = app('current_tenant') ?? $request->attributes->get('current_store');
+        $store = $this->getStore($request);
+
+        if (! $store) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Toko tidak ditemukan. Pastikan Anda memiliki toko aktif.',
+            ], 404);
+        }
 
         $validated = $request->validate([
             'plan' => 'required|string|in:'.implode(',', array_keys(self::PLANS)),
@@ -82,7 +91,8 @@ class SubscriptionController extends Controller
 
         $rank = array_flip(array_keys(self::PLANS));
         $tier = $validated['plan'];
-        $currentRank = $rank[$store->plan_tier] ?? 0;
+        $currentTier = $store->plan_tier ?? 'starter';
+        $currentRank = $rank[$currentTier] ?? 0;
 
         if ($rank[$tier] <= $currentRank) {
             return response()->json([
@@ -126,7 +136,14 @@ class SubscriptionController extends Controller
      */
     public function history(Request $request): JsonResponse
     {
-        $store = app('current_tenant') ?? $request->attributes->get('current_store');
+        $store = $this->getStore($request);
+
+        if (! $store) {
+            return response()->json([
+                'success' => true,
+                'subscriptions' => [],
+            ]);
+        }
 
         return response()->json([
             'success' => true,

@@ -71,7 +71,7 @@ export default function StorefrontCmsPage() {
   }, []);
 
   return (
-    <div className="space-y-5 pb-10 select-none">
+    <div className="space-y-5 pb-10">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
         <div>

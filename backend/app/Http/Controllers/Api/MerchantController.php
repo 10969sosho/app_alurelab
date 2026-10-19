@@ -369,8 +369,14 @@ class MerchantController extends Controller
      */
     public function getCmsSettings(Request $request): JsonResponse
     {
-        /** @var Store $store */
-        $store = app('current_tenant');
+        /** @var Store|null $store */
+        $store = $this->getStore($request);
+        if (! $store) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Toko tidak ditemukan.',
+            ], 404);
+        }
 
         return response()->json([
             'success' => true,
@@ -387,8 +393,14 @@ class MerchantController extends Controller
      */
     public function updateCmsSettings(Request $request): JsonResponse
     {
-        /** @var Store $store */
-        $store = app('current_tenant');
+        /** @var Store|null $store */
+        $store = $this->getStore($request);
+        if (! $store) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Toko tidak ditemukan.',
+            ], 404);
+        }
 
         $validated = $request->validate([
             'settings' => 'required|array',

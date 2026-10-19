@@ -257,7 +257,7 @@ export default function SettingsPage() {
   const bankCodeValid = (b: string) => b || 'BCA';
 
   return (
-    <div className="space-y-3 select-none font-sans pb-10">
+    <div className="space-y-3 font-sans pb-10">
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
         <div>

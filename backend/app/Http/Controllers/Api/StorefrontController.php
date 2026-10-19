@@ -38,8 +38,15 @@ class StorefrontController extends Controller
      */
     public function getStore(Request $request): JsonResponse
     {
-        /** @var Store $store */
-        $store = app('current_tenant');
+        /** @var Store|null $store */
+        $store = $this->getStore($request);
+        if (! $store) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Toko tidak ditemukan.',
+            ], 404);
+        }
+
         $settings = $store->settings ?? [];
         $publicSettings = array_intersect_key($settings, array_flip([
             'template',
@@ -71,8 +78,14 @@ class StorefrontController extends Controller
      */
     public function listProducts(Request $request): JsonResponse
     {
-        /** @var Store $store */
-        $store = app('current_tenant');
+        /** @var Store|null $store */
+        $store = $this->getStore($request);
+        if (! $store) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Toko tidak ditemukan.',
+            ], 404);
+        }
 
         $products = Product::where('tenant_id', $store->id)
             ->where('is_active', true)
@@ -91,7 +104,13 @@ class StorefrontController extends Controller
      */
     public function getProduct(Request $request, string $slug): JsonResponse
     {
-        $store = app('current_tenant');
+        $store = $this->getStore($request);
+        if (! $store) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Toko tidak ditemukan.',
+            ], 404);
+        }
 
         $product = Product::where('tenant_id', $store->id)
             ->where('slug', $slug)
@@ -110,8 +129,14 @@ class StorefrontController extends Controller
      */
     public function checkout(Request $request): JsonResponse
     {
-        /** @var Store $store */
-        $store = app('current_tenant');
+        /** @var Store|null $store */
+        $store = $this->getStore($request);
+        if (! $store) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Toko tidak ditemukan.',
+            ], 404);
+        }
 
         $validated = $request->validate([
             'customer_name' => 'required|string|max:255',

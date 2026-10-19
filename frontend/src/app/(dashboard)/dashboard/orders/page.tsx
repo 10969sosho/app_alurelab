@@ -81,7 +81,7 @@ function OrdersContent() {
   const lastPage = data?.last_page || 1;
 
   return (
-    <div className="space-y-2.5 select-none font-sans pb-10">
+    <div className="space-y-2.5 font-sans pb-10">
       {/* ─── 1. Header Bar ─── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
         <div>
