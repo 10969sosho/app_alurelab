@@ -44,6 +44,25 @@ return [
         'webhook_secret' => env('BITESHIP_WEBHOOK_SECRET', ''),
     ],
 
+    'openprovider' => [
+        'env' => env('OPENPROVIDER_ENV', 'sandbox'),
+        'base_url' => env('OPENPROVIDER_BASE_URL', 'https://api.sandbox.openprovider.nl/v1beta'),
+        'username' => env('OPENPROVIDER_USERNAME'),
+        'password' => env('OPENPROVIDER_PASSWORD'),
+        // IP A record default yang dipasang ke domain merchant (opsional)
+        'dns_ip' => env('OPENPROVIDER_DNS_IP', ''),
+    ],
+
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+    ],
+
+    'fonnte' => [
+        'token' => env('FONNTE_API_TOKEN'),
+        'url' => env('FONNTE_API_URL', 'https://api.fonnte.com/send'),
+    ],
+
     'qa_simulation' => [
         'enabled' => (bool) env('QA_SIMULATION_ENABLED', false),
         'store_slug' => env('QA_SIMULATION_STORE_SLUG', ''),

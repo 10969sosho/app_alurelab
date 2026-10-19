@@ -11,6 +11,7 @@ use App\Models\Store;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -21,6 +22,11 @@ class BuyerFlowTest extends TestCase
 
     public function test_buyer_registers_with_otp_without_ktp(): void
     {
+        config(['services.fonnte.token' => 'test-token']);
+        Http::fake([
+            'https://api.fonnte.com/send' => Http::response(['status' => true]),
+        ]);
+
         $phone = '081234'.random_int(100000, 999999);
         $headers = ['X-Store-Slug' => $this->createStore()->slug];
 
@@ -29,6 +35,11 @@ class BuyerFlowTest extends TestCase
         ]);
 
         $otpResponse->assertOk()->assertJsonStructure(['dev_otp']);
+        Http::assertSent(fn ($request) => $request->url() === 'https://api.fonnte.com/send'
+            && $request->hasHeader('Authorization', 'test-token')
+            && $request['target'] === '6281234'.substr($phone, -6)
+            && $request['message'] === 'Kode OTP AlureLab Anda adalah: '.$otpResponse->json('dev_otp').'. Jangan berikan kode ini kepada siapapun.');
+
         $loginResponse = $this->withHeaders($headers)->postJson('/api/v1/buyer/verify-otp', [
             'phone_number' => $phone,
             'otp' => (string) $otpResponse->json('dev_otp'),
@@ -44,6 +55,10 @@ class BuyerFlowTest extends TestCase
 
     public function test_otp_response_omits_dev_code_outside_local_and_testing(): void
     {
+        config(['services.fonnte.token' => 'test-token']);
+        Http::fake([
+            'https://api.fonnte.com/send' => Http::response(['status' => true]),
+        ]);
         $this->app->detectEnvironment(fn (): string => 'production');
         $store = $this->createStore();
 
@@ -51,7 +66,7 @@ class BuyerFlowTest extends TestCase
             'phone_number' => '081234567899',
         ]);
 
-        $response->assertStatus(503)->assertJsonMissingPath('dev_otp');
+        $response->assertOk()->assertJsonMissingPath('dev_otp');
     }
 
     public function test_guest_checkout_completes_without_ktp(): void

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Store;
+use App\Services\FonnteService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -43,27 +44,26 @@ class CustomerAuthController extends Controller
     /**
      * Request OTP for buyer login.
      */
-    public function requestOtp(Request $request): JsonResponse
+    public function requestOtp(Request $request, FonnteService $fonnte): JsonResponse
     {
         $validated = $request->validate([
             'phone_number' => 'required|string|min:8|max:30',
         ]);
 
-        if (! app()->environment(['local', 'testing'])) {
+        $normalizedPhone = $this->normalizePhone($validated['phone_number']);
+        $otp = random_int(100000, 999999);
+        if (! $fonnte->sendOtp($normalizedPhone, (string) $otp)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Pengiriman OTP belum dikonfigurasi.',
+                'message' => 'Pengiriman OTP sedang tidak tersedia. Coba lagi nanti.',
             ], 503);
         }
 
-        $normalizedPhone = $this->normalizePhone($validated['phone_number']);
-        $otp = random_int(100000, 999999);
-        // Store OTP for 5 minutes
         Cache::put('otp_'.$normalizedPhone, $otp, 300);
 
         $response = [
             'success' => true,
-            'message' => 'OTP sent',
+            'message' => 'Kode OTP berhasil dikirim melalui WhatsApp.',
         ];
 
         if (app()->environment(['local', 'testing'])) {
