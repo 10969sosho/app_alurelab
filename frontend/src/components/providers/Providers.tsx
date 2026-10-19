@@ -19,6 +19,40 @@ function StoreSlugSync() {
   return null;
 }
 
+// Auto-recover dari Next.js ChunkLoadError setelah deployment baru
+function ChunkErrorRecovery() {
+  useEffect(() => {
+    const handleChunkError = (event: ErrorEvent | PromiseRejectionEvent) => {
+      const errorMsg = 'message' in event ? event.message : (event as any)?.reason?.message || '';
+      const errorName = (event as any)?.error?.name || (event as any)?.reason?.name || '';
+      const isChunk =
+        errorName === 'ChunkLoadError' ||
+        errorMsg.includes('Loading chunk') ||
+        errorMsg.includes('ChunkLoadError');
+
+      if (isChunk) {
+        const lastReload = sessionStorage.getItem('chunk_reload_ts');
+        const now = Date.now();
+        // Cegah loop reload jika ada masalah permanen: maksimal 1x per 10 detik
+        if (!lastReload || now - Number(lastReload) > 10000) {
+          sessionStorage.setItem('chunk_reload_ts', String(now));
+          window.location.reload();
+        }
+      }
+    };
+
+    window.addEventListener('error', handleChunkError);
+    window.addEventListener('unhandledrejection', handleChunkError);
+
+    return () => {
+      window.removeEventListener('error', handleChunkError);
+      window.removeEventListener('unhandledrejection', handleChunkError);
+    };
+  }, []);
+
+  return null;
+}
+
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
     () =>
@@ -36,6 +70,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
       <StoreSlugSync />
+      <ChunkErrorRecovery />
       <QueryClientProvider client={queryClient}>
         <LenisProvider>
           {children}
