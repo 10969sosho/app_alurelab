@@ -29,6 +29,8 @@ use Illuminate\Support\Facades\URL;
 |--------------------------------------------------------------------------
 */
 
+Route::get('/login', fn () => response()->json(['message' => 'Unauthenticated.'], 401))->name('login');
+
 Route::prefix('v1')->group(function () {
     // ═══════════════════════════════════════════════════════════════════════
     // 0. HEALTH CHECK — Monitoring Server, DB, & Redis
