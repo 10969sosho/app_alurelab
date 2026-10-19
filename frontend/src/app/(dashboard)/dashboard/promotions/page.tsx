@@ -111,7 +111,7 @@ export default function PromotionsPage() {
         <button
           type="button"
           onClick={() => setIsCreateOpen(true)}
-          className="inline-flex items-center gap-1 px-4 py-2 bg-[#EE4D2D] hover:bg-[#d73f20] text-white text-xs font-semibold rounded-full transition-colors shadow-sm self-start sm:self-auto"
+          className="inline-flex items-center gap-1 px-4 py-2 bg-[#C8FF3D] hover:bg-[#b8f02e] text-[#111111] text-xs font-bold rounded-full transition-colors shadow-sm self-start sm:self-auto"
         >
           <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
           <span>Buat Promo Baru</span>
@@ -120,10 +120,10 @@ export default function PromotionsPage() {
 
       {/* ─── 2. Feature Cards (Promo Hub) ─── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:border-[#EE4D2D]/50 transition-colors cursor-pointer"
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:border-[#C8FF3D]/60 transition-colors cursor-pointer"
              onClick={() => setIsCreateOpen(true)}>
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-9 h-9 bg-orange-50 text-[#EE4D2D] rounded-xl flex items-center justify-center">
+            <div className="w-9 h-9 bg-[#C8FF3D]/15 text-lime-800 rounded-xl flex items-center justify-center">
               <Percent className="w-4 h-4" />
             </div>
             <h3 className="font-bold text-slate-800 text-xs">Voucher Toko</h3>
@@ -131,7 +131,7 @@ export default function PromotionsPage() {
           <p className="text-[11px] text-slate-500 leading-relaxed">
             Berikan potongan nominal atau persentase belanja untuk meningkatkan keranjang belanja pembeli.
           </p>
-          <span className="text-[11px] font-semibold text-[#EE4D2D] mt-2.5 inline-block">
+          <span className="text-[11px] font-semibold text-lime-800 mt-2.5 inline-block">
             + Buat Voucher &gt;
           </span>
         </div>
@@ -177,7 +177,7 @@ export default function PromotionsPage() {
 
         {isLoading ? (
           <div className="flex items-center justify-center py-20 text-slate-400">
-            <Loader2 className="w-6 h-6 animate-spin text-[#EE4D2D] mr-2" />
+            <Loader2 className="w-6 h-6 animate-spin text-[#111111] mr-2" />
             <span className="text-xs">Memuat promosi...</span>
           </div>
         ) : promotions.length === 0 ? (
@@ -204,10 +204,10 @@ export default function PromotionsPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {promotions.map((promo: any) => (
-                  <tr key={promo.id} className="hover:bg-orange-50/20 transition-colors">
+                  <tr key={promo.id} className="hover:bg-lime-50/30 transition-colors">
                     <td className="px-3 py-2.5">
                       <p className="font-semibold text-slate-800">{promo.name}</p>
-                      <span className="inline-block px-2.5 py-1 bg-orange-50 text-[#EE4D2D] font-mono font-bold text-[10px] rounded-full border border-orange-200 mt-0.5">
+                      <span className="inline-block px-2.5 py-1 bg-[#C8FF3D]/15 text-lime-950 font-mono font-bold text-[10px] rounded-full border border-[#C8FF3D]/40 mt-0.5">
                         {promo.code}
                       </span>
                     </td>
@@ -281,7 +281,7 @@ export default function PromotionsPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Misal: Diskon Gajian September"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30"
                   required
                 />
               </div>
@@ -294,7 +294,7 @@ export default function PromotionsPage() {
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
                     placeholder="GAJIAN10"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl uppercase font-mono outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl uppercase font-mono outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30"
                     required
                   />
                 </div>
@@ -303,7 +303,7 @@ export default function PromotionsPage() {
                   <select
                     value={discountType}
                     onChange={(e) => setDiscountType(e.target.value as any)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30"
                   >
                     <option value="percentage">Persentase (%)</option>
                     <option value="fixed">Nominal Rupiah (Rp)</option>
@@ -321,7 +321,7 @@ export default function PromotionsPage() {
                     min={1}
                     value={discountValue}
                     onChange={(e) => setDiscountValue(Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30"
                     required
                   />
                 </div>
@@ -332,7 +332,7 @@ export default function PromotionsPage() {
                     min={0}
                     value={minSpend}
                     onChange={(e) => setMinSpend(Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30"
                     required
                   />
                 </div>
@@ -345,7 +345,7 @@ export default function PromotionsPage() {
                   min={1}
                   value={quota}
                   onChange={(e) => setQuota(Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30"
                   required
                 />
               </div>
@@ -361,7 +361,7 @@ export default function PromotionsPage() {
                 <button
                   type="submit"
                   disabled={saveMutation.isPending}
-                  className="px-4 py-2 bg-[#EE4D2D] hover:bg-[#d73f20] text-white font-semibold rounded-full transition-colors disabled:opacity-50"
+                  className="px-4 py-2 bg-[#C8FF3D] hover:bg-[#b8f02e] text-[#111111] font-bold rounded-full transition-colors disabled:opacity-50"
                 >
                   {saveMutation.isPending ? 'Menyimpan...' : 'Simpan Voucher'}
                 </button>

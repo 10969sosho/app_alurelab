@@ -63,7 +63,7 @@ export default function AnalyticsPage() {
             onClick={() => setPeriod('7days')}
             className={`px-3 py-1 rounded-full font-medium transition-colors ${
               period === '7days'
-                ? 'bg-[#EE4D2D] text-white'
+                ? 'bg-[#111111] text-[#C8FF3D] font-bold'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -74,7 +74,7 @@ export default function AnalyticsPage() {
             onClick={() => setPeriod('30days')}
             className={`px-3 py-1 rounded-full font-medium transition-colors ${
               period === '30days'
-                ? 'bg-[#EE4D2D] text-white'
+                ? 'bg-[#111111] text-[#C8FF3D] font-bold'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -88,7 +88,7 @@ export default function AnalyticsPage() {
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-[11px] text-slate-500 font-medium">Total Penjualan (GMV)</span>
-            <div className="w-10 h-10 rounded-xl bg-orange-50 text-[#EE4D2D] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-[#C8FF3D]/15 text-lime-800 flex items-center justify-center">
               <TrendingUp className="w-3.5 h-3.5" />
             </div>
           </div>
@@ -150,7 +150,7 @@ export default function AnalyticsPage() {
       <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-1.5">
-            <BarChart3 className="w-4 h-4 text-[#EE4D2D]" />
+            <BarChart3 className="w-4 h-4 text-lime-700" />
             <h2 className="text-xs font-bold text-slate-800">Tren Penjualan Harian</h2>
           </div>
           <span className="text-[11px] text-slate-400">Grafik omset harian toko</span>
@@ -158,7 +158,7 @@ export default function AnalyticsPage() {
 
         {isLoading ? (
           <div className="flex items-center justify-center py-20 text-slate-400">
-            <Loader2 className="w-6 h-6 animate-spin text-[#EE4D2D] mr-2" />
+            <Loader2 className="w-6 h-6 animate-spin text-[#111111] mr-2" />
             <span className="text-xs">Menghitung analisis bisnis...</span>
           </div>
         ) : (
@@ -173,7 +173,7 @@ export default function AnalyticsPage() {
                     </span>
                     <div
                       style={{ height: `${heightPct}%` }}
-                       className="w-full max-w-[42px] bg-gradient-to-t from-[#EE4D2D] to-orange-400 rounded-t-lg transition-all group-hover:brightness-110"
+                       className="w-full max-w-[42px] bg-gradient-to-t from-lime-700 to-[#C8FF3D] rounded-t-lg transition-all group-hover:brightness-110"
                     />
                     <span className="text-[10px] text-slate-500 font-mono mt-1">
                       {c.label}
@@ -203,7 +203,7 @@ export default function AnalyticsPage() {
             return (
               <div key={prod.id} className="px-5 py-3.5 flex items-center gap-3 hover:bg-slate-50 transition-colors">
                 <span className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
-                  idx === 0 ? 'bg-[#EE4D2D] text-white' : idx === 1 ? 'bg-orange-100 text-orange-800' : 'bg-slate-100 text-slate-600'
+                  idx === 0 ? 'bg-[#C8FF3D] text-[#111111]' : idx === 1 ? 'bg-[#C8FF3D]/15 text-lime-950' : 'bg-slate-100 text-slate-600'
                 }`}>
                   {idx + 1}
                 </span>
@@ -221,7 +221,7 @@ export default function AnalyticsPage() {
 
                 <div className="text-right shrink-0">
                   <p className="font-bold text-slate-900 text-xs">{prod.sales_count} terjual</p>
-                  <p className="text-[11px] text-[#EE4D2D] font-semibold">{formatRupiah(Number(prod.revenue))}</p>
+                  <p className="text-[11px] text-lime-800 font-semibold">{formatRupiah(Number(prod.revenue))}</p>
                 </div>
               </div>
             );

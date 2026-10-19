@@ -139,7 +139,7 @@ export function SetupGuide() {
           <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-500 ${
-                allDone ? 'bg-emerald-500' : percent >= 50 ? 'bg-[#EE4D2D]' : 'bg-amber-400'
+                allDone ? 'bg-emerald-500' : percent >= 50 ? 'bg-[#C8FF3D]' : 'bg-amber-400'
               }`}
               style={{ width: `${isLoading ? 0 : percent}%` }}
             />
@@ -152,7 +152,7 @@ export function SetupGuide() {
         <div className="border-t border-slate-100 divide-y divide-slate-100">
           {isLoading ? (
             <div className="flex items-center justify-center py-10 text-slate-400">
-              <Loader2 className="w-5 h-5 animate-spin text-[#EE4D2D] mr-2" />
+              <Loader2 className="w-5 h-5 animate-spin text-[#111111] mr-2" />
               <span className="text-xs">Memuat panduan penyiapan...</span>
             </div>
           ) : (
@@ -192,7 +192,7 @@ export function SetupGuide() {
                   {!isDone && (
                     <Link
                       href={card.href}
-                      className="shrink-0 text-[11px] font-bold text-[#EE4D2D] hover:underline whitespace-nowrap mt-0.5"
+                      className="shrink-0 text-[11px] font-bold text-slate-900 hover:underline whitespace-nowrap mt-0.5"
                     >
                       {card.ctaLabel} &gt;
                     </Link>

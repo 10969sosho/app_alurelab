@@ -107,7 +107,7 @@ const TEMPLATE_OPTIONS = [
 const labelClass = "block text-[11px] font-semibold mb-1.5 text-slate-700";
 
 const inputClass =
-  "w-full px-3.5 py-2.5 text-xs text-slate-800 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/15 transition-all placeholder:text-slate-400";
+  "w-full px-3.5 py-2.5 text-xs text-slate-800 bg-white border border-slate-200 rounded-xl outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30 transition-all placeholder:text-slate-400";
 
 export default function ThemeEditorPage() {
   const [cms, setCms] = useState<CmsSettings>(DEFAULT_CMS);
@@ -296,7 +296,7 @@ export default function ThemeEditorPage() {
             type="button"
             onClick={handleSave}
             disabled={saving || loading}
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-[#EE4D2D] hover:bg-[#d73f20] text-white rounded-full text-xs font-semibold transition-colors shadow-sm disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-[#C8FF3D] hover:bg-[#b8f02e] text-[#111111] rounded-full text-xs font-bold transition-colors shadow-sm disabled:opacity-50"
           >
             {saving ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -314,7 +314,7 @@ export default function ThemeEditorPage() {
         <aside className="w-full sm:w-[360px] shrink-0 bg-white border-r border-slate-200 overflow-y-auto">
           {loading ? (
             <div className="flex items-center justify-center py-24 text-slate-400 text-xs">
-              <Loader2 className="w-5 h-5 animate-spin text-[#EE4D2D] mr-2" />
+              <Loader2 className="w-5 h-5 animate-spin text-[#111111] mr-2" />
               Memuat pengaturan tema...
             </div>
           ) : (

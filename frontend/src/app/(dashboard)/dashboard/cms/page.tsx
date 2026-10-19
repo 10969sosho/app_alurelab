@@ -83,7 +83,7 @@ export default function StorefrontCmsPage() {
           </p>
         </div>
         <span className="inline-flex items-center gap-1.5 self-start rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm">
-          <Palette className="w-3.5 h-3.5 text-[#EE4D2D]" />
+          <Palette className="w-3.5 h-3.5 text-lime-700" />
           1 Tema Terpasang
         </span>
       </div>
@@ -156,7 +156,7 @@ export default function StorefrontCmsPage() {
         {/* ─── Configuration Guide Card ─── */}
         <section className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
           <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2">
-            <Type className="w-3.5 h-3.5 text-[#EE4D2D]" />
+            <Type className="w-3.5 h-3.5 text-lime-700" />
             <p className="text-xs font-bold text-slate-700">
               Panduan Konfigurasi (Standar Shopify)
             </p>

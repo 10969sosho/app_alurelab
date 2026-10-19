@@ -176,10 +176,10 @@ export default function ProductsPage() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          {/* Orange Button: + Tambah Produk Baru */}
+          {/* Lemon-lime button: + Tambah Produk Baru */}
           <Link
             href="/dashboard/products/new"
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#EE4D2D] hover:bg-[#d73f20] text-white text-xs font-semibold rounded-full transition-colors shadow-sm"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#C8FF3D] hover:bg-[#b8f02e] text-[#111111] text-xs font-bold rounded-full transition-colors shadow-sm"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Tambah Produk Baru</span>
@@ -207,7 +207,7 @@ export default function ProductsPage() {
             }}
             className={`px-3.5 py-1.5 rounded-full text-xs whitespace-nowrap font-medium transition-all ${
               activeTab === tab.key
-                ? 'bg-[#EE4D2D] text-white font-semibold shadow-sm'
+                ? 'bg-[#111111] text-[#C8FF3D] font-bold shadow-sm'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
@@ -217,9 +217,9 @@ export default function ProductsPage() {
       </div>
 
       {/* ─── 3. Slim Promo Banner ─── */}
-      <div className="bg-orange-50/80 border border-orange-200/70 px-4 py-2.5 rounded-2xl flex items-center justify-between text-xs text-slate-700">
+      <div className="bg-[#C8FF3D]/10 border border-[#C8FF3D]/30 px-4 py-2.5 rounded-2xl flex items-center justify-between text-xs text-slate-700">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-6 h-6 rounded-full bg-[#EE4D2D] text-white flex items-center justify-center shrink-0">
+          <div className="w-6 h-6 rounded-full bg-[#C8FF3D] text-[#111111] flex items-center justify-center shrink-0">
             <Megaphone className="w-3 h-3" />
           </div>
           <p className="truncate">
@@ -229,7 +229,7 @@ export default function ProductsPage() {
         </div>
         <Link
           href="/dashboard/promotions"
-          className="text-[#EE4D2D] hover:underline font-semibold shrink-0 ml-3 whitespace-nowrap text-xs"
+          className="text-slate-900 hover:underline font-bold shrink-0 ml-3 whitespace-nowrap text-xs"
         >
           Pelajari Lebih Lanjut &gt;
         </Link>
@@ -247,7 +247,7 @@ export default function ProductsPage() {
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleApplyFilter()}
               placeholder="Cari Nama Produk, SKU Induk, ID Produk..."
-              className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-full text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/15 transition-all"
+              className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-full text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30 transition-all"
             />
           </div>
 
@@ -255,7 +255,7 @@ export default function ProductsPage() {
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="px-3 py-2 bg-white border border-slate-200 rounded-full text-xs text-slate-700 outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/15 transition-all"
+            className="px-3 py-2 bg-white border border-slate-200 rounded-full text-xs text-slate-700 outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30 transition-all"
           >
             <option value="">Semua Kategori</option>
             {categoryOptions.map((cat) => (
@@ -269,7 +269,7 @@ export default function ProductsPage() {
           <select
             value={stockFilter}
             onChange={(e) => setStockFilter(e.target.value)}
-            className="px-3 py-2 bg-white border border-slate-200 rounded-full text-xs text-slate-700 outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/15 transition-all"
+            className="px-3 py-2 bg-white border border-slate-200 rounded-full text-xs text-slate-700 outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30 transition-all"
           >
             <option value="">Semua Stok</option>
             <option value="low">Stok Menipis (&lt; 5)</option>
@@ -281,7 +281,7 @@ export default function ProductsPage() {
             <button
               type="button"
               onClick={handleApplyFilter}
-              className="px-4 py-2 bg-[#EE4D2D] hover:bg-[#d73f20] text-white text-xs font-semibold rounded-full transition-colors shadow-sm"
+              className="px-4 py-2 bg-[#111111] hover:bg-black text-[#C8FF3D] text-xs font-bold rounded-full transition-colors shadow-sm"
             >
               Terapkan
             </button>
@@ -317,7 +317,7 @@ export default function ProductsPage() {
               onClick={() => setQuickFilter('need_ads')}
               className={`px-3 py-1 rounded-full text-xs transition-all ${
                 quickFilter === 'need_ads'
-                  ? 'bg-orange-600 text-white font-medium'
+                  ? 'bg-[#111111] text-[#C8FF3D] font-bold'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
@@ -349,7 +349,7 @@ export default function ProductsPage() {
 
           {/* Bulk Action Controls if items selected */}
           {selectedIds.length > 0 && (
-            <div className="flex items-center gap-2 bg-orange-50 px-3 py-1.5 border border-orange-200 rounded-full text-xs">
+            <div className="flex items-center gap-2 bg-[#C8FF3D]/15 px-3 py-1.5 border border-[#C8FF3D]/40 rounded-full text-xs">
               <span className="text-slate-700 font-medium">
                 {selectedIds.length} dipilih
               </span>
@@ -358,7 +358,7 @@ export default function ProductsPage() {
                 onClick={() => {
                   toast.info(`Fitur massal untuk ${selectedIds.length} produk`);
                 }}
-                className="text-[#EE4D2D] font-bold hover:underline"
+                className="text-slate-900 font-bold hover:underline"
               >
                 Ubah Massal
               </button>
@@ -371,7 +371,7 @@ export default function ProductsPage() {
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
         {isLoading ? (
           <div className="flex items-center justify-center py-24 text-slate-400">
-            <Loader2 className="w-6 h-6 animate-spin text-[#EE4D2D] mr-2" />
+            <Loader2 className="w-6 h-6 animate-spin text-[#111111] mr-2" />
             <span className="text-xs">Memuat data produk...</span>
           </div>
         ) : products.length === 0 ? (
@@ -385,7 +385,7 @@ export default function ProductsPage() {
             </p>
             <Link
               href="/dashboard/products/new"
-              className="mt-3 px-4 py-2 bg-[#EE4D2D] hover:bg-[#d73f20] text-white text-xs font-semibold rounded-full"
+              className="mt-3 px-4 py-2 bg-[#C8FF3D] hover:bg-[#b8f02e] text-[#111111] text-xs font-bold rounded-full"
             >
               + Tambah Produk Sekarang
             </Link>
@@ -401,7 +401,7 @@ export default function ProductsPage() {
                       type="checkbox"
                       checked={isAllSelected}
                       onChange={(e) => handleSelectAll(e.target.checked)}
-                      className="rounded border-slate-300 text-[#EE4D2D] focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                      className="rounded border-slate-300 text-lime-700 focus:ring-0 focus:ring-offset-0 cursor-pointer"
                     />
                   </th>
                   <th className="px-3 py-2.5 min-w-[280px]">Nama Produk</th>
@@ -428,8 +428,8 @@ export default function ProductsPage() {
                   return (
                     <tr
                       key={item.id}
-                      className={`hover:bg-orange-50/30 transition-colors ${
-                        isChecked ? 'bg-orange-50/50' : ''
+                      className={`hover:bg-lime-50/30 transition-colors ${
+                        isChecked ? 'bg-lime-50/50' : ''
                       }`}
                     >
                       {/* Checkbox */}
@@ -438,7 +438,7 @@ export default function ProductsPage() {
                           type="checkbox"
                           checked={isChecked}
                           onChange={(e) => handleSelectOne(item.id, e.target.checked)}
-                          className="rounded border-slate-300 text-[#EE4D2D] focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                          className="rounded border-slate-300 text-lime-700 focus:ring-0 focus:ring-offset-0 cursor-pointer"
                         />
                       </td>
 
@@ -453,7 +453,7 @@ export default function ProductsPage() {
                           <div className="min-w-0 flex-1">
                             <Link
                               href={`/dashboard/products/${item.id}/edit`}
-                              className="font-medium text-slate-800 hover:text-[#EE4D2D] line-clamp-2 leading-tight transition-colors"
+                              className="font-medium text-slate-800 hover:text-lime-700 line-clamp-2 leading-tight transition-colors"
                             >
                               {item.title}
                             </Link>

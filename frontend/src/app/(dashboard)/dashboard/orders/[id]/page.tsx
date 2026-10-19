@@ -33,7 +33,7 @@ const STATUS_BADGES: Record<string, { label: string; color: string; icon: any }>
   delivered:       { label: 'Telah Diterima',      color: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: CheckCircle2 },
   completed:       { label: 'Selesai',             color: 'bg-green-50 text-green-700 border-green-200',    icon: CheckCircle2 },
   cancelled:       { label: 'Dibatalkan',          color: 'bg-red-50 text-red-700 border-red-200',          icon: AlertTriangle },
-  rts_returned:    { label: 'Retur (RTS)',         color: 'bg-orange-50 text-orange-700 border-orange-200', icon: RotateCcw },
+  rts_returned:    { label: 'Retur (RTS)',         color: 'bg-[#C8FF3D]/15 text-lime-950 border-[#C8FF3D]/40', icon: RotateCcw },
 };
 
 const COURIER_OPTIONS: Record<string, { value: string; label: string }[]> = {

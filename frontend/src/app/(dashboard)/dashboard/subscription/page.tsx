@@ -95,7 +95,7 @@ function SubscriptionContent() {
   if (isLoadingPlans) {
     return (
       <div className="flex items-center justify-center py-24 text-slate-400">
-        <Loader2 className="w-6 h-6 animate-spin text-[#EE4D2D] mr-2" />
+        <Loader2 className="w-6 h-6 animate-spin text-[#111111] mr-2" />
         <span className="text-xs">Memuat paket langganan...</span>
       </div>
     );
@@ -112,8 +112,8 @@ function SubscriptionContent() {
           <h1 className="text-lg font-bold text-slate-800">Paket Langganan</h1>
           <p className="text-xs text-slate-400 mt-1">Pilih paket yang sesuai dengan pertumbuhan toko Anda.</p>
         </div>
-        <span className="inline-flex items-center gap-2 self-start rounded-full border border-[#EE4D2D]/25 bg-[#EE4D2D]/8 px-3.5 py-1.5 text-xs shadow-sm">
-          <Crown className="w-3.5 h-3.5 text-[#EE4D2D]" />
+        <span className="inline-flex items-center gap-2 self-start rounded-full border border-[#C8FF3D]/40 bg-[#C8FF3D]/15 px-3.5 py-1.5 text-xs font-semibold text-slate-900 shadow-sm">
+          <Crown className="w-3.5 h-3.5 text-lime-700" />
           <span className="font-semibold text-slate-800">Paket Aktif: {activePlan?.name ?? 'Starter'}</span>
           {activePlan?.expires_at && (
             <span className="text-[11px] text-slate-500">berlaku s/d {formatDateTime(activePlan.expires_at)}</span>
@@ -134,17 +134,17 @@ function SubscriptionContent() {
               key={plan.tier}
               className={`relative bg-white border rounded-3xl p-6 shadow-sm transition-all hover:shadow-md ${
                 plan.popular
-                  ? 'border-[#EE4D2D] ring-1 ring-[#EE4D2D]/30'
+                  ? 'border-[#C8FF3D] ring-2 ring-[#C8FF3D]/40'
                   : 'border-slate-200 hover:border-slate-400'
               }`}
             >
               {plan.popular && (
-                <span className="absolute -top-3 right-6 bg-[#EE4D2D] text-white text-xs font-semibold px-3 py-1 rounded-full shadow-sm">
+                <span className="absolute -top-3 right-6 bg-[#C8FF3D] text-[#111111] text-xs font-bold px-3 py-1 rounded-full shadow-sm">
                   PALING POPULER
                 </span>
               )}
               <div className="flex items-center justify-between">
-                <Icon className="w-5 h-5 text-[#EE4D2D]" />
+                <Icon className="w-5 h-5 text-lime-700" />
                 {isCurrent && (
                   <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                     PAKET AKTIF
@@ -168,7 +168,7 @@ function SubscriptionContent() {
                 type="button"
                 disabled={!isUpgrade || checkoutMutation.isPending}
                 onClick={() => checkoutMutation.mutate(plan.tier)}
-                className="mt-6 w-full rounded-full bg-[#EE4D2D] px-4 py-2.5 text-xs font-semibold text-white hover:bg-[#d73f20] transition-colors disabled:bg-slate-100 disabled:text-slate-400 disabled:border disabled:border-slate-200 disabled:cursor-not-allowed"
+                className="mt-6 w-full rounded-full bg-[#C8FF3D] px-4 py-2.5 text-xs font-bold text-[#111111] hover:bg-[#b8f02e] transition-colors disabled:bg-slate-100 disabled:text-slate-400 disabled:border disabled:border-slate-200 disabled:cursor-not-allowed"
               >
                 {checkoutMutation.isPending && checkoutMutation.variables === plan.tier
                   ? 'Membuat tagihan...'
@@ -184,7 +184,7 @@ function SubscriptionContent() {
 
         {isLoadingHistory ? (
           <div className="flex items-center justify-center py-10 text-slate-400">
-            <Loader2 className="w-5 h-5 animate-spin text-[#EE4D2D] mr-2" />
+            <Loader2 className="w-5 h-5 animate-spin text-[#111111] mr-2" />
             <span className="text-xs">Memuat riwayat langganan...</span>
           </div>
         ) : subscriptions.length === 0 ? (
@@ -240,7 +240,7 @@ export default function SubscriptionPage() {
     <Suspense
       fallback={
         <div className="flex items-center justify-center py-24 text-slate-400">
-          <Loader2 className="w-6 h-6 animate-spin text-[#EE4D2D] mr-2" />
+          <Loader2 className="w-6 h-6 animate-spin text-[#111111] mr-2" />
           <span className="text-xs">Memuat langganan...</span>
         </div>
       }

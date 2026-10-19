@@ -116,7 +116,7 @@ export default function FinancePage() {
             setAccountHolder(bankAccount?.account_holder || '');
             setIsWithdrawOpen(true);
           }}
-          className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#EE4D2D] hover:bg-[#d73f20] text-white text-xs font-semibold rounded-full transition-colors shadow-sm disabled:opacity-40 self-start sm:self-auto"
+          className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#C8FF3D] hover:bg-[#b8f02e] text-[#111111] text-xs font-bold rounded-full transition-colors shadow-sm disabled:opacity-40 self-start sm:self-auto"
         >
           <ArrowUpRight className="w-3.5 h-3.5 stroke-[2.5]" />
            <span>Tarik Dana ke Rekening</span>
@@ -167,7 +167,7 @@ export default function FinancePage() {
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-1.5 text-slate-700 font-bold text-xs mb-1">
-              <Building2 className="w-3.5 h-3.5 text-[#EE4D2D]" />
+              <Building2 className="w-3.5 h-3.5 text-lime-700" />
               <span>Rekening Penarikan Utama</span>
             </div>
             <p className="text-xs font-semibold text-slate-900">
@@ -190,7 +190,7 @@ export default function FinancePage() {
             onClick={() => setActiveTab('payouts')}
             className={`py-2.5 font-medium border-b-2 whitespace-nowrap transition-colors ${
               activeTab === 'payouts'
-                ? 'border-[#EE4D2D] text-[#EE4D2D] font-bold'
+                ? 'border-slate-900 text-slate-900 font-bold'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -201,7 +201,7 @@ export default function FinancePage() {
             onClick={() => setActiveTab('transactions')}
             className={`py-2.5 font-medium border-b-2 whitespace-nowrap transition-colors ${
               activeTab === 'transactions'
-                ? 'border-[#EE4D2D] text-[#EE4D2D] font-bold'
+                ? 'border-slate-900 text-slate-900 font-bold'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -211,7 +211,7 @@ export default function FinancePage() {
 
         {isLoading ? (
           <div className="flex items-center justify-center py-20 text-slate-400">
-            <Loader2 className="w-6 h-6 animate-spin text-[#EE4D2D] mr-2" />
+            <Loader2 className="w-6 h-6 animate-spin text-[#111111] mr-2" />
             <span className="text-xs">Memuat riwayat keuangan...</span>
           </div>
         ) : activeTab === 'payouts' ? (
@@ -328,7 +328,7 @@ export default function FinancePage() {
             </div>
 
             <form onSubmit={handleWithdrawSubmit} className="p-4 space-y-3 text-xs">
-              <div className="bg-orange-50/70 border border-orange-200 rounded-xl p-3">
+              <div className="bg-[#C8FF3D]/10 border border-[#C8FF3D]/30 rounded-xl p-3">
                 <p className="text-[11px] text-slate-600">
                   Saldo yang dapat ditarik: <strong className="text-slate-900">{formatRupiah(Number(wallet.available_balance))}</strong>
                 </p>
@@ -344,7 +344,7 @@ export default function FinancePage() {
                   value={withdrawAmount}
                   onChange={(e) => setWithdrawAmount(e.target.value)}
                   placeholder="Contoh: 150000"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20 font-mono text-sm"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30 font-mono text-sm"
                   required
                 />
               </div>
@@ -355,7 +355,7 @@ export default function FinancePage() {
                   <select
                     value={bankCode}
                     onChange={(e) => setBankCode(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30"
                   >
                     <option value="BCA">BCA</option>
                     <option value="MANDIRI">Bank Mandiri</option>
@@ -371,7 +371,7 @@ export default function FinancePage() {
                     value={accountNumber}
                     onChange={(e) => setAccountNumber(e.target.value)}
                     placeholder="Nomor rekening"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20 font-mono"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30 font-mono"
                     required
                   />
                 </div>
@@ -384,7 +384,7 @@ export default function FinancePage() {
                   value={accountHolder}
                   onChange={(e) => setAccountHolder(e.target.value)}
                   placeholder="Nama sesuai buku tabungan"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30"
                   required
                 />
               </div>
@@ -400,7 +400,7 @@ export default function FinancePage() {
                 <button
                   type="submit"
                   disabled={withdrawMutation.isPending}
-                  className="px-4 py-2 bg-[#EE4D2D] hover:bg-[#d73f20] text-white font-semibold rounded-full transition-colors disabled:opacity-50"
+                  className="px-4 py-2 bg-[#C8FF3D] hover:bg-[#b8f02e] text-[#111111] font-bold rounded-full transition-colors disabled:opacity-50"
                 >
                   {withdrawMutation.isPending ? 'Memproses...' : 'Konfirmasi Tarik Dana'}
                 </button>

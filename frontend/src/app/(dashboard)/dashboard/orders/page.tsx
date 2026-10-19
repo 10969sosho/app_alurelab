@@ -41,7 +41,7 @@ const STATUS_BADGES: Record<string, { label: string; color: string; icon: any }>
   delivered:       { label: 'Terkirim',       color: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: CheckCircle2 },
   completed:       { label: 'Selesai',        color: 'bg-green-50 text-green-700 border-green-200',    icon: CheckCircle2 },
   cancelled:       { label: 'Dibatalkan',     color: 'bg-red-50 text-red-700 border-red-200',          icon: AlertTriangle },
-  rts_returned:    { label: 'Retur (RTS)',    color: 'bg-orange-50 text-orange-700 border-orange-200', icon: RotateCcw },
+  rts_returned:    { label: 'Retur (RTS)',    color: 'bg-[#C8FF3D]/15 text-lime-950 border-[#C8FF3D]/40', icon: RotateCcw },
 };
 
 function OrdersContent() {
@@ -107,7 +107,7 @@ function OrdersContent() {
             }}
             className={`py-2.5 font-medium border-b-2 whitespace-nowrap transition-colors ${
               activeTab === tab.key
-                ? 'border-[#EE4D2D] text-[#EE4D2D] font-bold'
+                ? 'border-[#C8FF3D] text-slate-900 font-bold'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -128,7 +128,7 @@ function OrdersContent() {
               setPage(1);
             }}
             placeholder="Cari nomor pesanan, nama pembeli, atau telepon..."
-            className="w-full pl-8 pr-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20 transition-colors"
+            className="w-full pl-8 pr-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30 transition-colors"
           />
         </div>
         <div className="text-xs text-slate-500 font-medium">
@@ -140,7 +140,7 @@ function OrdersContent() {
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
         {isLoading ? (
           <div className="flex items-center justify-center py-24 text-slate-400">
-            <Loader2 className="w-6 h-6 animate-spin text-[#EE4D2D] mr-2" />
+            <Loader2 className="w-6 h-6 animate-spin text-[#111111] mr-2" />
             <span className="text-xs">Memuat data pesanan...</span>
           </div>
         ) : orders.length === 0 ? (
@@ -173,12 +173,12 @@ function OrdersContent() {
                   const StatusIcon = cfg.icon;
 
                   return (
-                    <tr key={item.id} className="hover:bg-orange-50/30 transition-colors">
+                    <tr key={item.id} className="hover:bg-lime-50/30 transition-colors">
                       {/* Pesanan */}
                       <td className="px-3 py-2.5">
                         <Link
                           href={`/dashboard/orders/${item.id}`}
-                          className="font-bold text-slate-900 hover:text-[#EE4D2D] transition-colors"
+                          className="font-bold text-slate-900 hover:text-lime-700 transition-colors"
                         >
                           {item.order_number}
                         </Link>

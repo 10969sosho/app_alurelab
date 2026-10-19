@@ -107,7 +107,7 @@ export default function ShippingPage() {
                   bulkShipMutation.mutate({ orderIds: selectedIds, courierCode: courierFilter || 'jne' });
                 }
               }}
-              className="inline-flex items-center gap-1 px-4 py-2 bg-[#EE4D2D] hover:bg-[#d73f20] text-white text-xs font-semibold rounded-full transition-colors shadow-sm disabled:opacity-50"
+              className="inline-flex items-center gap-1 px-4 py-2 bg-[#C8FF3D] hover:bg-[#b8f02e] text-[#111111] text-xs font-bold rounded-full transition-colors shadow-sm disabled:opacity-50"
             >
               <Send className="w-3.5 h-3.5" />
               <span>Kirim ({selectedIds.length}) Pesanan</span>
@@ -127,7 +127,7 @@ export default function ShippingPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
           <p className="text-[11px] text-slate-500 font-medium">Perlu Pengiriman</p>
-          <p className="text-lg font-bold text-[#EE4D2D] mt-0.5">{total}</p>
+          <p className="text-lg font-bold text-lime-800 mt-0.5">{total}</p>
           <span className="text-[10px] text-slate-400">Pesanan telah dibayar pembeli</span>
         </div>
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
@@ -151,14 +151,14 @@ export default function ShippingPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Cari nomor pesanan, penerima, atau nomor HP..."
-            className="w-full pl-8 pr-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20 transition-colors"
+            className="w-full pl-8 pr-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30 transition-colors"
           />
         </div>
 
         <select
           value={courierFilter}
           onChange={(e) => setCourierFilter(e.target.value)}
-          className="px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-700 outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20"
+          className="px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-700 outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30"
         >
           <option value="">Semua Kurir</option>
           <option value="jne">JNE Express</option>
@@ -172,7 +172,7 @@ export default function ShippingPage() {
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
         {isLoading ? (
           <div className="flex items-center justify-center py-24 text-slate-400">
-            <Loader2 className="w-6 h-6 animate-spin text-[#EE4D2D] mr-2" />
+            <Loader2 className="w-6 h-6 animate-spin text-[#111111] mr-2" />
             <span className="text-xs">Memuat antrean pengiriman...</span>
           </div>
         ) : orders.length === 0 ? (
@@ -195,7 +195,7 @@ export default function ShippingPage() {
                       type="checkbox"
                       checked={isAllSelected}
                       onChange={(e) => handleSelectAll(e.target.checked)}
-                      className="rounded-sm border-slate-300 text-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20 cursor-pointer"
+                      className="rounded-sm border-slate-300 text-lime-700 focus:ring-2 focus:ring-[#C8FF3D]/30 cursor-pointer"
                     />
                   </th>
                   <th className="px-3 py-2.5 min-w-[180px]">No. Pesanan</th>
@@ -212,8 +212,8 @@ export default function ShippingPage() {
                   return (
                     <tr
                       key={item.id}
-                      className={`hover:bg-orange-50/30 transition-colors ${
-                        isChecked ? 'bg-orange-50/40' : ''
+                      className={`hover:bg-lime-50/30 transition-colors ${
+                        isChecked ? 'bg-lime-50/50' : ''
                       }`}
                     >
                       <td className="px-3 py-2.5 text-center">
@@ -221,14 +221,14 @@ export default function ShippingPage() {
                           type="checkbox"
                           checked={isChecked}
                           onChange={(e) => handleSelectOne(item.id, e.target.checked)}
-                          className="rounded-sm border-slate-300 text-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20 cursor-pointer"
+                          className="rounded-sm border-slate-300 text-lime-700 focus:ring-2 focus:ring-[#C8FF3D]/30 cursor-pointer"
                         />
                       </td>
 
                       <td className="px-3 py-2.5">
                         <Link
                           href={`/dashboard/orders/${item.id}`}
-                          className="font-bold text-slate-900 hover:text-[#EE4D2D] transition-colors"
+                          className="font-bold text-slate-900 hover:text-lime-700 transition-colors"
                         >
                           {item.order_number}
                         </Link>
@@ -268,7 +268,7 @@ export default function ShippingPage() {
                           onClick={() => {
                             bulkShipMutation.mutate({ orderIds: [item.id], courierCode: item.courier_code || 'jne' });
                           }}
-                          className="px-3 py-1.5 bg-[#EE4D2D] hover:bg-[#d73f20] text-white text-[11px] font-semibold rounded-full transition-colors shadow-sm"
+                          className="px-3 py-1.5 bg-[#C8FF3D] hover:bg-[#b8f02e] text-[#111111] text-[11px] font-bold rounded-full transition-colors shadow-sm"
                         >
                           Kirim Sekarang
                         </button>

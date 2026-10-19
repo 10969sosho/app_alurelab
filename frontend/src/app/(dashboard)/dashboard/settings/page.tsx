@@ -273,7 +273,7 @@ export default function SettingsPage() {
           type="button"
           onClick={handleSave}
           disabled={updateMutation.isPending}
-          className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#EE4D2D] hover:bg-[#d73f20] text-white text-xs font-semibold rounded-full transition-colors shadow-sm disabled:opacity-50 self-start sm:self-auto"
+          className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#C8FF3D] hover:bg-[#b8f02e] text-[#111111] text-xs font-bold rounded-full transition-colors shadow-sm disabled:opacity-50 self-start sm:self-auto"
         >
           <Save className="w-3.5 h-3.5" />
           <span>{updateMutation.isPending ? 'Menyimpan...' : 'Simpan Semua'}</span>
@@ -311,7 +311,7 @@ export default function SettingsPage() {
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
         {isLoading ? (
           <div className="flex items-center justify-center py-24 text-slate-400">
-            <Loader2 className="w-6 h-6 animate-spin text-[#EE4D2D] mr-2" />
+            <Loader2 className="w-6 h-6 animate-spin text-[#111111] mr-2" />
             <span className="text-xs">Memuat konfigurasi toko...</span>
           </div>
         ) : (
@@ -325,7 +325,7 @@ export default function SettingsPage() {
                     type="text"
                     value={storeName}
                     onChange={(e) => setStoreName(e.target.value)}
-                    className="w-full px-3 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/15 transition-all"
+                    className="w-full px-3 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30 transition-all"
                     required
                   />
                 </div>
@@ -336,7 +336,7 @@ export default function SettingsPage() {
                     type="text"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
-                    className="w-full px-3 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/15 transition-all font-mono"
+                    className="w-full px-3 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30 transition-all font-mono"
                     required
                   />
                   <span className="text-[10px] text-slate-400 mt-0.5 block">Digunakan oleh pembeli untuk bertanya ketersediaan produk.</span>
@@ -349,7 +349,7 @@ export default function SettingsPage() {
                     value={tagline}
                     onChange={(e) => setTagline(e.target.value)}
                     placeholder="Official Store Berkualitas Terbaik"
-                    className="w-full px-3 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/15 transition-all"
+                    className="w-full px-3 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30 transition-all"
                   />
                 </div>
               </div>
@@ -358,7 +358,7 @@ export default function SettingsPage() {
             {/* 2. Address & Warehouse Tab */}
             {activeTab === 'address' && (
               <div className="space-y-3">
-                <div className="bg-orange-50/70 border border-orange-200 rounded-2xl p-3.5">
+                <div className="bg-[#C8FF3D]/10 border border-[#C8FF3D]/30 text-slate-800 rounded-2xl p-3.5">
                   <p className="text-[11px] text-slate-700 font-medium">Alamat Asal Pengiriman (Origin Address)</p>
                   <p className="text-[10px] text-slate-500 mt-0.5">
                     Alamat ini digunakan oleh kurir Biteship untuk menghitung ongkos kirim real-time dan titik pickup paket.
@@ -373,7 +373,7 @@ export default function SettingsPage() {
                       value={contactName}
                       onChange={(e) => setContactName(e.target.value)}
                       placeholder="Admin Gudang Alurelab"
-                      className="w-full px-3 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/15 transition-all"
+                      className="w-full px-3 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30 transition-all"
                     />
                   </div>
                   <div>
@@ -383,7 +383,7 @@ export default function SettingsPage() {
                       value={warehousePhone}
                       onChange={(e) => setWarehousePhone(e.target.value)}
                       placeholder="08123456789"
-                      className="w-full px-3 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/15 transition-all font-mono"
+                      className="w-full px-3 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30 transition-all font-mono"
                     />
                   </div>
                 </div>
@@ -395,7 +395,7 @@ export default function SettingsPage() {
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     placeholder="Nama jalan, nomor gedung, kelurahan, kecamatan"
-                    className="w-full px-3 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/15 transition-all"
+                    className="w-full px-3 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30 transition-all"
                   />
                 </div>
 
@@ -408,7 +408,7 @@ export default function SettingsPage() {
                     value={postalCode}
                     onChange={(e) => setPostalCode(e.target.value)}
                     placeholder="Contoh: 60271"
-                    className="w-full px-3 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/15 transition-all font-mono"
+                    className="w-full px-3 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30 transition-all font-mono"
                   />
                 </div>
               </div>
@@ -460,7 +460,7 @@ export default function SettingsPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <Landmark className="w-4 h-4 text-[#EE4D2D] shrink-0" />
+                        <Landmark className="w-4 h-4 text-lime-700 shrink-0" />
                         <p className="font-bold text-slate-800">DOKU Merchant Gateway</p>
                         {loadingDoku ? (
                           <Loader2 className="w-3 h-3 animate-spin text-slate-400" />
@@ -504,7 +504,7 @@ export default function SettingsPage() {
                         type="button"
                         onClick={() => dokuSetupMutation.mutate()}
                         disabled={dokuSetupMutation.isPending}
-                        className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#EE4D2D] hover:bg-[#d73f20] text-white text-xs font-bold rounded-full transition-colors disabled:opacity-50 shadow-sm"
+                        className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#C8FF3D] hover:bg-[#b8f02e] text-[#111111] text-xs font-bold rounded-full transition-colors disabled:opacity-50 shadow-sm"
                       >
                         {dokuSetupMutation.isPending ? (
                           <>
@@ -544,7 +544,7 @@ export default function SettingsPage() {
                       <select
                         value={bankName}
                         onChange={(e) => setBankName(e.target.value)}
-                        className="w-full px-2.5 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/15 transition-all"
+                        className="w-full px-2.5 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30 transition-all"
                       >
                         <option value="BCA">BCA</option>
                         <option value="MANDIRI">Bank Mandiri</option>
@@ -559,7 +559,7 @@ export default function SettingsPage() {
                         type="text"
                         value={accountNumber}
                         onChange={(e) => setAccountNumber(e.target.value)}
-                        className="w-full px-3 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/15 transition-all font-mono"
+                        className="w-full px-3 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30 transition-all font-mono"
                         required
                       />
                     </div>
@@ -571,7 +571,7 @@ export default function SettingsPage() {
                       type="text"
                       value={accountHolder}
                       onChange={(e) => setAccountHolder(e.target.value)}
-                      className="w-full px-3 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/15 transition-all"
+                      className="w-full px-3 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30 transition-all"
                       required
                     />
                   </div>
@@ -643,7 +643,7 @@ export default function SettingsPage() {
                         setDomainCheck(null);
                       }}
                       placeholder="namatoko"
-                      className="flex-1 min-w-0 px-3 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/15 transition-all font-mono text-sm"
+                      className="flex-1 min-w-0 px-3 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30 transition-all font-mono text-sm"
                     />
                     <select
                       value={domainTld}
@@ -651,7 +651,7 @@ export default function SettingsPage() {
                         setDomainTld(e.target.value);
                         setDomainCheck(null);
                       }}
-                      className="px-2 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/15 transition-all font-mono text-sm bg-white"
+                      className="px-2 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30 transition-all font-mono text-sm bg-white"
                     >
                       {['com', 'id', 'net', 'shop', 'online', 'store', 'co.id', 'my.id'].map((tld) => (
                         <option key={tld} value={tld}>
@@ -681,7 +681,7 @@ export default function SettingsPage() {
                         type="button"
                         onClick={() => domainRegisterMutation.mutate()}
                         disabled={domainRegisterMutation.isPending}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#EE4D2D] hover:bg-[#d73f20] text-white text-[12px] font-semibold rounded-full transition-colors disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#C8FF3D] hover:bg-[#b8f02e] text-[#111111] text-[12px] font-bold rounded-full transition-colors disabled:opacity-50"
                       >
                         {domainRegisterMutation.isPending ? (
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -724,7 +724,7 @@ export default function SettingsPage() {
                 <button
                   type="submit"
                   disabled={updateMutation.isPending}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#EE4D2D] hover:bg-[#d73f20] text-white font-semibold rounded-full transition-colors disabled:opacity-50 shadow-sm"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#C8FF3D] hover:bg-[#b8f02e] text-[#111111] font-bold rounded-full transition-colors disabled:opacity-50 shadow-sm"
                 >
                   <Save className="w-3.5 h-3.5" />
                   <span>{updateMutation.isPending ? 'Menyimpan...' : 'Simpan Perubahan'}</span>

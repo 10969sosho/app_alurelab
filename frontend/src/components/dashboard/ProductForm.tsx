@@ -245,7 +245,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
         <button
           type="submit"
           disabled={isSubmitting}
-          className="px-4 py-2 bg-[#EE4D2D] hover:bg-[#d73f20] disabled:opacity-50 text-white text-xs font-semibold rounded-full flex items-center gap-1.5 transition-colors shadow-sm self-start sm:self-auto"
+          className="px-4 py-2 bg-[#C8FF3D] hover:bg-[#b8f02e] disabled:opacity-50 text-[#111111] text-xs font-bold rounded-full flex items-center gap-1.5 transition-colors shadow-sm self-start sm:self-auto"
         >
           {isSubmitting ? (
             <>
@@ -264,21 +264,21 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
       {/* ─── 1. Informasi Dasar ─── */}
       <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3 shadow-sm">
         <div className="flex items-center gap-2 text-slate-800 font-bold text-xs border-b border-slate-100 pb-2.5">
-          <Package className="w-4 h-4 text-[#EE4D2D]" />
+          <Package className="w-4 h-4 text-lime-700" />
           <h2>Informasi Dasar Produk</h2>
         </div>
 
         <div>
           <label className="block text-xs font-medium text-slate-700 mb-1">
-            Nama Produk <span className="text-[#EE4D2D]">*</span>
+            Nama Produk <span className="text-lime-800">*</span>
           </label>
           <input
             {...register('title')}
             placeholder="Contoh: Kemeja Linen Katun Premium L-Kids Series"
-            className={`w-full px-3 py-2 rounded-xl border text-xs outline-none transition-colors focus:ring-2 focus:ring-[#EE4D2D]/20 ${
+            className={`w-full px-3 py-2 rounded-xl border text-xs outline-none transition-colors focus:ring-2 focus:ring-[#C8FF3D]/30 ${
               errors.title
                 ? 'border-red-400 bg-red-50 focus:border-red-500'
-                : 'border-slate-300 focus:border-[#EE4D2D]'
+                : 'border-slate-300 focus:border-slate-800'
             }`}
           />
           {errors.title && (
@@ -295,7 +295,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
               {...register('category_name')}
               list="product-categories"
               placeholder="Cari kategori..."
-              className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20"
+              className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30"
             />
             <datalist id="product-categories">
               {categories.map((category) => <option key={category} value={category} />)}
@@ -313,7 +313,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
                   {...register('is_active')}
                   className="sr-only peer"
                 />
-                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#EE4D2D]"></div>
+                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#C8FF3D]"></div>
                 <span className="ml-2.5 text-xs font-medium text-slate-700">
                   {watch('is_active') ? 'Live (Tampil di Toko)' : 'Nonaktif (Draft)'}
                 </span>
@@ -330,7 +330,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
             {...register('description')}
             rows={3}
             placeholder="Jelaskan spesifikasi, bahan material, dan keunggulan produk Anda..."
-            className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20"
+            className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30"
           />
         </div>
       </div>
@@ -339,7 +339,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
       <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3 shadow-sm">
         <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
           <div className="flex items-center gap-2 text-slate-800 font-bold text-xs">
-            <ImageIcon className="w-4 h-4 text-[#EE4D2D]" />
+            <ImageIcon className="w-4 h-4 text-lime-700" />
             <h2>Foto & Media Produk</h2>
           </div>
           <span className="text-[11px] text-slate-400">Maks 8MB per file • JPG, PNG, WebP</span>
@@ -348,8 +348,8 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
         {/* Drag-and-Drop & File Picker Zone */}
         <label className={`block relative border border-dashed rounded-2xl p-6 text-center cursor-pointer transition-colors ${
           isUploading
-            ? 'border-orange-400 bg-orange-50/50 cursor-not-allowed'
-            : 'border-slate-300 hover:border-[#EE4D2D] bg-slate-50/60'
+            ? 'border-[#C8FF3D]/60 bg-[#C8FF3D]/10 cursor-not-allowed'
+            : 'border-slate-300 hover:border-[#C8FF3D] bg-slate-50/60'
         }`}>
           <input
             type="file"
@@ -360,9 +360,9 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
             className="sr-only"
           />
           <div className="flex flex-col items-center justify-center gap-1.5">
-            <div className="w-10 h-10 rounded-xl bg-orange-50 text-[#EE4D2D] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-[#C8FF3D]/15 text-lime-800 flex items-center justify-center">
               {isUploading ? (
-                <Loader2 className="w-4 h-4 animate-spin text-[#EE4D2D]" />
+                <Loader2 className="w-4 h-4 animate-spin text-[#111111]" />
               ) : (
                 <Upload className="w-4 h-4" />
               )}
@@ -388,7 +388,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
                   key={index}
                   className={`group relative rounded-xl overflow-hidden border transition-all ${
                     index === 0
-                      ? 'border-[#EE4D2D] ring-1 ring-[#EE4D2D]'
+                      ? 'border-[#C8FF3D] ring-1 ring-[#C8FF3D]'
                       : 'border-slate-200'
                   }`}
                 >
@@ -403,15 +403,15 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
 
                   {/* Primary Cover Badge */}
                   {index === 0 ? (
-                    <div className="absolute top-1 left-1 bg-[#EE4D2D] text-white text-[9px] font-bold px-2 py-1 rounded-full flex items-center gap-0.5 shadow-sm">
-                      <Star className="w-2.5 h-2.5 fill-white" />
+                    <div className="absolute top-1 left-1 bg-[#C8FF3D] text-[#111111] text-[9px] font-bold px-2 py-1 rounded-full flex items-center gap-0.5 shadow-sm">
+                      <Star className="w-2.5 h-2.5 fill-[#111111]" />
                       <span>Cover</span>
                     </div>
                   ) : (
                     <button
                       type="button"
                       onClick={() => handleSetPrimaryImage(index)}
-                      className="absolute top-1 left-1 bg-black/70 hover:bg-[#EE4D2D] text-white text-[9px] font-medium px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute top-1 left-1 bg-black/70 hover:bg-[#C8FF3D] hover:text-[#111111] text-white text-[9px] font-medium px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       Jadikan Cover
                     </button>
@@ -439,7 +439,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
             value={newImageUrl}
             onChange={(e) => setNewImageUrl(e.target.value)}
             placeholder="Atau tempel tautan URL gambar..."
-            className="flex-1 px-3 py-2 rounded-xl border border-slate-300 text-xs outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20"
+            className="flex-1 px-3 py-2 rounded-xl border border-slate-300 text-xs outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30"
           />
           <button
             type="button"
@@ -455,20 +455,20 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
       {/* ─── 3. Harga & Pengiriman ─── */}
       <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3 shadow-sm">
         <div className="flex items-center gap-2 text-slate-800 font-bold text-xs border-b border-slate-100 pb-2.5">
-          <DollarSign className="w-4 h-4 text-[#EE4D2D]" />
+          <DollarSign className="w-4 h-4 text-lime-700" />
           <h2>Harga & Berat Produk</h2>
         </div>
 
         {/* Notice when variants are enabled */}
         {hasVariants ? (
-          <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-start gap-2.5">
-            <Info className="w-4 h-4 text-[#EE4D2D] shrink-0 mt-0.5" />
+          <div className="bg-[#C8FF3D]/15 border border-[#C8FF3D]/40 rounded-xl p-4 flex items-start gap-2.5">
+            <Info className="w-4 h-4 text-lime-800 shrink-0 mt-0.5" />
             <div className="text-xs text-slate-700 leading-relaxed">
               <p className="font-bold text-slate-900">Mode Varian Aktif</p>
               <p className="mt-0.5 text-[11px] text-slate-600">
                 Harga jual dan berat pengiriman produk secara otomatis ditentukan berdasarkan variasi di bawah.
                 {lowestVariantPrice > 0 && (
-                  <span className="block mt-1 font-semibold text-[#EE4D2D]">
+                  <span className="block mt-1 font-semibold text-lime-800">
                     Harga terendah saat ini: Rp {lowestVariantPrice.toLocaleString('id-ID')} • Berat acuan: {firstVariantWeight} gram
                   </span>
                 )}
@@ -480,16 +480,16 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label className="block text-xs font-medium text-slate-700 mb-1">
-                  Harga Jual (Rp) <span className="text-[#EE4D2D]">*</span>
+                  Harga Jual (Rp) <span className="text-lime-800">*</span>
                 </label>
                 <input
                   type="number"
                   {...register('price')}
                   placeholder="150000"
-                  className={`w-full px-3 py-2 rounded-xl border text-xs outline-none transition-colors focus:ring-2 focus:ring-[#EE4D2D]/20 ${
+                  className={`w-full px-3 py-2 rounded-xl border text-xs outline-none transition-colors focus:ring-2 focus:ring-[#C8FF3D]/30 ${
                     errors.price
                       ? 'border-red-400 bg-red-50 focus:border-red-500'
-                      : 'border-slate-300 focus:border-[#EE4D2D]'
+                      : 'border-slate-300 focus:border-slate-800'
                   }`}
                 />
                 {errors.price && (
@@ -505,7 +505,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
                   type="number"
                   {...register('compare_at_price')}
                   placeholder="199000"
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30"
                 />
               </div>
 
@@ -517,21 +517,21 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
                   type="number"
                   {...register('cost_price')}
                   placeholder="75000"
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30"
                 />
               </div>
             </div>
 
             <div>
               <label className="block text-xs font-medium text-slate-700 mb-1">
-                Berat Pengiriman (gram) <span className="text-[#EE4D2D]">*</span>
+                Berat Pengiriman (gram) <span className="text-lime-800">*</span>
               </label>
               <div className="relative max-w-xs">
                 <input
                   type="number"
                   {...register('weight_grams')}
                   placeholder="250"
-                  className="w-full px-3 py-2 pr-14 rounded-xl border border-slate-300 text-xs outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20"
+                  className="w-full px-3 py-2 pr-14 rounded-xl border border-slate-300 text-xs outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-slate-400 font-medium">
                   gram
@@ -549,7 +549,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
       <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3 shadow-sm">
         <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
           <div className="flex items-center gap-2 text-slate-800 font-bold text-xs">
-            <Layers className="w-4 h-4 text-[#EE4D2D]" />
+            <Layers className="w-4 h-4 text-lime-700" />
             <h2>Varian Produk (Warna, Ukuran, Seri)</h2>
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
@@ -570,7 +570,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
               }}
               className="sr-only peer"
             />
-            <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#EE4D2D]"></div>
+            <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#C8FF3D]"></div>
             <span className="ml-2.5 text-xs font-semibold text-slate-700">
               Aktifkan Varian
             </span>
@@ -596,7 +596,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
                     <input
                       {...register(`variants.${index}.title` as const)}
                       placeholder="Contoh: Merah / XL"
-                      className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20"
+                      className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30"
                     />
                   </div>
 
@@ -608,7 +608,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
                       type="number"
                       {...register(`variants.${index}.price` as const)}
                       placeholder="150000"
-                      className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20 font-mono"
+                      className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30 font-mono"
                     />
                   </div>
 
@@ -620,7 +620,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
                       type="number"
                       {...register(`variants.${index}.weight_grams` as const)}
                       placeholder="200"
-                      className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20 font-mono"
+                      className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30 font-mono"
                     />
                   </div>
 
@@ -632,7 +632,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
                       type="number"
                       {...register(`variants.${index}.stock` as const)}
                       placeholder="50"
-                      className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20 font-mono"
+                      className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30 font-mono"
                     />
                   </div>
 
@@ -643,7 +643,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
                     <input
                       {...register(`variants.${index}.sku` as const)}
                       placeholder="SKU-01"
-                      className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20 font-mono uppercase"
+                      className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30 font-mono uppercase"
                     />
                   </div>
 
@@ -664,7 +664,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
               onClick={() => append({ title: '', price: lowestVariantPrice || 100000, stock: 10, weight_grams: firstVariantWeight || 200, sku: '' })}
               className="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-full flex items-center gap-1.5 transition-colors shadow-sm"
             >
-              <Plus className="w-3.5 h-3.5 text-[#EE4D2D]" />
+              <Plus className="w-3.5 h-3.5 text-lime-700" />
               <span>Tambah Baris Varian</span>
             </button>
           </div>

@@ -50,7 +50,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
   delivered: { label: 'Terkirim', color: 'text-emerald-700 bg-emerald-50 border-emerald-200', icon: CheckCircle2 },
   completed: { label: 'Selesai', color: 'text-green-700 bg-green-50 border-green-200', icon: CheckCircle2 },
   cancelled: { label: 'Dibatalkan', color: 'text-red-700 bg-red-50 border-red-200', icon: AlertTriangle },
-  rts_returned: { label: 'RTS', color: 'text-orange-700 bg-orange-50 border-orange-200', icon: RotateCcw },
+  rts_returned: { label: 'RTS', color: 'text-lime-950 bg-[#C8FF3D]/15 border-[#C8FF3D]/40', icon: RotateCcw },
 };
 
 export default function DashboardPage() {
@@ -80,7 +80,7 @@ export default function DashboardPage() {
   if (loadingDashboard) {
     return (
       <div className="flex h-48 items-center justify-center text-slate-400">
-        <Loader2 className="mr-2 h-6 w-6 animate-spin text-[#EE4D2D]" />
+        <Loader2 className="mr-2 h-6 w-6 animate-spin text-[#111111]" />
         <span className="text-sm">Memuat data dashboard...</span>
       </div>
     );
@@ -111,7 +111,7 @@ export default function DashboardPage() {
       </section>
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Ringkasan performa">
-        <MetricCard label="Penjualan Hari Ini" value={formatRupiah(stats.revenue_today, { compact: true })} icon={TrendingUp} iconBg="bg-orange-50" iconColor="text-[#EE4D2D]" />
+        <MetricCard label="Penjualan Hari Ini" value={formatRupiah(stats.revenue_today, { compact: true })} icon={TrendingUp} iconBg="bg-[#C8FF3D]/20" iconColor="text-lime-800" />
         <MetricCard label="Pesanan Baru" value={String(stats.orders_today)} icon={ShoppingBag} iconBg="bg-blue-50" iconColor="text-blue-600" />
         <MetricCard label="Produk Aktif" value={String(stats.products_active)} icon={Package} iconBg="bg-emerald-50" iconColor="text-emerald-600" />
         <MetricCard label="Pelanggan Baru" value={stats.new_customers != null ? String(stats.new_customers) : '—'} icon={Users} iconBg="bg-violet-50" iconColor="text-violet-600" />
@@ -142,7 +142,7 @@ export default function DashboardPage() {
 
         {loadingOrders ? (
           <div className="flex h-28 items-center justify-center text-slate-400">
-            <Loader2 className="mr-2 h-5 w-5 animate-spin text-[#EE4D2D]" />
+            <Loader2 className="mr-2 h-5 w-5 animate-spin text-[#111111]" />
             <span className="text-sm">Memuat pesanan...</span>
           </div>
         ) : recentOrders.length === 0 ? (
@@ -216,7 +216,7 @@ function PriorityCard({ label, count, href, ctaLabel }: {
         <p className="text-3xl font-bold leading-tight text-slate-900">{count}</p>
         <p className="mt-1 text-xs font-medium text-slate-600">{label}</p>
       </div>
-      <Link href={href} className="mt-4 text-xs font-semibold text-slate-700 hover:text-[#EE4D2D]">
+      <Link href={href} className="mt-4 text-xs font-bold text-slate-900 hover:text-lime-700">
         {ctaLabel} <span aria-hidden="true">→</span>
       </Link>
     </article>

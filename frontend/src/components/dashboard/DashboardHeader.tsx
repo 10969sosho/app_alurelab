@@ -47,7 +47,7 @@ export function DashboardHeader() {
           className="relative flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
         >
           <Bell className="h-4 w-4" />
-          <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#EE4D2D]" />
+          <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full border border-slate-900 bg-[#C8FF3D]" />
         </button>
         <div
           title={displayName}

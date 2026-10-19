@@ -55,7 +55,7 @@ export default function CategoriesPage() {
           </p>
         </div>
         <span className="inline-flex items-center gap-1.5 self-start rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm">
-          <Tag className="w-3.5 h-3.5 text-[#EE4D2D]" />
+          <Tag className="w-3.5 h-3.5 text-lime-700" />
           {categories.length} Kategori
         </span>
       </div>
@@ -68,7 +68,7 @@ export default function CategoriesPage() {
             name="category"
             ref={categoryInputRef}
             placeholder="Contoh: Kopi, Fashion, Elektronik"
-            className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/15 transition-all"
+            className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30 transition-all"
           />
           <button
             type="submit"
@@ -121,7 +121,7 @@ export default function CategoriesPage() {
           type="button"
           onClick={saveCategories}
           disabled={saving || loading}
-          className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#EE4D2D] hover:bg-[#d73f20] text-white rounded-full text-xs font-semibold disabled:opacity-50 shadow-sm transition-colors"
+          className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#C8FF3D] hover:bg-[#b8f02e] text-[#111111] rounded-full text-xs font-bold disabled:opacity-50 shadow-sm transition-colors"
         >
           <Save className="w-3.5 h-3.5" /> {saving ? 'Menyimpan...' : 'Simpan Master Kategori'}
         </button>

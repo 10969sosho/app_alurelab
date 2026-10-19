@@ -72,7 +72,7 @@ export default function CustomersPage() {
         </div>
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
           <p className="text-[11px] text-slate-500 font-medium">Total Akumulasi Belanja (LTV)</p>
-          <p className="text-lg font-bold text-[#EE4D2D] mt-0.5">{formatRupiah(totalSpendAll)}</p>
+          <p className="text-lg font-bold text-lime-800 mt-0.5">{formatRupiah(totalSpendAll)}</p>
           <span className="text-[10px] text-slate-400">Rata-rata pesanan: {totalOrdersAll} transaksi</span>
         </div>
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
@@ -91,7 +91,7 @@ export default function CustomersPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Cari nama pelanggan, nomor WhatsApp, atau email..."
-            className="w-full pl-8 pr-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20 transition-colors"
+            className="w-full pl-8 pr-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30 transition-colors"
           />
         </div>
         <div className="text-xs text-slate-500 font-medium">
@@ -103,7 +103,7 @@ export default function CustomersPage() {
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
         {isLoading ? (
           <div className="flex items-center justify-center py-24 text-slate-400">
-            <Loader2 className="w-6 h-6 animate-spin text-[#EE4D2D] mr-2" />
+            <Loader2 className="w-6 h-6 animate-spin text-[#111111] mr-2" />
             <span className="text-xs">Memuat data pelanggan...</span>
           </div>
         ) : customers.length === 0 ? (
@@ -138,7 +138,7 @@ export default function CustomersPage() {
                     : rawPhone;
 
                   return (
-                    <tr key={item.id} className="hover:bg-orange-50/20 transition-colors">
+                    <tr key={item.id} className="hover:bg-lime-50/20 transition-colors">
                       <td className="px-3 py-2.5">
                         <div className="flex items-center gap-2.5">
                           <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-slate-600 text-xs shrink-0">
