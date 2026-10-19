@@ -189,9 +189,13 @@ class DokuService
                 'payment_due_date' => 60,
             ],
             'customer' => [
-                'name' => $user->name,
+                'name' => $user->name ?: 'Merchant',
                 'email' => $user->email,
-                'phone' => $this->sanitizePhoneNumber($user->phone_number ?: $store->phone_number),
+                'phone' => $this->sanitizePhoneNumber(
+                    (! empty($user->phone_number) && $user->phone_number !== '-')
+                        ? $user->phone_number
+                        : $store->phone_number
+                ),
             ],
         ];
 

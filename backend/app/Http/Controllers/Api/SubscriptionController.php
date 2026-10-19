@@ -91,20 +91,20 @@ class SubscriptionController extends Controller
         ]);
 
         $user = $request->user();
+        $rawPhone = $validated['phone'] ?? $user?->phone_number ?? $store->phone_number;
+        $cleanPhone = $this->dokuService->sanitizePhoneNumber($rawPhone);
+
         if ($request->filled('phone')) {
-            $clean = $this->dokuService->sanitizePhoneNumber($validated['phone']);
-            if ($user && (! $user->phone_number || $user->phone_number === '-')) {
-                $user->update(['phone_number' => $clean]);
+            if ($user) {
+                $user->update(['phone_number' => $cleanPhone]);
             }
-            if (! $store->phone_number || $store->phone_number === '-') {
-                $store->update(['phone_number' => $clean]);
-            }
+            $store->update(['phone_number' => $cleanPhone]);
         } else {
-            if ($user && $user->phone_number === '-') {
-                $user->update(['phone_number' => null]);
+            if (empty($store->phone_number) || $store->phone_number === '-') {
+                $store->update(['phone_number' => $cleanPhone]);
             }
-            if ($store->phone_number === '-') {
-                $store->update(['phone_number' => null]);
+            if ($user && (empty($user->phone_number) || $user->phone_number === '-')) {
+                $user->update(['phone_number' => $cleanPhone]);
             }
         }
 
