@@ -29,7 +29,6 @@ const navGroups = [
     items: [
       { href: '/dashboard', label: 'Ringkasan Beranda', icon: LayoutDashboard, exact: true },
       { href: '/dashboard/orders', label: 'Pesanan Saya', icon: ShoppingBag },
-      { href: '/dashboard/orders?tab=return', label: 'Pengembalian/Pembatalan', icon: RotateCcw },
       { href: '/dashboard/products', label: 'Produk Saya', icon: Package },
       { href: '/dashboard/categories', label: 'Master Kategori', icon: Tags },
       { href: '/dashboard/cms', label: 'Tampilan Toko (CMS)', icon: Palette, exact: true },
