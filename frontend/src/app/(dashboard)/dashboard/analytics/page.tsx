@@ -57,11 +57,11 @@ export default function AnalyticsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-1.5 bg-white border border-slate-200 p-0.5 rounded-xs self-start sm:self-auto text-xs">
+        <div className="flex items-center gap-1.5 bg-white border border-slate-200 p-1 rounded-full self-start sm:self-auto text-xs">
           <button
             type="button"
             onClick={() => setPeriod('7days')}
-            className={`px-3 py-1 rounded-xs font-medium transition-colors ${
+            className={`px-3 py-1 rounded-full font-medium transition-colors ${
               period === '7days'
                 ? 'bg-[#EE4D2D] text-white'
                 : 'text-slate-600 hover:text-slate-900'
@@ -72,7 +72,7 @@ export default function AnalyticsPage() {
           <button
             type="button"
             onClick={() => setPeriod('30days')}
-            className={`px-3 py-1 rounded-xs font-medium transition-colors ${
+            className={`px-3 py-1 rounded-full font-medium transition-colors ${
               period === '30days'
                 ? 'bg-[#EE4D2D] text-white'
                 : 'text-slate-600 hover:text-slate-900'
@@ -85,10 +85,10 @@ export default function AnalyticsPage() {
 
       {/* ─── 2. Metric Grid ─── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
-        <div className="bg-white border border-slate-200 rounded-xs p-3 shadow-2xs">
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-[11px] text-slate-500 font-medium">Total Penjualan (GMV)</span>
-            <div className="w-6 h-6 rounded-xs bg-orange-50 text-[#EE4D2D] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-orange-50 text-[#EE4D2D] flex items-center justify-center">
               <TrendingUp className="w-3.5 h-3.5" />
             </div>
           </div>
@@ -104,10 +104,10 @@ export default function AnalyticsPage() {
           )}
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xs p-3 shadow-2xs">
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-[11px] text-slate-500 font-medium">Total Pesanan Masuk</span>
-            <div className="w-6 h-6 rounded-xs bg-blue-50 text-blue-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
               <ShoppingBag className="w-3.5 h-3.5" />
             </div>
           </div>
@@ -119,10 +119,10 @@ export default function AnalyticsPage() {
           </span>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xs p-3 shadow-2xs">
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-[11px] text-slate-500 font-medium">Rata-rata Nilai Pesanan</span>
-            <div className="w-6 h-6 rounded-xs bg-purple-50 text-purple-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
               <DollarSign className="w-3.5 h-3.5" />
             </div>
           </div>
@@ -132,10 +132,10 @@ export default function AnalyticsPage() {
           <span className="text-[10px] text-slate-400">Basket size per checkout</span>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xs p-3 shadow-2xs">
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-[11px] text-slate-500 font-medium">Konversi Pembeli</span>
-            <div className="w-6 h-6 rounded-xs bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
               <Users className="w-3.5 h-3.5" />
             </div>
           </div>
@@ -147,7 +147,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* ─── 3. Sales Trend Bar Chart (Native CSS Ponytail) ─── */}
-      <div className="bg-white border border-slate-200 rounded-xs p-3.5 shadow-2xs">
+      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-1.5">
             <BarChart3 className="w-4 h-4 text-[#EE4D2D]" />
@@ -173,7 +173,7 @@ export default function AnalyticsPage() {
                     </span>
                     <div
                       style={{ height: `${heightPct}%` }}
-                      className="w-full max-w-[42px] bg-gradient-to-t from-[#EE4D2D] to-orange-400 rounded-t-xs transition-all group-hover:brightness-110"
+                       className="w-full max-w-[42px] bg-gradient-to-t from-[#EE4D2D] to-orange-400 rounded-t-lg transition-all group-hover:brightness-110"
                     />
                     <span className="text-[10px] text-slate-500 font-mono mt-1">
                       {c.label}
@@ -191,8 +191,8 @@ export default function AnalyticsPage() {
       </div>
 
       {/* ─── 4. Top Selling Products ─── */}
-      <div className="bg-white border border-slate-200 rounded-xs overflow-hidden shadow-2xs">
-        <div className="px-3.5 py-2.5 border-b border-slate-100 flex items-center justify-between">
+      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+        <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
           <h2 className="text-xs font-bold text-slate-800">5 Produk Terlaris</h2>
           <span className="text-[11px] text-slate-400">Peringkat performa omset</span>
         </div>
@@ -201,8 +201,8 @@ export default function AnalyticsPage() {
           {topProducts.map((prod: any, idx: number) => {
             const coverImage = prod.images?.[0] || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200';
             return (
-              <div key={prod.id} className="px-3.5 py-2.5 flex items-center gap-3 hover:bg-orange-50/20 transition-colors">
-                <span className={`w-5 h-5 rounded-xs flex items-center justify-center font-bold text-xs shrink-0 ${
+              <div key={prod.id} className="px-5 py-3.5 flex items-center gap-3 hover:bg-slate-50 transition-colors">
+                <span className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
                   idx === 0 ? 'bg-[#EE4D2D] text-white' : idx === 1 ? 'bg-orange-100 text-orange-800' : 'bg-slate-100 text-slate-600'
                 }`}>
                   {idx + 1}
@@ -211,7 +211,7 @@ export default function AnalyticsPage() {
                 <img
                   src={coverImage}
                   alt={prod.title}
-                  className="w-10 h-10 rounded-xs object-cover border border-slate-200 bg-slate-50 shrink-0"
+                  className="w-10 h-10 rounded-xl object-cover border border-slate-200 bg-slate-50 shrink-0"
                 />
 
                 <div className="flex-1 min-w-0">

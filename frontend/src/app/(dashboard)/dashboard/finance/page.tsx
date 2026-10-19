@@ -116,7 +116,7 @@ export default function FinancePage() {
             setAccountHolder(bankAccount?.account_holder || '');
             setIsWithdrawOpen(true);
           }}
-          className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#EE4D2D] hover:bg-[#d73f20] text-white text-xs font-semibold rounded-xs transition-colors shadow-2xs disabled:opacity-40 self-start sm:self-auto"
+          className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#EE4D2D] hover:bg-[#d73f20] text-white text-xs font-semibold rounded-full transition-colors shadow-sm disabled:opacity-40 self-start sm:self-auto"
         >
           <ArrowUpRight className="w-3.5 h-3.5 stroke-[2.5]" />
            <span>Tarik Dana ke Rekening</span>
@@ -131,10 +131,10 @@ export default function FinancePage() {
       {/* ─── 2. Wallet Balance & Bank Cards ─── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
         {/* Available Balance */}
-        <div className="bg-white border border-slate-200 rounded-xs p-3.5 shadow-2xs">
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-[11px] text-slate-500 font-medium">Saldo Siap Ditarik</span>
-            <span className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-xs font-semibold">
+            <span className="text-[10px] text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full font-semibold">
               Bebas Dicairkan
             </span>
           </div>
@@ -147,10 +147,10 @@ export default function FinancePage() {
         </div>
 
         {/* Escrow Held Balance */}
-        <div className="bg-white border border-slate-200 rounded-xs p-3.5 shadow-2xs">
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-[11px] text-slate-500 font-medium">Saldo Escrow Tertahan</span>
-            <span className="text-[10px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-xs font-semibold flex items-center gap-1">
+            <span className="text-[10px] text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full font-semibold flex items-center gap-1">
               <ShieldCheck className="w-3 h-3" />
               Rekening Bersama
             </span>
@@ -164,7 +164,7 @@ export default function FinancePage() {
         </div>
 
         {/* Bank Account Info Card */}
-        <div className="bg-white border border-slate-200 rounded-xs p-3.5 shadow-2xs flex flex-col justify-between">
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-1.5 text-slate-700 font-bold text-xs mb-1">
               <Building2 className="w-3.5 h-3.5 text-[#EE4D2D]" />
@@ -182,7 +182,7 @@ export default function FinancePage() {
       </div>
 
       {/* ─── 3. History Tabs & Table ─── */}
-      <div className="bg-white border border-slate-200 rounded-xs overflow-hidden shadow-2xs">
+      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
         {/* Tab Headers */}
         <div className="border-b border-slate-200 px-3 flex items-center gap-6 text-xs bg-[#FAFAFA]">
           <button
@@ -254,7 +254,7 @@ export default function FinancePage() {
                         {formatRupiah(Number(item.fee_amount || 3000))}
                       </td>
                       <td className="px-3 py-2.5">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-xs border text-[10px] font-semibold bg-emerald-50 text-emerald-700 border-emerald-200">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border text-[10px] font-semibold bg-emerald-50 text-emerald-700 border-emerald-200">
                           <CheckCircle2 className="w-3 h-3" />
                           Berhasil (Sukses)
                         </span>
@@ -293,7 +293,7 @@ export default function FinancePage() {
                         {tx.description}
                       </td>
                       <td className="px-3 py-2.5">
-                        <span className="text-[10px] font-mono uppercase text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-xs">
+                        <span className="text-[10px] font-mono uppercase text-slate-500 bg-slate-100 px-2 py-1 rounded-full">
                           {tx.type}
                         </span>
                       </td>
@@ -315,7 +315,7 @@ export default function FinancePage() {
       {/* ─── 4. Modal Tarik Dana ─── */}
       {isWithdrawOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-2xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xs border border-slate-200 shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
               <h3 className="font-bold text-slate-800 text-xs">Penarikan Dana ke Rekening</h3>
               <button
@@ -328,7 +328,7 @@ export default function FinancePage() {
             </div>
 
             <form onSubmit={handleWithdrawSubmit} className="p-4 space-y-3 text-xs">
-              <div className="bg-orange-50/70 border border-orange-200 rounded-xs p-2.5">
+              <div className="bg-orange-50/70 border border-orange-200 rounded-xl p-3">
                 <p className="text-[11px] text-slate-600">
                   Saldo yang dapat ditarik: <strong className="text-slate-900">{formatRupiah(Number(wallet.available_balance))}</strong>
                 </p>
@@ -344,7 +344,7 @@ export default function FinancePage() {
                   value={withdrawAmount}
                   onChange={(e) => setWithdrawAmount(e.target.value)}
                   placeholder="Contoh: 150000"
-                  className="w-full px-3 py-1.5 border border-slate-300 rounded-xs outline-none focus:border-[#EE4D2D] font-mono text-sm"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20 font-mono text-sm"
                   required
                 />
               </div>
@@ -355,7 +355,7 @@ export default function FinancePage() {
                   <select
                     value={bankCode}
                     onChange={(e) => setBankCode(e.target.value)}
-                    className="w-full px-2.5 py-1.5 border border-slate-300 rounded-xs outline-none focus:border-[#EE4D2D]"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20"
                   >
                     <option value="BCA">BCA</option>
                     <option value="MANDIRI">Bank Mandiri</option>
@@ -371,7 +371,7 @@ export default function FinancePage() {
                     value={accountNumber}
                     onChange={(e) => setAccountNumber(e.target.value)}
                     placeholder="Nomor rekening"
-                    className="w-full px-3 py-1.5 border border-slate-300 rounded-xs outline-none focus:border-[#EE4D2D] font-mono"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20 font-mono"
                     required
                   />
                 </div>
@@ -384,7 +384,7 @@ export default function FinancePage() {
                   value={accountHolder}
                   onChange={(e) => setAccountHolder(e.target.value)}
                   placeholder="Nama sesuai buku tabungan"
-                  className="w-full px-3 py-1.5 border border-slate-300 rounded-xs outline-none focus:border-[#EE4D2D]"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20"
                   required
                 />
               </div>
@@ -393,14 +393,14 @@ export default function FinancePage() {
                 <button
                   type="button"
                   onClick={() => setIsWithdrawOpen(false)}
-                  className="px-3 py-1.5 border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xs"
+                  className="px-3 py-2 border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-full"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={withdrawMutation.isPending}
-                  className="px-4 py-1.5 bg-[#EE4D2D] hover:bg-[#d73f20] text-white font-semibold rounded-xs transition-colors disabled:opacity-50"
+                  className="px-4 py-2 bg-[#EE4D2D] hover:bg-[#d73f20] text-white font-semibold rounded-full transition-colors disabled:opacity-50"
                 >
                   {withdrawMutation.isPending ? 'Memproses...' : 'Konfirmasi Tarik Dana'}
                 </button>

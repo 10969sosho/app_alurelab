@@ -107,7 +107,7 @@ export default function ShippingPage() {
                   bulkShipMutation.mutate({ orderIds: selectedIds, courierCode: courierFilter || 'jne' });
                 }
               }}
-              className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-[#EE4D2D] hover:bg-[#d73f20] text-white text-xs font-semibold rounded-xs transition-colors shadow-2xs disabled:opacity-50"
+              className="inline-flex items-center gap-1 px-4 py-2 bg-[#EE4D2D] hover:bg-[#d73f20] text-white text-xs font-semibold rounded-full transition-colors shadow-sm disabled:opacity-50"
             >
               <Send className="w-3.5 h-3.5" />
               <span>Kirim ({selectedIds.length}) Pesanan</span>
@@ -116,7 +116,7 @@ export default function ShippingPage() {
 
           <Link
             href="/dashboard/orders"
-            className="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-medium rounded-xs transition-colors shadow-2xs"
+            className="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-medium rounded-full transition-colors shadow-sm"
           >
             Lihat Semua Pesanan
           </Link>
@@ -125,17 +125,17 @@ export default function ShippingPage() {
 
       {/* Metric Cards Banner */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-        <div className="bg-white border border-slate-200 rounded-xs p-3 shadow-2xs">
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
           <p className="text-[11px] text-slate-500 font-medium">Perlu Pengiriman</p>
           <p className="text-lg font-bold text-[#EE4D2D] mt-0.5">{total}</p>
           <span className="text-[10px] text-slate-400">Pesanan telah dibayar pembeli</span>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xs p-3 shadow-2xs">
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
           <p className="text-[11px] text-slate-500 font-medium">Terpilih untuk Pickup</p>
           <p className="text-lg font-bold text-blue-600 mt-0.5">{selectedIds.length}</p>
           <span className="text-[10px] text-slate-400">Siap cetak label dan kirim</span>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xs p-3 shadow-2xs">
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
           <p className="text-[11px] text-slate-500 font-medium">Layanan Ekspedisi</p>
           <p className="text-lg font-bold text-slate-800 mt-0.5">Biteship Multi-Kurir</p>
           <span className="text-[10px] text-emerald-600 font-medium">● Terhubung otomatis</span>
@@ -143,7 +143,7 @@ export default function ShippingPage() {
       </div>
 
       {/* Filter Toolbar */}
-      <div className="bg-white border border-slate-200 rounded-xs p-3 flex flex-wrap items-center gap-2.5">
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-wrap items-center gap-2.5 shadow-sm">
         <div className="relative flex-1 min-w-[240px]">
           <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
           <input
@@ -151,14 +151,14 @@ export default function ShippingPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Cari nomor pesanan, penerima, atau nomor HP..."
-            className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-300 rounded-xs text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-[#EE4D2D] transition-colors"
+            className="w-full pl-8 pr-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20 transition-colors"
           />
         </div>
 
         <select
           value={courierFilter}
           onChange={(e) => setCourierFilter(e.target.value)}
-          className="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xs text-xs text-slate-700 outline-none focus:border-[#EE4D2D]"
+          className="px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-700 outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20"
         >
           <option value="">Semua Kurir</option>
           <option value="jne">JNE Express</option>
@@ -169,7 +169,7 @@ export default function ShippingPage() {
       </div>
 
       {/* Compact Orders Table */}
-      <div className="bg-white border border-slate-200 rounded-xs overflow-hidden shadow-2xs">
+      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
         {isLoading ? (
           <div className="flex items-center justify-center py-24 text-slate-400">
             <Loader2 className="w-6 h-6 animate-spin text-[#EE4D2D] mr-2" />
@@ -195,7 +195,7 @@ export default function ShippingPage() {
                       type="checkbox"
                       checked={isAllSelected}
                       onChange={(e) => handleSelectAll(e.target.checked)}
-                      className="rounded-xs border-slate-300 text-[#EE4D2D] focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                      className="rounded-sm border-slate-300 text-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20 cursor-pointer"
                     />
                   </th>
                   <th className="px-3 py-2.5 min-w-[180px]">No. Pesanan</th>
@@ -221,7 +221,7 @@ export default function ShippingPage() {
                           type="checkbox"
                           checked={isChecked}
                           onChange={(e) => handleSelectOne(item.id, e.target.checked)}
-                          className="rounded-xs border-slate-300 text-[#EE4D2D] focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                          className="rounded-sm border-slate-300 text-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20 cursor-pointer"
                         />
                       </td>
 
@@ -257,7 +257,7 @@ export default function ShippingPage() {
                       </td>
 
                       <td className="px-3 py-2.5">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-xs text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
                           Siap Kirim
                         </span>
                       </td>
@@ -268,7 +268,7 @@ export default function ShippingPage() {
                           onClick={() => {
                             bulkShipMutation.mutate({ orderIds: [item.id], courierCode: item.courier_code || 'jne' });
                           }}
-                          className="px-2.5 py-1 bg-[#EE4D2D] hover:bg-[#d73f20] text-white text-[11px] font-semibold rounded-xs transition-colors shadow-2xs"
+                          className="px-3 py-1.5 bg-[#EE4D2D] hover:bg-[#d73f20] text-white text-[11px] font-semibold rounded-full transition-colors shadow-sm"
                         >
                           Kirim Sekarang
                         </button>
@@ -292,7 +292,7 @@ export default function ShippingPage() {
                 type="button"
                 disabled={page <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="p-1 rounded-xs border border-slate-300 disabled:opacity-30 hover:bg-white bg-slate-50 transition-colors"
+                className="p-1.5 rounded-full border border-slate-300 disabled:opacity-30 hover:bg-white bg-slate-50 transition-colors"
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
               </button>
@@ -303,7 +303,7 @@ export default function ShippingPage() {
                 type="button"
                 disabled={page >= lastPage}
                 onClick={() => setPage((p) => Math.min(lastPage, p + 1))}
-                className="p-1 rounded-xs border border-slate-300 disabled:opacity-30 hover:bg-white bg-slate-50 transition-colors"
+                className="p-1.5 rounded-full border border-slate-300 disabled:opacity-30 hover:bg-white bg-slate-50 transition-colors"
               >
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>

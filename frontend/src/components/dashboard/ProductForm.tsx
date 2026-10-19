@@ -228,7 +228,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
         <div className="flex items-center gap-2.5">
           <Link
             href="/dashboard/products"
-            className="p-1.5 rounded-xs bg-white border border-slate-300 text-slate-600 hover:bg-slate-50 transition-colors"
+            className="p-1.5 rounded-full bg-white border border-slate-300 text-slate-600 hover:bg-slate-50 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
@@ -245,7 +245,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
         <button
           type="submit"
           disabled={isSubmitting}
-          className="px-4 py-2 bg-[#EE4D2D] hover:bg-[#d73f20] disabled:opacity-50 text-white text-xs font-semibold rounded-xs flex items-center gap-1.5 transition-colors shadow-2xs self-start sm:self-auto"
+          className="px-4 py-2 bg-[#EE4D2D] hover:bg-[#d73f20] disabled:opacity-50 text-white text-xs font-semibold rounded-full flex items-center gap-1.5 transition-colors shadow-sm self-start sm:self-auto"
         >
           {isSubmitting ? (
             <>
@@ -262,7 +262,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
       </div>
 
       {/* ─── 1. Informasi Dasar ─── */}
-      <div className="bg-white rounded-xs border border-slate-200 p-4 space-y-3 shadow-2xs">
+      <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3 shadow-sm">
         <div className="flex items-center gap-2 text-slate-800 font-bold text-xs border-b border-slate-100 pb-2.5">
           <Package className="w-4 h-4 text-[#EE4D2D]" />
           <h2>Informasi Dasar Produk</h2>
@@ -275,7 +275,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
           <input
             {...register('title')}
             placeholder="Contoh: Kemeja Linen Katun Premium L-Kids Series"
-            className={`w-full px-3 py-1.5 rounded-xs border text-xs outline-none transition-colors ${
+            className={`w-full px-3 py-2 rounded-xl border text-xs outline-none transition-colors focus:ring-2 focus:ring-[#EE4D2D]/20 ${
               errors.title
                 ? 'border-red-400 bg-red-50 focus:border-red-500'
                 : 'border-slate-300 focus:border-[#EE4D2D]'
@@ -295,7 +295,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
               {...register('category_name')}
               list="product-categories"
               placeholder="Cari kategori..."
-              className="w-full px-3 py-1.5 rounded-xs border border-slate-300 text-xs outline-none focus:border-[#EE4D2D]"
+              className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20"
             />
             <datalist id="product-categories">
               {categories.map((category) => <option key={category} value={category} />)}
@@ -330,13 +330,13 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
             {...register('description')}
             rows={3}
             placeholder="Jelaskan spesifikasi, bahan material, dan keunggulan produk Anda..."
-            className="w-full px-3 py-1.5 rounded-xs border border-slate-300 text-xs outline-none focus:border-[#EE4D2D]"
+            className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20"
           />
         </div>
       </div>
 
       {/* ─── 2. Foto & Media Produk ─── */}
-      <div className="bg-white rounded-xs border border-slate-200 p-4 space-y-3 shadow-2xs">
+      <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3 shadow-sm">
         <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
           <div className="flex items-center gap-2 text-slate-800 font-bold text-xs">
             <ImageIcon className="w-4 h-4 text-[#EE4D2D]" />
@@ -346,7 +346,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
         </div>
 
         {/* Drag-and-Drop & File Picker Zone */}
-        <label className={`block relative border border-dashed rounded-xs p-5 text-center cursor-pointer transition-colors ${
+        <label className={`block relative border border-dashed rounded-2xl p-6 text-center cursor-pointer transition-colors ${
           isUploading
             ? 'border-orange-400 bg-orange-50/50 cursor-not-allowed'
             : 'border-slate-300 hover:border-[#EE4D2D] bg-slate-50/60'
@@ -360,7 +360,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
             className="sr-only"
           />
           <div className="flex flex-col items-center justify-center gap-1.5">
-            <div className="w-9 h-9 rounded-xs bg-orange-50 text-[#EE4D2D] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-orange-50 text-[#EE4D2D] flex items-center justify-center">
               {isUploading ? (
                 <Loader2 className="w-4 h-4 animate-spin text-[#EE4D2D]" />
               ) : (
@@ -386,7 +386,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
               {images.map((imgUrl, index) => (
                 <div
                   key={index}
-                  className={`group relative rounded-xs overflow-hidden border transition-all ${
+                  className={`group relative rounded-xl overflow-hidden border transition-all ${
                     index === 0
                       ? 'border-[#EE4D2D] ring-1 ring-[#EE4D2D]'
                       : 'border-slate-200'
@@ -403,7 +403,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
 
                   {/* Primary Cover Badge */}
                   {index === 0 ? (
-                    <div className="absolute top-1 left-1 bg-[#EE4D2D] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-xs flex items-center gap-0.5 shadow-xs">
+                    <div className="absolute top-1 left-1 bg-[#EE4D2D] text-white text-[9px] font-bold px-2 py-1 rounded-full flex items-center gap-0.5 shadow-sm">
                       <Star className="w-2.5 h-2.5 fill-white" />
                       <span>Cover</span>
                     </div>
@@ -411,7 +411,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
                     <button
                       type="button"
                       onClick={() => handleSetPrimaryImage(index)}
-                      className="absolute top-1 left-1 bg-black/70 hover:bg-[#EE4D2D] text-white text-[9px] font-medium px-1.5 py-0.5 rounded-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute top-1 left-1 bg-black/70 hover:bg-[#EE4D2D] text-white text-[9px] font-medium px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       Jadikan Cover
                     </button>
@@ -421,7 +421,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
                   <button
                     type="button"
                     onClick={() => handleRemoveImage(index)}
-                    className="absolute top-1 right-1 p-1 bg-red-600 text-white rounded-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-1 right-1 p-1.5 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                     title="Hapus Foto"
                   >
                     <Trash2 className="w-3 h-3" />
@@ -439,12 +439,12 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
             value={newImageUrl}
             onChange={(e) => setNewImageUrl(e.target.value)}
             placeholder="Atau tempel tautan URL gambar..."
-            className="flex-1 px-3 py-1.5 rounded-xs border border-slate-300 text-xs outline-none focus:border-[#EE4D2D]"
+            className="flex-1 px-3 py-2 rounded-xl border border-slate-300 text-xs outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20"
           />
           <button
             type="button"
             onClick={handleAddImage}
-            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-xs flex items-center gap-1 transition-colors"
+            className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-full flex items-center gap-1 transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Tambah URL</span>
@@ -453,7 +453,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
       </div>
 
       {/* ─── 3. Harga & Pengiriman ─── */}
-      <div className="bg-white rounded-xs border border-slate-200 p-4 space-y-3 shadow-2xs">
+      <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3 shadow-sm">
         <div className="flex items-center gap-2 text-slate-800 font-bold text-xs border-b border-slate-100 pb-2.5">
           <DollarSign className="w-4 h-4 text-[#EE4D2D]" />
           <h2>Harga & Berat Produk</h2>
@@ -461,7 +461,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
 
         {/* Notice when variants are enabled */}
         {hasVariants ? (
-          <div className="bg-orange-50 border border-orange-200 rounded-xs p-3 flex items-start gap-2.5">
+          <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-start gap-2.5">
             <Info className="w-4 h-4 text-[#EE4D2D] shrink-0 mt-0.5" />
             <div className="text-xs text-slate-700 leading-relaxed">
               <p className="font-bold text-slate-900">Mode Varian Aktif</p>
@@ -486,7 +486,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
                   type="number"
                   {...register('price')}
                   placeholder="150000"
-                  className={`w-full px-3 py-1.5 rounded-xs border text-xs outline-none transition-colors ${
+                  className={`w-full px-3 py-2 rounded-xl border text-xs outline-none transition-colors focus:ring-2 focus:ring-[#EE4D2D]/20 ${
                     errors.price
                       ? 'border-red-400 bg-red-50 focus:border-red-500'
                       : 'border-slate-300 focus:border-[#EE4D2D]'
@@ -505,7 +505,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
                   type="number"
                   {...register('compare_at_price')}
                   placeholder="199000"
-                  className="w-full px-3 py-1.5 rounded-xs border border-slate-300 text-xs outline-none focus:border-[#EE4D2D]"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20"
                 />
               </div>
 
@@ -517,7 +517,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
                   type="number"
                   {...register('cost_price')}
                   placeholder="75000"
-                  className="w-full px-3 py-1.5 rounded-xs border border-slate-300 text-xs outline-none focus:border-[#EE4D2D]"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20"
                 />
               </div>
             </div>
@@ -531,7 +531,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
                   type="number"
                   {...register('weight_grams')}
                   placeholder="250"
-                  className="w-full px-3 py-1.5 pr-14 rounded-xs border border-slate-300 text-xs outline-none focus:border-[#EE4D2D]"
+                  className="w-full px-3 py-2 pr-14 rounded-xl border border-slate-300 text-xs outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-slate-400 font-medium">
                   gram
@@ -546,7 +546,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
       </div>
 
       {/* ─── 4. Varian Produk ─── */}
-      <div className="bg-white rounded-xs border border-slate-200 p-4 space-y-3 shadow-2xs">
+      <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3 shadow-sm">
         <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
           <div className="flex items-center gap-2 text-slate-800 font-bold text-xs">
             <Layers className="w-4 h-4 text-[#EE4D2D]" />
@@ -587,7 +587,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
               {fields.map((field, index) => (
                 <div
                   key={field.id}
-                  className="flex flex-col sm:flex-row items-start sm:items-center gap-2.5 p-3 bg-slate-50/70 rounded-xs border border-slate-200"
+                  className="flex flex-col sm:flex-row items-start sm:items-center gap-2.5 p-4 bg-slate-50/70 rounded-xl border border-slate-200"
                 >
                   <div className="flex-1 min-w-[140px]">
                     <label className="block text-[10px] font-semibold text-slate-500 mb-0.5">
@@ -596,7 +596,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
                     <input
                       {...register(`variants.${index}.title` as const)}
                       placeholder="Contoh: Merah / XL"
-                      className="w-full px-2.5 py-1.5 bg-white rounded-xs border border-slate-300 text-xs outline-none focus:border-[#EE4D2D]"
+                      className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20"
                     />
                   </div>
 
@@ -608,7 +608,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
                       type="number"
                       {...register(`variants.${index}.price` as const)}
                       placeholder="150000"
-                      className="w-full px-2.5 py-1.5 bg-white rounded-xs border border-slate-300 text-xs outline-none focus:border-[#EE4D2D] font-mono"
+                      className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20 font-mono"
                     />
                   </div>
 
@@ -620,7 +620,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
                       type="number"
                       {...register(`variants.${index}.weight_grams` as const)}
                       placeholder="200"
-                      className="w-full px-2.5 py-1.5 bg-white rounded-xs border border-slate-300 text-xs outline-none focus:border-[#EE4D2D] font-mono"
+                      className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20 font-mono"
                     />
                   </div>
 
@@ -632,7 +632,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
                       type="number"
                       {...register(`variants.${index}.stock` as const)}
                       placeholder="50"
-                      className="w-full px-2.5 py-1.5 bg-white rounded-xs border border-slate-300 text-xs outline-none focus:border-[#EE4D2D] font-mono"
+                      className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20 font-mono"
                     />
                   </div>
 
@@ -643,14 +643,14 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
                     <input
                       {...register(`variants.${index}.sku` as const)}
                       placeholder="SKU-01"
-                      className="w-full px-2.5 py-1.5 bg-white rounded-xs border border-slate-300 text-xs outline-none focus:border-[#EE4D2D] font-mono uppercase"
+                      className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/20 font-mono uppercase"
                     />
                   </div>
 
                   <button
                     type="button"
                     onClick={() => remove(index)}
-                    className="p-1.5 text-slate-400 hover:text-red-600 rounded-xs hover:bg-red-50 transition-colors sm:mt-4"
+                    className="p-1.5 text-slate-400 hover:text-red-600 rounded-full hover:bg-red-50 transition-colors sm:mt-4"
                     title="Hapus Varian"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -662,7 +662,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
             <button
               type="button"
               onClick={() => append({ title: '', price: lowestVariantPrice || 100000, stock: 10, weight_grams: firstVariantWeight || 200, sku: '' })}
-              className="px-3.5 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xs flex items-center gap-1.5 transition-colors shadow-2xs"
+              className="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-full flex items-center gap-1.5 transition-colors shadow-sm"
             >
               <Plus className="w-3.5 h-3.5 text-[#EE4D2D]" />
               <span>Tambah Baris Varian</span>

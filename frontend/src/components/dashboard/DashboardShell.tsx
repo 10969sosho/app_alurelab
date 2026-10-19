@@ -13,11 +13,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const fullscreen = pathname === '/dashboard/cms/editor';
 
   if (fullscreen) {
-    return <div className="h-screen overflow-hidden bg-[#F8F9FA] text-[#333333]">{children}</div>;
+    return <div className="h-screen overflow-hidden bg-[#f6f6f6] text-slate-900">{children}</div>;
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F8F9FA] text-[#333333]">
+    <div className="flex h-screen overflow-hidden bg-[#f6f6f6] text-slate-900">
       {/* Sidebar (desktop) */}
       <div className="hidden lg:flex lg:flex-shrink-0">
         <Sidebar />
@@ -29,7 +29,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <DashboardHeader />
 
         {/* Page Content */}
-        <main className="flex-1 min-h-0 overflow-y-auto px-4 py-3 sm:px-5 sm:py-4">
+        <main className="flex-1 min-h-0 overflow-y-auto px-4 py-5 sm:px-6">
           {children}
         </main>
       </div>
