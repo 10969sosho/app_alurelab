@@ -11,7 +11,7 @@ interface BuyerBottomNavProps {
 
 export default function BuyerBottomNav({ storeSlug }: BuyerBottomNavProps) {
   const pathname = usePathname();
-  const totalItems = useCartStore((state) => state.getTotalItems());
+  const totalItems = useCartStore((state) => state.getTotalItems(storeSlug));
 
   const isHome =
     pathname === `/${storeSlug}` || pathname === `/${storeSlug}/`;

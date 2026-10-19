@@ -12,7 +12,6 @@ import {
   Loader2,
   Package,
   Palette,
-  Truck,
 } from 'lucide-react';
 import api from '@/lib/api';
 
@@ -39,9 +38,9 @@ interface GuideCard {
 const GUIDE_CARDS: GuideCard[] = [
   {
     key: 'products_added',
-    title: 'Add your first product',
-    description: 'Start with a title, price, and a photo.',
-    ctaLabel: 'Tambah Produk',
+    title: 'Tambah produk pertama',
+    description: 'Masukkan nama, harga, dan foto produk untuk mulai menjual.',
+    ctaLabel: 'Tambah produk',
     href: '/dashboard/products/new',
     icon: Package,
     iconBg: 'bg-blue-50',
@@ -49,9 +48,9 @@ const GUIDE_CARDS: GuideCard[] = [
   },
   {
     key: 'design_chosen',
-    title: 'Choose your store design',
-    description: 'Pick a theme that fits your brand, then customize from there.',
-    ctaLabel: 'Pilih Desain',
+    title: 'Kustomisasi toko online',
+    description: 'Pilih tampilan toko dan sesuaikan warna, banner, serta cerita brand Anda.',
+    ctaLabel: 'Kustomisasi toko',
     href: '/dashboard/cms',
     icon: Palette,
     iconBg: 'bg-purple-50',
@@ -59,29 +58,19 @@ const GUIDE_CARDS: GuideCard[] = [
   },
   {
     key: 'payments_configured',
-    title: 'Set up payments',
-    description: 'Choose a payment provider to let customers pay by QRIS, Virtual Account, or COD (DOKU).',
-    ctaLabel: 'Aktivasi Pembayaran',
+    title: 'Atur pembayaran & rekening bank',
+    description: 'Aktifkan QRIS, Virtual Account, atau COD, lalu isi rekening pencairan dana.',
+    ctaLabel: 'Atur pembayaran',
     href: '/dashboard/settings?tab=payment',
     icon: CreditCard,
     iconBg: 'bg-emerald-50',
     iconColor: 'text-emerald-600',
   },
   {
-    key: 'shipping_configured',
-    title: 'Review shipping rates',
-    description: 'Look over the defaults set up for you based on your location (Biteship).',
-    ctaLabel: 'Atur Pengiriman',
-    href: '/dashboard/settings?tab=address',
-    icon: Truck,
-    iconBg: 'bg-orange-50',
-    iconColor: 'text-[#EE4D2D]',
-  },
-  {
     key: 'domain_connected',
-    title: 'Get a custom domain',
-    description: "Give your store a branded URL that's easy to find, trust, and remember.",
-    ctaLabel: 'Atur Domain',
+    title: 'Hubungkan domain toko',
+    description: 'Gunakan alamat domain sendiri agar toko lebih mudah dipercaya dan diingat.',
+    ctaLabel: 'Hubungkan domain',
     href: '/dashboard/settings?tab=domain',
     icon: Globe,
     iconBg: 'bg-slate-100',
@@ -102,7 +91,7 @@ export function SetupGuide() {
   });
 
   const completed = data?.completed ?? 0;
-  const total = data?.total ?? 5;
+  const total = data?.total ?? 4;
   const percent = data?.percent ?? 0;
   const allDone = completed >= total;
 
@@ -150,7 +139,7 @@ export function SetupGuide() {
           <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-500 ${
-                allDone ? 'bg-emerald-500' : percent >= 40 ? 'bg-[#EE4D2D]' : 'bg-amber-400'
+                allDone ? 'bg-emerald-500' : percent >= 50 ? 'bg-[#EE4D2D]' : 'bg-amber-400'
               }`}
               style={{ width: `${isLoading ? 0 : percent}%` }}
             />
@@ -193,7 +182,7 @@ export function SetupGuide() {
                       </p>
                       {isDone && (
                         <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-xs whitespace-nowrap">
-                          <CheckCircle2 className="w-2.5 h-2.5" /> Done
+                          <CheckCircle2 className="w-2.5 h-2.5" /> Selesai
                         </span>
                       )}
                     </div>
@@ -218,7 +207,7 @@ export function SetupGuide() {
       {allDone && !dismissed && (
         <div className="px-3.5 py-2.5 border-t border-emerald-100 bg-emerald-50/60">
           <p className="text-[11px] font-semibold text-emerald-700">
-            🎉 Hebat! Semua langkah penyiapan toko Anda sudah selesai.
+            Semua langkah penyiapan toko Anda sudah selesai.
           </p>
         </div>
       )}

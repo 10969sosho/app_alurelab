@@ -140,14 +140,21 @@ class MerchantController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|min:3|max:255',
-            'slug' => 'required|string|max:100|unique:stores,slug',
+            'slug' => 'nullable|string|max:100|unique:stores,slug',
             'category' => 'nullable|string|max:100',
         ], [
             'name.min' => 'Nama toko minimal 3 karakter.',
             'slug.unique' => 'Subdomain toko sudah dipakai. Pilih subdomain lain.',
         ]);
 
-        $slug = Str::slug($validated['slug']);
+        // Slug opsional — auto-generate dari nama toko bila kosong.
+        $slug = Str::slug((string) ($validated['slug'] ?? ''));
+        if ($slug === '') {
+            $base = Str::slug($validated['name']);
+            do {
+                $slug = $base.'-'.Str::lower(Str::random(5));
+            } while (Store::where('slug', $slug)->exists());
+        }
 
         [$store] = DB::transaction(function () use ($validated, $slug, $user) {
             $store = Store::create([
@@ -206,7 +213,8 @@ class MerchantController extends Controller
     }
 
     /**
-     * Status Setup Guide — 5 pilar onboarding seller (gaya Shopify).
+     * Status Setup Guide — 4 pilar onboarding seller (gaya Shopify):
+     * produk, tampilan toko, pembayaran, domain.
      * Dihitung real-time dari data toko, bukan state tersimpan.
      */
     public function getSetupGuide(Request $request): JsonResponse
@@ -216,7 +224,6 @@ class MerchantController extends Controller
 
         $settings = $store->settings ?? [];
         $codEnabled = (bool) ($settings['cod_enabled'] ?? $settings['allow_cod'] ?? false);
-        $originAreaId = $settings['origin_address']['area_id'] ?? null;
 
         $steps = [
             'products_added' => $store->products()->count() > 0,
@@ -224,9 +231,6 @@ class MerchantController extends Controller
             'payments_configured' => ! empty($store->doku_sub_account_id)
                 || ! empty($settings['payment_methods'])
                 || $codEnabled,
-            'shipping_configured' => ! empty($store->address_area_id)
-                || ! empty($store->address_raw)
-                || ! empty($originAreaId),
             'domain_connected' => ! empty($store->custom_domain) && $store->custom_domain_status === 'active',
         ];
 

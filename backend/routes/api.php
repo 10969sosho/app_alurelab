@@ -7,11 +7,13 @@ use App\Http\Controllers\Api\BuyerFlowController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\CustomerAuthController;
 use App\Http\Controllers\Api\DokuWebhookController;
+use App\Http\Controllers\Api\DomainController;
 use App\Http\Controllers\Api\LogisticsController;
 use App\Http\Controllers\Api\MerchantController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\StorefrontController;
+use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Api\UploadController;
 use App\Http\Middleware\IdentifyTenant;
 use App\Models\User;
@@ -58,6 +60,7 @@ Route::prefix('v1')->group(function () {
     Route::prefix('auth')->group(function () {
         Route::post('/register', [AuthController::class, 'register']);
         Route::post('/login', [AuthController::class, 'login']);
+        Route::post('/google-callback', [AuthController::class, 'googleCallback']);
         Route::get('/email/verify/{id}/{hash}', function (Request $request, string $id, string $hash) {
             $validSignature = URL::hasValidSignature($request);
 
@@ -186,12 +189,21 @@ Route::prefix('v1')->group(function () {
             Route::post('/payment/setup', [MerchantController::class, 'setupPayment'])->middleware('store.role:owner');
             Route::get('/payment/status', [MerchantController::class, 'getPaymentStatus'])->middleware('store.role:owner,manager');
 
+            // ── Langganan Paket (DOKU Checkout V1) ────────────────────────────
+            Route::get('/subscription/plans', [SubscriptionController::class, 'plans']);
+            Route::post('/subscription/checkout', [SubscriptionController::class, 'checkout'])->middleware('store.role:owner');
+            Route::get('/subscription/history', [SubscriptionController::class, 'history']);
+
             // ── Analisis Bisnis ───────────────────────────────────────────────
             Route::get('/analytics', [MerchantController::class, 'getAnalytics']);
 
             // ── Pengaturan Toko ───────────────────────────────────────────────
             Route::get('/settings', [MerchantController::class, 'getSettings'])->middleware('store.role:owner,manager');
             Route::put('/settings', [MerchantController::class, 'updateSettings'])->middleware('store.role:owner');
+
+            // ── Domain Custom (Openprovider Sandbox) ─────────────────────────
+            Route::post('/domain/check', [DomainController::class, 'check'])->middleware('store.role:owner,manager');
+            Route::post('/domain/register', [DomainController::class, 'register'])->middleware('store.role:owner');
 
             // ── Pusat Promosi ─────────────────────────────────────────────────
             Route::get('/promotions', [MerchantController::class, 'getPromotions'])->middleware('store.role:owner,manager');

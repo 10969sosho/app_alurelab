@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ShoppingBag, User, Menu, X, ArrowRight } from 'lucide-react';
+import { ShoppingBag, User, Menu, X, ArrowRight, Search } from 'lucide-react';
 import { useCartStore } from '@/store/cart-store';
 import { useBuyerStore } from '@/store/buyer-store';
 import { CmsSettings, NavMenuItem } from '@/components/templates/types';
@@ -47,7 +47,7 @@ export function BuyerThemeFrame({ storeSlug, children, className = '' }: {
 export function BuyerNavbar({ storeSlug, storeName, onLogin }: { storeSlug: string; storeName?: string; onLogin?: () => void }) {
   const settings = useBuyerTheme(storeSlug);
   const { buyer } = useBuyerStore();
-  const totalItems = useCartStore((state) => state.getTotalItems());
+  const totalItems = useCartStore((state) => state.getTotalItems(storeSlug));
   const hydrated = useHydrated();
   
   const [loginOpen, setLoginOpen] = useState(false);
@@ -80,10 +80,10 @@ export function BuyerNavbar({ storeSlug, storeName, onLogin }: { storeSlug: stri
 
       {/* Main Navbar */}
       <header className="buyer-navbar sticky top-0 z-40 border-b border-black/10 backdrop-blur-xl bg-white/80 transition-all duration-300">
-        <div className="mx-auto flex h-14 sm:h-16 max-w-7xl items-center justify-between px-4 sm:px-6 md:px-10">
+          <div className="mx-auto flex h-14 sm:h-16 max-w-7xl items-center justify-between gap-5 px-4 sm:px-6 md:px-10">
           
           {/* Mobile Menu Button & Logo */}
-          <div className="flex items-center gap-3 md:w-1/3">
+          <div className="flex items-center gap-3 shrink-0">
             <button 
               className={`p-1.5 -ml-1.5 text-black hover:opacity-70 transition-opacity ${desktopStyle === 'inline' ? 'md:hidden' : ''}`}
               onClick={() => setMobileMenuOpen(true)}
@@ -96,8 +96,13 @@ export function BuyerNavbar({ storeSlug, storeName, onLogin }: { storeSlug: stri
           </div>
 
           {/* Desktop Navigation */}
+          <form action={`/${storeSlug}/shop`} method="get" className="relative hidden md:flex flex-1 max-w-md">
+            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-black/40" />
+            <input name="q" placeholder="Cari produk di toko ini" className="h-10 w-full rounded-full border border-black/5 bg-black/[0.035] pl-10 pr-4 text-xs outline-none transition focus:border-black/15 focus:bg-white focus:ring-2 focus:ring-black/5" />
+          </form>
+
           {desktopStyle === 'inline' && (
-            <nav className="hidden md:flex flex-1 items-center justify-center gap-6 lg:gap-8">
+            <nav className="hidden lg:flex flex-1 items-center justify-center gap-6 lg:gap-8">
               {navItems.map((item) => (
                 <Link 
                   key={item.id} 
@@ -112,7 +117,7 @@ export function BuyerNavbar({ storeSlug, storeName, onLogin }: { storeSlug: stri
           )}
 
           {/* Right Icons */}
-          <div className="flex shrink-0 items-center justify-end gap-3 sm:gap-4 md:w-1/3 text-black">
+          <div className="flex shrink-0 items-center justify-end gap-3 sm:gap-4 text-black">
             {hydrated && buyer ? (
               <Link href={`/${storeSlug}/account`} aria-label="Account" className="hover:opacity-70 transition-opacity p-1">
                 <User className="h-4 w-4 sm:h-4.5 sm:w-4.5" />

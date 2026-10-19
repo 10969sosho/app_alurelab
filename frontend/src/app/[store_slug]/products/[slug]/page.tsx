@@ -1,24 +1,19 @@
 'use client';
 
-import { use, useState, useRef } from 'react';
+import { use, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
-  ArrowLeft,
-  ShoppingBag,
   ShieldCheck,
   Truck,
   Plus,
   Minus,
   MessageCircle,
-  Tag,
   Share2,
   ChevronLeft,
   ChevronRight,
-  Check,
-  Sparkles,
 } from 'lucide-react';
 import axios from 'axios';
 import { useCartStore } from '@/store/cart-store';
@@ -156,6 +151,7 @@ export default function ProductDetailPage({
       imageUrl: images[0],
       stock: stockAvailable,
       weightGrams: product.weight_grams,
+      storeSlug,
     });
     toast.success(`${product.title} (${quantity} barang) masuk ke keranjang!`, {
       duration: 2500,
@@ -177,6 +173,7 @@ export default function ProductDetailPage({
       imageUrl: images[0],
       stock: stockAvailable,
       weightGrams: product.weight_grams,
+      storeSlug,
     });
     router.push(`/${storeSlug}/checkout`);
   };
@@ -205,260 +202,88 @@ export default function ProductDetailPage({
         productTitleForChat={product.title}
       />
 
-      <main className="flex-1 w-full max-w-4xl mx-auto space-y-3 pt-0 sm:pt-3">
-        {/* ── 2. Langsung 1 Image Besar Bisa di Slide Kanan Kiri ── */}
-        <section className="relative bg-white sm:rounded-2xl border-b sm:border border-stone-200 overflow-hidden">
-          <div className="relative aspect-square w-full bg-stone-100 overflow-hidden">
-            {images.map((img, idx) => (
-              <div
-                key={idx}
-                className={`absolute inset-0 transition-opacity duration-300 ${
-                  idx === activeImageIdx ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
-                }`}
-              >
-                <img
-                  src={img}
-                  alt={`${product.title} gambar ${idx + 1}`}
-                  className="w-full h-full object-cover object-center"
-                />
-              </div>
-            ))}
-
-            {/* Slide Navigation Arrows (If more than 1 image) */}
-            {images.length > 1 && (
-              <>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setActiveImageIdx((prev) => (prev === 0 ? images.length - 1 : prev - 1))
-                  }
-                  className="absolute left-2.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center backdrop-blur-xs hover:bg-black/60 transition-colors"
-                  aria-label="Gambar Sebelumnya"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setActiveImageIdx((prev) => (prev === images.length - 1 ? 0 : prev + 1))
-                  }
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center backdrop-blur-xs hover:bg-black/60 transition-colors"
-                  aria-label="Gambar Selanjutnya"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              </>
-            )}
-
-            {/* Slide Index Counter (e.g. 1/3) */}
-            <div className="absolute bottom-3 right-3 z-20 bg-black/60 text-white text-[11px] font-bold px-2.5 py-1 rounded-full backdrop-blur-xs">
-              {activeImageIdx + 1} / {images.length}
-            </div>
-
-            {/* Share Button Floating */}
-            <button
-              type="button"
-              onClick={handleShare}
-              className="absolute top-3 right-3 z-20 w-9 h-9 rounded-full bg-white/90 text-slate-700 hover:text-black flex items-center justify-center shadow-md backdrop-blur-xs active:scale-95 transition-all"
-              aria-label="Bagikan Produk"
-            >
-              <Share2 className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Thumbnail Strip (If multiple images) */}
-          {images.length > 1 && (
-            <div className="p-3 flex items-center gap-2 overflow-x-auto no-scrollbar border-t border-stone-100">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 space-y-10 pt-4 md:pt-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 items-start gap-6 lg:gap-12">
+          <section className="relative lg:col-span-7 lg:sticky lg:top-28">
+            <div className="relative aspect-square md:aspect-[1.08/1] w-full overflow-hidden rounded-2xl bg-stone-100">
               {images.map((img, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setActiveImageIdx(idx)}
-                  className={`relative w-14 h-14 rounded-lg overflow-hidden shrink-0 border-2 transition-all ${
-                    idx === activeImageIdx
-                      ? 'border-slate-900 ring-1 ring-slate-900'
-                      : 'border-transparent opacity-70 hover:opacity-100'
-                  }`}
-                >
-                  <img src={img} alt="thumb" className="w-full h-full object-cover" />
-                </button>
+                <div key={idx} className={`absolute inset-0 transition-opacity duration-500 ${idx === activeImageIdx ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
+                  <img src={img} alt={`${product.title} gambar ${idx + 1}`} className="w-full h-full object-cover object-center" />
+                </div>
               ))}
+              {images.length > 1 && <>
+                <button type="button" onClick={() => setActiveImageIdx((prev) => (prev === 0 ? images.length - 1 : prev - 1))} className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/80 text-neutral-900 flex items-center justify-center backdrop-blur-sm hover:bg-white transition-colors" aria-label="Gambar Sebelumnya"><ChevronLeft className="w-5 h-5" /></button>
+                <button type="button" onClick={() => setActiveImageIdx((prev) => (prev === images.length - 1 ? 0 : prev + 1))} className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/80 text-neutral-900 flex items-center justify-center backdrop-blur-sm hover:bg-white transition-colors" aria-label="Gambar Selanjutnya"><ChevronRight className="w-5 h-5" /></button>
+              </>}
+              <div className="absolute bottom-4 right-4 z-20 rounded-full bg-black/60 px-3 py-1.5 text-[11px] font-medium text-white backdrop-blur-sm">{activeImageIdx + 1} / {images.length}</div>
+              <button type="button" onClick={handleShare} className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-white/90 text-slate-700 hover:text-black flex items-center justify-center shadow-sm backdrop-blur-sm transition" aria-label="Bagikan Produk"><Share2 className="w-4 h-4" /></button>
             </div>
-          )}
-        </section>
+            {images.length > 1 && <div className="mt-3 flex items-center gap-3 overflow-x-auto no-scrollbar">
+              {images.map((img, idx) => <button key={idx} type="button" onClick={() => setActiveImageIdx(idx)} aria-label={`Lihat gambar ${idx + 1}`} className={`relative h-16 w-16 md:h-20 md:w-20 shrink-0 overflow-hidden rounded-xl border-2 transition ${idx === activeImageIdx ? 'border-neutral-900' : 'border-transparent opacity-65 hover:opacity-100'}`}><img src={img} alt="" className="h-full w-full object-cover" /></button>)}
+            </div>}
+          </section>
 
-        {/* ── 3. Section HARGA & JUDUL ── */}
-        <section className="bg-white p-4 sm:p-6 sm:rounded-2xl border-y sm:border border-stone-200/80 shadow-2xs space-y-2.5">
-          {/* HARGA */}
-          <div className="flex items-baseline gap-2.5">
-            <span className="text-2xl sm:text-3xl font-extrabold text-slate-950">
-              Rp {currentPrice.toLocaleString('id-ID')}
-            </span>
-            {comparePrice && comparePrice > currentPrice && (
-              <span className="text-sm text-stone-600 line-through">
-                Rp {comparePrice.toLocaleString('id-ID')}
-              </span>
-            )}
-            {discountPercent !== null && (
-              <span className="bg-rose-600 text-white text-[11px] font-extrabold px-2 py-0.5 rounded-sm uppercase tracking-wide">
-                Hemat {discountPercent}%
-              </span>
-            )}
-          </div>
-
-          {/* JUDUL */}
-          <h1 className="text-base sm:text-xl font-extrabold text-slate-900 leading-snug">
-            {product.title}
-          </h1>
-
-          {/* Category & Status */}
-          <div className="flex items-center gap-2 pt-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider bg-stone-100 text-stone-700 px-2 py-0.5 rounded-md">
-              {product.category_name || 'Koleksi Toko'}
-            </span>
-            <span className="text-xs font-semibold flex items-center gap-1">
-              {isOutOfStock ? (
-                <>
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                  <span className="text-rose-600">Stok Habis</span>
-                </>
-              ) : (
-                <>
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  <span className="text-emerald-700">Stok Tersedia</span>
-                </>
-              )}
-            </span>
-          </div>
-        </section>
-
-        {/* ── 4. Section PROMO Dari Seller ── */}
-        <section className="bg-white p-4 sm:p-5 sm:rounded-2xl border-y sm:border border-stone-200/80 shadow-2xs space-y-2.5">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
-              <Tag className="w-3.5 h-3.5 text-amber-600" />
-              <span>Promo Toko Tersedia</span>
-            </h2>
-            <span className="text-[10px] text-stone-600">Otomatis saat checkout</span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <div className="p-3 bg-linear-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-amber-500 text-white flex items-center justify-center font-bold text-xs shrink-0">
-                %
+          <div className="lg:col-span-5 space-y-5 md:space-y-6">
+            <section className="space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-neutral-500">{product.category_name || 'Koleksi Toko'}</span>
+                <span className={`text-xs font-medium flex items-center gap-2 ${isOutOfStock ? 'text-rose-600' : 'text-emerald-700'}`}><span className={`w-1.5 h-1.5 rounded-full ${isOutOfStock ? 'bg-rose-500' : 'bg-emerald-500'}`} />{isOutOfStock ? 'Stok Habis' : 'Tersedia'}</span>
               </div>
-              <div className="text-xs">
-                <div className="font-bold text-amber-900">Voucher Diskon Toko</div>
-                <div className="text-[11px] text-amber-700">Potongan langsung untuk pembelian hari ini</div>
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-semibold tracking-tight leading-tight text-neutral-950">{product.title}</h1>
+              <div className="flex items-baseline gap-3">
+                <span className="text-2xl md:text-3xl font-semibold tracking-tight text-neutral-950">Rp {currentPrice.toLocaleString('id-ID')}</span>
+                {comparePrice && comparePrice > currentPrice && <><span className="text-sm text-stone-400 line-through">Rp {comparePrice.toLocaleString('id-ID')}</span><span className="rounded-full bg-stone-100 px-2.5 py-1 text-[10px] font-semibold text-neutral-700">-{discountPercent}%</span></>}
               </div>
-            </div>
+            </section>
 
-            <div className="p-3 bg-linear-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0">
-                <Truck className="w-4 h-4" />
-              </div>
-              <div className="text-xs">
-                <div className="font-bold text-emerald-900">Gratis Ongkir Xtra</div>
-                <div className="text-[11px] text-emerald-700">Tersedia via kurir JNE, J&T, SiCepat</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ── 5. Section PILIH VARIAN & DESKRIPSI ── */}
-        <section className="bg-white p-4 sm:p-6 sm:rounded-2xl border-y sm:border border-stone-200/80 shadow-2xs space-y-4">
-          {/* Variant Selector */}
-          {variants.length > 0 && (
-            <div className="space-y-2.5">
-              <div className="flex justify-between items-center">
-                <label className="text-xs font-extrabold uppercase tracking-wider text-slate-800">
-                  Pilih Varian
-                </label>
-                {activeVariant?.stock && (
-                  <span className="text-[11px] text-stone-500">
-                    Sisa stok: <strong>{activeVariant.stock}</strong>
-                  </span>
-                )}
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                {variants.map((v: any) => {
+            <section className="rounded-2xl border border-stone-200 bg-white p-4 md:p-5 space-y-5">
+              {variants.length > 0 && <div className="space-y-3">
+                <div className="flex justify-between items-center"><label className="text-xs font-semibold text-neutral-800">Pilih varian</label>{activeVariant?.stock > 0 && <span className="text-[11px] text-stone-500">Sisa {activeVariant.stock}</span>}</div>
+                <div className="flex flex-wrap gap-2">{variants.map((v: any) => {
                   const isSelected = activeVariant?.id === v.id;
-                  return (
-                    <button
-                      key={v.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedVariantId(v.id);
-                        setQuantity(1);
-                      }}
-                      className={`text-xs px-3.5 py-2 rounded-xl font-bold transition-all border ${
-                        isSelected
-                          ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
-                          : 'bg-stone-50 text-slate-700 border-stone-200 hover:bg-stone-100'
-                      }`}
-                    >
-                      {v.title}
-                    </button>
-                  );
-                })}
+                  const outOfStock = typeof v.stock === 'number' && v.stock <= 0;
+                  return <button key={v.id} type="button" disabled={outOfStock} onClick={() => { setSelectedVariantId(v.id); setQuantity(1); }} className={`min-h-10 rounded-full border px-4 py-2 text-xs font-medium transition ${isSelected ? 'border-neutral-900 bg-neutral-900 text-white' : 'border-stone-200 bg-white text-neutral-700 hover:border-neutral-500'} disabled:cursor-not-allowed disabled:border-stone-100 disabled:bg-stone-50 disabled:text-stone-400`}>{v.title}{outOfStock ? ' · Habis' : ''}</button>;
+                })}</div>
+              </div>}
+              <div className="flex items-center justify-between border-t border-stone-100 pt-4">
+                <span className="text-xs font-semibold text-neutral-800">Jumlah</span>
+                <div className="flex items-center rounded-full border border-stone-200 bg-white">
+                  <button type="button" disabled={isOutOfStock || quantity <= 1} onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="w-10 h-10 flex items-center justify-center text-neutral-700 hover:bg-stone-50 rounded-l-full disabled:opacity-40" aria-label="Kurangi jumlah"><Minus className="w-3.5 h-3.5" /></button>
+                  <span className="w-9 text-center text-xs font-semibold">{quantity}</span>
+                  <button type="button" disabled={isOutOfStock || quantity >= stockAvailable} onClick={() => setQuantity((q) => Math.min(stockAvailable, q + 1))} className="w-10 h-10 flex items-center justify-center text-neutral-700 hover:bg-stone-50 rounded-r-full disabled:opacity-40" aria-label="Tambah jumlah"><Plus className="w-3.5 h-3.5" /></button>
+                </div>
               </div>
-            </div>
-          )}
+              <div className="hidden lg:grid grid-cols-[auto_1fr_1fr] gap-2">
+                <button type="button" onClick={() => setIsChatModalOpen(true)} className="h-12 w-12 rounded-xl border border-stone-200 text-neutral-700 hover:bg-stone-50 flex items-center justify-center" aria-label="Chat toko"><MessageCircle className="w-4 h-4" /></button>
+                <button type="button" disabled={isOutOfStock} onClick={handleAddToCart} className="h-12 rounded-xl border border-neutral-300 px-4 text-sm font-semibold text-neutral-900 hover:bg-stone-50 transition disabled:opacity-50">Tambah ke Keranjang</button>
+                <button type="button" disabled={isOutOfStock} onClick={handleBuyNow} className="h-12 rounded-xl bg-neutral-900 px-4 text-sm font-semibold text-white hover:bg-neutral-700 transition disabled:opacity-50">Beli Sekarang</button>
+              </div>
+            </section>
 
-          {/* Quantity Selector */}
-          <div className="flex items-center justify-between pt-3 border-t border-stone-100">
-            <span className="text-xs font-extrabold uppercase tracking-wider text-slate-800">
-              Jumlah Pembelian
-            </span>
-            <div className="flex items-center border border-stone-200 rounded-xl bg-stone-50 overflow-hidden">
-              <button
-                type="button"
-                disabled={isOutOfStock || quantity <= 1}
-                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                className="w-8 h-8 flex items-center justify-center text-slate-700 hover:bg-stone-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <Minus className="w-3.5 h-3.5" />
-              </button>
-              <span className="w-10 text-center text-xs font-bold text-slate-900">
-                {quantity}
-              </span>
-              <button
-                type="button"
-                disabled={isOutOfStock || quantity >= stockAvailable}
-                onClick={() => setQuantity((q) => Math.min(stockAvailable, q + 1))}
-                className="w-8 h-8 flex items-center justify-center text-slate-700 hover:bg-stone-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <Plus className="w-3.5 h-3.5" />
-              </button>
-            </div>
+            <section className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div className="rounded-xl border border-stone-200/80 bg-white p-3.5 flex items-center gap-3"><ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0" /><span className="text-xs font-medium text-neutral-700">Pembayaran terlindungi</span></div>
+              <div className="rounded-xl border border-stone-200/80 bg-white p-3.5 flex items-center gap-3"><Truck className="w-4 h-4 text-emerald-700 shrink-0" /><span className="text-xs font-medium text-neutral-700">Pengiriman terlacak</span></div>
+            </section>
+
+            <section className="divide-y divide-stone-200 border-y border-stone-200">
+              <details open className="group py-4">
+                <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-neutral-900">Deskripsi produk <span className="text-lg font-normal text-stone-400 group-open:rotate-45 transition-transform">+</span></summary>
+                <div className="pt-3 text-sm leading-7 text-stone-600 whitespace-pre-line">{product.description || 'Tidak ada deskripsi rinci untuk produk ini.'}</div>
+              </details>
+              <details className="group py-4">
+                <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-neutral-900">Penyajian & penyimpanan <span className="text-lg font-normal text-stone-400 group-open:rotate-45 transition-transform">+</span></summary>
+                <p className="pt-3 text-sm leading-7 text-stone-600">Ikuti petunjuk penggunaan atau penyimpanan yang tercantum pada kemasan produk.</p>
+              </details>
+              <details className="group py-4">
+                <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-neutral-900">Pengiriman <span className="text-lg font-normal text-stone-400 group-open:rotate-45 transition-transform">+</span></summary>
+                <p className="pt-3 text-sm leading-7 text-stone-600">Pilihan kurir dan estimasi ongkir tersedia setelah alamat tujuan diisi saat checkout.</p>
+              </details>
+            </section>
           </div>
+        </div>
 
-          {/* DESKRIPSI PRODUK */}
-          <div className="pt-4 border-t border-stone-100 space-y-2">
-            <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-800">
-              Deskripsi Produk
-            </h2>
-            <div className="text-xs text-stone-600 leading-relaxed space-y-2 whitespace-pre-line">
-              {product.description || 'Tidak ada deskripsi rinci untuk produk ini.'}
-            </div>
-          </div>
-
-          {/* Trust Guarantee */}
-          <div className="pt-4 border-t border-stone-100 grid grid-cols-2 gap-2 text-stone-600 text-[11px]">
-            <div className="flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>Garansi 100% Produk Original</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Truck className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>Pengiriman Cepat & Terlacak</span>
-            </div>
-          </div>
-        </section>
-
-        {/* ── 6. Section PRODUK TERKAIT ── */}
         {relatedProducts.length > 0 && (
-          <section className="px-3 sm:px-0 pt-3 space-y-3">
+          <section className="pt-5 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-extrabold text-slate-900">
                 Produk Terkait Dari Toko Ini
@@ -472,7 +297,7 @@ export default function ProductDetailPage({
             </div>
 
             {/* 2 Card Kanan Kiri */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-5 lg:gap-7">
               {relatedProducts.map((p) => (
                 <BuyerProductCard
                   key={p.id}
@@ -486,7 +311,7 @@ export default function ProductDetailPage({
       </main>
 
       {/* ── 7. Nav Bawah Sticky PDP: Chat, Beli Langsung, + Keranjang ── */}
-      <aside aria-label="Action Pembelian" className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-stone-200/90 shadow-2xl">
+      <aside aria-label="Action Pembelian" className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-stone-200/90 shadow-2xl lg:hidden">
         <div className="mx-auto max-w-lg px-3 py-2 flex items-center gap-2">
           {/* Chat Button */}
           <button

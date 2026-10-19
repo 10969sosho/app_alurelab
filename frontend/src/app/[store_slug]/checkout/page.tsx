@@ -23,10 +23,12 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
   const resolvedParams = use(params);
   const storeSlug = resolvedParams.store_slug;
 
-  const { items, getSubtotal, clearCart } = useCartStore();
+  const { getItemsByStore, getSubtotal, clearCart } = useCartStore();
   const { buyer } = useBuyerStore();
   const copy = useBuyerCms(storeSlug);
   const [isHydrated, setIsHydrated] = useState(false);
+
+  const items = getItemsByStore(storeSlug);
 
   const [form, setForm] = useState({
     name: '',
@@ -79,7 +81,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [ratesAttemptedFor, setRatesAttemptedFor] = useState<string | null>(null);
 
-  const subtotal = getSubtotal();
+  const subtotal = getSubtotal(storeSlug);
   const totalAmount = subtotal + form.shippingCost;
   const resolvedAreaId = form.areaId || buildAreaId(form.wilayah);
   const hasStockIssue = items.some(
@@ -206,7 +208,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
         tenantIdOrSlug: storeSlug,
       });
 
-      clearCart();
+      clearCart(storeSlug);
       setOrderSuccess(res);
     } catch (err: any) {
       setErrorMessage(err?.message || 'Checkout gagal. Coba lagi.');
@@ -279,7 +281,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
      <BuyerThemeFrame storeSlug={storeSlug} className="text-[#111111] pb-16">
        <BuyerNavbar storeSlug={storeSlug} />
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-10 py-6 md:py-10">
         {errorMessage && (
           <div className="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
@@ -287,11 +289,11 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
            </div>
         )}
 
-        <form onSubmit={handleSubmitOrder} className="grid md:grid-cols-5 gap-8">
+        <form onSubmit={handleSubmitOrder} className="grid md:grid-cols-12 gap-6 lg:gap-10 items-start">
           {/* Kolom Kiri: Form Identitas & Pengiriman */}
-          <div className="md:col-span-3 space-y-6">
+          <div className="md:col-span-7 space-y-4 md:space-y-5">
             {/* Step 1: Identitas Pembeli */}
-             <div className="bg-white p-5 border border-slate-200 space-y-4">
+             <div className="bg-white p-5 md:p-7 rounded-2xl border border-slate-200/80 shadow-sm space-y-5">
               <div className="flex items-center justify-between">
                 <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
                   <span className="w-5 h-5 bg-slate-900 text-white text-xs rounded-full flex items-center justify-center font-mono">1</span>
@@ -322,7 +324,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
                     placeholder="Contoh: Amanda Putri"
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    className="w-full text-xs px-3.5 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                   className="w-full text-sm px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition"
                   />
                 </div>
 
@@ -335,7 +337,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
                       placeholder="081234567890"
                       value={form.phone}
                       onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                      className="w-full text-xs px-3.5 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                     className="w-full text-sm px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition"
                     />
                   </div>
                   <div>
@@ -345,7 +347,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
                       placeholder="amanda@email.com"
                       value={form.email}
                       onChange={(e) => setForm({ ...form, email: e.target.value })}
-                      className="w-full text-xs px-3.5 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                     className="w-full text-sm px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition"
                     />
                   </div>
                 </div>
@@ -353,7 +355,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
             </div>
 
             {/* Step 2: Alamat Pengiriman */}
-             <div className="bg-white p-5 border border-slate-200 space-y-4">
+             <div className="bg-white p-5 md:p-7 rounded-2xl border border-slate-200/80 shadow-sm space-y-5">
               <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
                 <span className="w-5 h-5 bg-slate-900 text-white text-xs rounded-full flex items-center justify-center font-mono">2</span>
                  Delivery address
@@ -376,14 +378,14 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
                     placeholder="Nama jalan, nomor rumah, RT/RW, dan patokan dekat lokasi..."
                     value={form.addressDetail}
                     onChange={(e) => setForm({ ...form, addressDetail: e.target.value })}
-                    className="w-full text-xs px-3.5 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                     className="w-full text-sm px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition"
                   />
                 </div>
               </div>
             </div>
 
             {/* Step 3: Kurir Ekspedisi */}
-             <div className="bg-white p-5 border border-slate-200 space-y-4">
+             <div className="bg-white p-5 md:p-7 rounded-2xl border border-slate-200/80 shadow-sm space-y-5">
               <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
                 <span className="w-5 h-5 bg-slate-900 text-white text-xs rounded-full flex items-center justify-center font-mono">3</span>
                  Delivery method
@@ -397,7 +399,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
                 {shippingOptions.map((c) => (
                   <label
                      key={`${c.courier_code}-${c.courier_service_code}`}
-                    className={`flex items-center justify-between p-3 rounded-xl border text-xs cursor-pointer transition-all ${
+                     className={`flex items-center justify-between p-4 md:p-5 rounded-xl border text-xs cursor-pointer transition-all ${
                         form.courier === c.courier_code && form.courierService === c.courier_service_code
                         ? 'border-emerald-500 bg-emerald-50/50 font-medium'
                         : 'border-slate-200 hover:border-slate-300'
@@ -419,7 +421,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
                         className="text-emerald-600 focus:ring-emerald-500"
                       />
                       <Truck className="w-4 h-4 text-slate-500" />
-                      <span>{c.courier_name} {c.courier_service_name}</span>
+                       <span className="flex flex-col gap-1"><span className="font-semibold text-slate-900">{c.courier_name} · {c.courier_service_name}</span>{c.duration && <span className="text-[11px] text-slate-500">Estimasi {c.duration}</span>}</span>
                     </div>
                     <span className="font-bold text-slate-900">Rp {Number(c.price).toLocaleString('id-ID')}</span>
                   </label>
@@ -428,7 +430,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
             </div>
 
             {/* Step 4: Metode Pembayaran */}
-             <div className="bg-white p-5 border border-slate-200 space-y-4">
+             <div className="bg-white p-5 md:p-7 rounded-2xl border border-slate-200/80 shadow-sm space-y-5">
               <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
                 <span className="w-5 h-5 bg-slate-900 text-white text-xs rounded-full flex items-center justify-center font-mono">4</span>
                  Payment
@@ -467,8 +469,8 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
           </div>
 
           {/* Kolom Kanan: Ringkasan & Submit */}
-          <div className="md:col-span-2">
-             <div className="bg-white p-5 border border-slate-200 sticky top-20 space-y-4">
+          <div className="md:col-span-5">
+             <div className="bg-white p-5 md:p-7 rounded-2xl border border-slate-200/80 shadow-sm sticky top-24 space-y-5">
               <h3 className="font-bold text-sm text-slate-900 pb-3 border-b border-slate-100">
                 Ringkasan Belanja
               </h3>
@@ -516,10 +518,10 @@ export default function CheckoutPage({ params }: { params: Promise<{ store_slug:
                 </div>
               </div>
 
-              <button
+               <button
                 type="submit"
                 disabled={loading || !isHydrated || loadingRates || !form.courier || shippingOptions.length === 0 || hasStockIssue}
-                className="w-full bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2"
+                 className="w-full bg-slate-900 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-4 rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2"
               >
                  {loading ? 'Processing...' : loadingRates ? 'Menghitung Ongkir...' : `${copy.checkoutSubmit} · Rp ${totalAmount.toLocaleString('id-ID')}`}
               </button>

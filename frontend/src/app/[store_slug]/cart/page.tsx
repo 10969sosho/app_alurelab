@@ -23,10 +23,12 @@ export default function CartPage({
   params: Promise<{ store_slug: string }>;
 }) {
   const { store_slug: storeSlug } = use(params);
-  const { items, updateQuantity, removeItem, clearCart, getSubtotal, getTotalItems } = useCartStore();
+  const { getItemsByStore, updateQuantity, removeItem, clearCart, getSubtotal, getTotalItems } =
+    useCartStore();
 
-  const subtotal = getSubtotal();
-  const totalItems = getTotalItems();
+  const items = getItemsByStore(storeSlug);
+  const subtotal = getSubtotal(storeSlug);
+  const totalItems = getTotalItems(storeSlug);
   const storeDisplayName = storeSlug.replace(/-/g, ' ');
 
   return (
@@ -38,9 +40,9 @@ export default function CartPage({
         showBackButton={true}
       />
 
-      <main className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 flex-1 space-y-6">
+      <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-10 py-6 md:py-10 flex-1 space-y-7 md:space-y-9">
         {/* Header Title */}
-        <div className="flex items-center justify-between border-b border-stone-200/80 pb-4">
+          <div className="flex items-center justify-between border-b border-stone-200/80 pb-5 md:pb-7">
           <div className="flex items-center gap-3">
             <Link
               href={`/${storeSlug}/shop`}
@@ -50,7 +52,7 @@ export default function CartPage({
               <ArrowLeft className="w-4 h-4" />
             </Link>
             <div>
-              <h1 className="text-lg sm:text-2xl font-extrabold text-neutral-900">
+              <h1 className="text-lg sm:text-2xl md:text-3xl font-semibold tracking-tight text-neutral-900">
                 Keranjang Belanja
               </h1>
               <p className="text-xs text-neutral-500">
@@ -62,7 +64,7 @@ export default function CartPage({
           {items.length > 0 && (
             <button
               type="button"
-              onClick={clearCart}
+              onClick={() => clearCart(storeSlug)}
               className="text-xs font-semibold text-rose-600 hover:text-rose-700 hover:underline"
             >
               Kosongkan Keranjang
@@ -94,16 +96,16 @@ export default function CartPage({
           </div>
         ) : (
           /* Cart Grid: Items List + Order Summary */
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-start">
             {/* Left: Cart Items List */}
-            <div className="lg:col-span-7 space-y-3">
+            <div className="lg:col-span-8 space-y-3 md:space-y-4">
               {items.map((item) => (
                 <div
                   key={`${item.productId}-${item.variantId}`}
-                  className="bg-white rounded-2xl border border-stone-200/80 p-3 sm:p-4 shadow-2xs flex gap-3 sm:gap-4 items-center"
+                  className="bg-white rounded-xl md:rounded-2xl border border-stone-200/80 p-3 sm:p-4 md:p-5 shadow-2xs flex gap-3 sm:gap-4 items-center"
                 >
                   {/* Product Image */}
-                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-neutral-100 shrink-0 border border-stone-100">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-xl overflow-hidden bg-neutral-100 shrink-0 border border-stone-100">
                     <UniversalImage
                       src={item.imageUrl}
                       alt={item.title}
@@ -131,7 +133,9 @@ export default function CartPage({
                       <div className="flex items-center border border-stone-200 rounded-lg bg-stone-50 overflow-hidden">
                         <button
                           type="button"
-                          onClick={() => updateQuantity(item.productId, item.variantId, item.quantity - 1)}
+                          onClick={() =>
+                            updateQuantity(item.productId, item.variantId, item.quantity - 1, storeSlug)
+                          }
                           className="w-7 h-7 flex items-center justify-center text-neutral-700 hover:bg-stone-200 transition-colors"
                           aria-label="Kurangi"
                         >
@@ -142,7 +146,9 @@ export default function CartPage({
                         </span>
                         <button
                           type="button"
-                          onClick={() => updateQuantity(item.productId, item.variantId, item.quantity + 1)}
+                          onClick={() =>
+                            updateQuantity(item.productId, item.variantId, item.quantity + 1, storeSlug)
+                          }
                           className="w-7 h-7 flex items-center justify-center text-neutral-700 hover:bg-stone-200 transition-colors"
                           aria-label="Tambah"
                         >
@@ -152,7 +158,7 @@ export default function CartPage({
 
                       <button
                         type="button"
-                        onClick={() => removeItem(item.productId, item.variantId)}
+                        onClick={() => removeItem(item.productId, item.variantId, storeSlug)}
                         className="text-neutral-400 hover:text-rose-600 transition-colors p-1"
                         aria-label="Hapus"
                       >
@@ -165,8 +171,8 @@ export default function CartPage({
             </div>
 
             {/* Right: Order Summary */}
-            <div className="lg:col-span-5 bg-white rounded-2xl border border-stone-200/80 p-5 sm:p-6 shadow-2xs space-y-4 lg:sticky lg:top-24">
-              <h2 className="text-sm font-extrabold uppercase tracking-wider text-neutral-800">
+            <div className="lg:col-span-4 bg-white rounded-2xl border border-stone-200/80 p-5 sm:p-6 md:p-7 shadow-sm space-y-5 lg:sticky lg:top-28">
+              <h2 className="text-sm font-semibold tracking-tight text-neutral-900">
                 Ringkasan Pesanan
               </h2>
 
@@ -178,7 +184,7 @@ export default function CartPage({
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Ongkos Kirim</span>
+                  <span>Estimasi ongkir</span>
                   <span className="text-emerald-600 font-semibold">
                     Dihitung saat checkout
                   </span>
@@ -194,7 +200,7 @@ export default function CartPage({
 
               <Link
                 href={`/${storeSlug}/checkout`}
-                className="w-full bg-neutral-900 hover:bg-black text-white font-bold py-3.5 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs transition-all"
+                className="w-full bg-neutral-900 hover:bg-neutral-700 text-white font-semibold py-4 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition-all duration-200"
               >
                 <span>Lanjut ke Checkout</span>
                 <ArrowRight className="w-4 h-4" />

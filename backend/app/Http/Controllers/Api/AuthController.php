@@ -9,7 +9,9 @@ use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -91,6 +93,109 @@ class AuthController extends Controller
             'store' => $storeUser ? $this->formatStore($storeUser->store) : null,
             'token' => $token,
         ]);
+    }
+
+    /**
+     * Google OAuth callback — dipanggil oleh frontend NextAuth.
+     * Find-or-create user by email, lalu issue Sanctum token (format sama seperti login).
+     * User tanpa toko langsung mendapat toko otomatis (frictionless onboarding),
+     * sehingga redirect selesai lurus ke /dashboard tanpa dicegat /create-store.
+     */
+    public function googleCallback(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'email' => 'required|email',
+            'name' => 'required|string|max:255',
+            'google_id' => 'nullable|string|max:255',
+            'avatar' => 'nullable|string|max:2048',
+        ]);
+
+        $user = User::where('email', $validated['email'])->first();
+
+        if (! $user) {
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password_hash' => Hash::make(Str::random(32)),
+                'google_id' => $validated['google_id'] ?? null,
+            ]);
+
+            // email_verified_at bukan fillable — set eksplisit (Google email sudah terverifikasi)
+            $user->forceFill(['email_verified_at' => now()])->save();
+
+            event(new Registered($user));
+        } else {
+            $needsUpdate = false;
+
+            if (! $user->hasVerifiedEmail()) {
+                $user->email_verified_at = now();
+                $needsUpdate = true;
+            }
+
+            if (! empty($validated['google_id']) && $user->google_id !== $validated['google_id']) {
+                $user->google_id = $validated['google_id'];
+                $needsUpdate = true;
+            }
+
+            if ($needsUpdate) {
+                $user->save();
+            }
+        }
+
+        // Ambil store pertama yang dimiliki user (MVP single-store)
+        $storeUser = StoreUser::with('store')
+            ->where('user_id', $user->id)
+            ->orderBy('created_at', 'asc')
+            ->first();
+
+        // User baru / belum punya toko → provision toko default secara atomik
+        if (! $storeUser) {
+            $storeUser = $this->provisionDefaultStore($user);
+        }
+
+        $user->tokens()->delete();
+
+        $abilities = ["role:{$storeUser->role}"];
+        $token = $user->createToken('dashboard', $abilities)->plainTextToken;
+
+        return response()->json([
+            'message' => 'Login berhasil.',
+            'user' => $this->formatUser($user),
+            'store' => $this->formatStore($storeUser->store),
+            'token' => $token,
+        ]);
+    }
+
+    /**
+     * Buat toko default + membership owner untuk user yang belum punya toko.
+     */
+    private function provisionDefaultStore(User $user): StoreUser
+    {
+        $firstName = explode(' ', trim($user->name))[0] ?: 'Toko';
+
+        return DB::transaction(function () use ($user, $firstName) {
+            $store = Store::create([
+                'name' => 'Toko '.$firstName,
+                'slug' => Str::slug('toko-'.$firstName.'-'.Str::lower(Str::random(5))),
+                'phone_number' => $user->phone_number ?: '-',
+                'plan_tier' => 'starter',
+                'custom_domain_status' => 'pending',
+                'settings' => [
+                    'template' => 'default',
+                    'theme' => 'default',
+                    'status' => 'active',
+                    'theme_color' => '#0F172A',
+                    'tagline' => 'Toko Resmi '.$firstName,
+                    'allow_cod' => true,
+                ],
+            ]);
+
+            return StoreUser::create([
+                'store_id' => $store->id,
+                'user_id' => $user->id,
+                'role' => 'owner',
+            ]);
+        });
     }
 
     /**

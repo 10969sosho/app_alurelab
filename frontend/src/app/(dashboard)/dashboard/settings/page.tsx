@@ -19,6 +19,7 @@ import {
   QrCode,
   Landmark,
   Zap,
+  Search,
 } from 'lucide-react';
 import api from '@/lib/api';
 import { WilayahAddressFields, type WilayahAddressValue } from '@/components/address/WilayahAddressFields';
@@ -56,6 +57,17 @@ export default function SettingsPage() {
   const [bankName, setBankName] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   const [accountHolder, setAccountHolder] = useState('');
+
+  // Domain states (Openprovider Sandbox)
+  const [domainName, setDomainName] = useState('');
+  const [domainTld, setDomainTld] = useState('com');
+  const [domainCheck, setDomainCheck] = useState<{
+    domain: string;
+    available: boolean | null;
+    price?: number | null;
+    currency?: string | null;
+  } | null>(null);
+  const [domainOverride, setDomainOverride] = useState<{ domain: string | null; status: string } | null>(null);
 
   // Fetch settings
   const { data, isLoading } = useQuery({
@@ -97,8 +109,46 @@ export default function SettingsPage() {
   });
 
   const dokuActive = Boolean(dokuStatus?.doku_sub_account_id);
-  const customDomain = (session as any)?.store?.custom_domain ?? null;
-  const customDomainStatus = (session as any)?.store?.custom_domain_status ?? 'pending';
+
+  // Cek ketersediaan domain via Openprovider Sandbox
+  const domainCheckMutation = useMutation({
+    mutationFn: async () =>
+      (await api.post('/merchant/domain/check', { name: domainName, tld: domainTld })).data,
+    onSuccess: (res) => {
+      if (res?.success) {
+        setDomainCheck(res);
+      } else {
+        setDomainCheck(null);
+        toast.error(res?.error || 'Gagal mengecek ketersediaan domain.');
+      }
+    },
+    onError: (err: any) => {
+      setDomainCheck(null);
+      toast.error(err?.response?.data?.error || 'Gagal mengecek ketersediaan domain');
+    },
+  });
+
+  // Daftarkan domain & aktifkan custom domain toko (sandbox)
+  const domainRegisterMutation = useMutation({
+    mutationFn: async () =>
+      (await api.post('/merchant/domain/register', { name: domainName, tld: domainTld })).data,
+    onSuccess: (res) => {
+      if (res?.success) {
+        toast.success(`Domain ${res.domain} berhasil didaftarkan & diaktifkan!`);
+        setDomainOverride({ domain: res.domain, status: res.store?.custom_domain_status ?? 'active' });
+        setDomainCheck(null);
+        queryClient.invalidateQueries({ queryKey: ['merchant-settings'] });
+      } else {
+        toast.error(res?.error || 'Pendaftaran domain belum berhasil. Coba lagi nanti.');
+      }
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.error || 'Gagal mendaftarkan domain');
+    },
+  });
+
+  const customDomain = domainOverride?.domain ?? (session as any)?.store?.custom_domain ?? null;
+  const customDomainStatus = domainOverride?.status ?? (session as any)?.store?.custom_domain_status ?? 'pending';
 
   useEffect(() => {
     if (data) {
@@ -223,90 +273,49 @@ export default function SettingsPage() {
           type="button"
           onClick={handleSave}
           disabled={updateMutation.isPending}
-          className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#EE4D2D] hover:bg-[#d73f20] text-white text-xs font-semibold rounded-xs transition-colors shadow-2xs disabled:opacity-50 self-start sm:self-auto"
+          className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#EE4D2D] hover:bg-[#d73f20] text-white text-xs font-semibold rounded-full transition-colors shadow-sm disabled:opacity-50 self-start sm:self-auto"
         >
           <Save className="w-3.5 h-3.5" />
           <span>{updateMutation.isPending ? 'Menyimpan...' : 'Simpan Semua'}</span>
         </button>
       </div>
 
+      {/* Navigation Tabs (Pill Switcher) */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-1.5 flex items-center gap-1 text-xs overflow-x-auto shadow-sm">
+        {(
+          [
+            { key: 'profile', label: 'Profil Toko', Icon: Store },
+            { key: 'address', label: 'Alamat & Gudang', Icon: MapPin },
+            { key: 'couriers', label: 'Jasa Kirim (Logistik)', Icon: Truck },
+            { key: 'payment', label: 'Pembayaran & Rekening', Icon: CreditCard },
+            { key: 'domain', label: 'Domain', Icon: Globe },
+          ] as const
+        ).map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => setActiveTab(tab.key)}
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl whitespace-nowrap font-medium transition-all ${
+              activeTab === tab.key
+                ? 'bg-[#111111] text-[#FAFAF8] font-semibold shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <tab.Icon className="w-3.5 h-3.5" />
+            <span>{tab.label}</span>
+          </button>
+        ))}
+      </div>
+
       {/* Main Settings Panel */}
-      <div className="bg-white border border-slate-200 rounded-xs overflow-hidden shadow-2xs">
-        {/* Navigation Tabs */}
-        <div className="border-b border-slate-200 px-3 flex items-center gap-6 text-xs bg-[#FAFAFA] overflow-x-auto">
-          <button
-            type="button"
-            onClick={() => setActiveTab('profile')}
-            className={`py-2.5 font-medium border-b-2 whitespace-nowrap flex items-center gap-1.5 transition-colors ${
-              activeTab === 'profile'
-                ? 'border-[#EE4D2D] text-[#EE4D2D] font-bold'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <Store className="w-3.5 h-3.5" />
-            <span>Profil Toko</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('address')}
-            className={`py-2.5 font-medium border-b-2 whitespace-nowrap flex items-center gap-1.5 transition-colors ${
-              activeTab === 'address'
-                ? 'border-[#EE4D2D] text-[#EE4D2D] font-bold'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <MapPin className="w-3.5 h-3.5" />
-            <span>Alamat & Gudang</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('couriers')}
-            className={`py-2.5 font-medium border-b-2 whitespace-nowrap flex items-center gap-1.5 transition-colors ${
-              activeTab === 'couriers'
-                ? 'border-[#EE4D2D] text-[#EE4D2D] font-bold'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <Truck className="w-3.5 h-3.5" />
-            <span>Jasa Kirim (Logistik)</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('payment')}
-            className={`py-2.5 font-medium border-b-2 whitespace-nowrap flex items-center gap-1.5 transition-colors ${
-              activeTab === 'payment'
-                ? 'border-[#EE4D2D] text-[#EE4D2D] font-bold'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <CreditCard className="w-3.5 h-3.5" />
-            <span>Pembayaran & Rekening</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('domain')}
-            className={`py-2.5 font-medium border-b-2 whitespace-nowrap flex items-center gap-1.5 transition-colors ${
-              activeTab === 'domain'
-                ? 'border-[#EE4D2D] text-[#EE4D2D] font-bold'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <Globe className="w-3.5 h-3.5" />
-            <span>Domain</span>
-          </button>
-        </div>
-
+      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
         {isLoading ? (
           <div className="flex items-center justify-center py-24 text-slate-400">
             <Loader2 className="w-6 h-6 animate-spin text-[#EE4D2D] mr-2" />
             <span className="text-xs">Memuat konfigurasi toko...</span>
           </div>
         ) : (
-          <form onSubmit={handleSave} className="p-4 space-y-4 max-w-2xl text-xs">
+          <form onSubmit={handleSave} className="p-6 space-y-4 text-xs">
             {/* 1. Profile Tab */}
             {activeTab === 'profile' && (
               <div className="space-y-3">
@@ -316,7 +325,7 @@ export default function SettingsPage() {
                     type="text"
                     value={storeName}
                     onChange={(e) => setStoreName(e.target.value)}
-                    className="w-full px-3 py-1.5 border border-slate-300 rounded-xs outline-none focus:border-[#EE4D2D]"
+                    className="w-full px-3 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/15 transition-all"
                     required
                   />
                 </div>
@@ -327,7 +336,7 @@ export default function SettingsPage() {
                     type="text"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
-                    className="w-full px-3 py-1.5 border border-slate-300 rounded-xs outline-none focus:border-[#EE4D2D] font-mono"
+                    className="w-full px-3 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/15 transition-all font-mono"
                     required
                   />
                   <span className="text-[10px] text-slate-400 mt-0.5 block">Digunakan oleh pembeli untuk bertanya ketersediaan produk.</span>
@@ -340,7 +349,7 @@ export default function SettingsPage() {
                     value={tagline}
                     onChange={(e) => setTagline(e.target.value)}
                     placeholder="Official Store Berkualitas Terbaik"
-                    className="w-full px-3 py-1.5 border border-slate-300 rounded-xs outline-none focus:border-[#EE4D2D]"
+                    className="w-full px-3 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/15 transition-all"
                   />
                 </div>
               </div>
@@ -349,7 +358,7 @@ export default function SettingsPage() {
             {/* 2. Address & Warehouse Tab */}
             {activeTab === 'address' && (
               <div className="space-y-3">
-                <div className="bg-orange-50/70 border border-orange-200 rounded-xs p-2.5">
+                <div className="bg-orange-50/70 border border-orange-200 rounded-2xl p-3.5">
                   <p className="text-[11px] text-slate-700 font-medium">Alamat Asal Pengiriman (Origin Address)</p>
                   <p className="text-[10px] text-slate-500 mt-0.5">
                     Alamat ini digunakan oleh kurir Biteship untuk menghitung ongkos kirim real-time dan titik pickup paket.
@@ -364,7 +373,7 @@ export default function SettingsPage() {
                       value={contactName}
                       onChange={(e) => setContactName(e.target.value)}
                       placeholder="Admin Gudang Alurelab"
-                      className="w-full px-3 py-1.5 border border-slate-300 rounded-xs outline-none focus:border-[#EE4D2D]"
+                      className="w-full px-3 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/15 transition-all"
                     />
                   </div>
                   <div>
@@ -374,7 +383,7 @@ export default function SettingsPage() {
                       value={warehousePhone}
                       onChange={(e) => setWarehousePhone(e.target.value)}
                       placeholder="08123456789"
-                      className="w-full px-3 py-1.5 border border-slate-300 rounded-xs outline-none focus:border-[#EE4D2D] font-mono"
+                      className="w-full px-3 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/15 transition-all font-mono"
                     />
                   </div>
                 </div>
@@ -386,7 +395,7 @@ export default function SettingsPage() {
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     placeholder="Nama jalan, nomor gedung, kelurahan, kecamatan"
-                    className="w-full px-3 py-1.5 border border-slate-300 rounded-xs outline-none focus:border-[#EE4D2D]"
+                    className="w-full px-3 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/15 transition-all"
                   />
                 </div>
 
@@ -399,7 +408,7 @@ export default function SettingsPage() {
                     value={postalCode}
                     onChange={(e) => setPostalCode(e.target.value)}
                     placeholder="Contoh: 60271"
-                    className="w-full px-3 py-1.5 border border-slate-300 rounded-xs outline-none focus:border-[#EE4D2D] font-mono"
+                    className="w-full px-3 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/15 transition-all font-mono"
                   />
                 </div>
               </div>
@@ -409,7 +418,7 @@ export default function SettingsPage() {
             {activeTab === 'couriers' && (
               <div className="space-y-3">
                 <p className="text-slate-600 font-medium">Pilih ekspedisi yang Anda sediakan untuk pembeli:</p>
-                <div className="divide-y divide-slate-100 border border-slate-200 rounded-xs">
+                <div className="divide-y divide-slate-100 border border-slate-200 rounded-2xl overflow-hidden">
                   {[
                     { id: 'jne', label: 'JNE Express (Reguler & YES)' },
                     { id: 'sicepat', label: 'SiCepat Ekspres (SIUNT & BEST)' },
@@ -417,16 +426,22 @@ export default function SettingsPage() {
                     { id: 'anteraja', label: 'AnterAja' },
                     { id: 'gosend', label: 'GoSend Instant (Surabaya & Sekitarnya)' },
                   ].map((c) => (
-                    <label key={c.id} className="flex items-center justify-between p-3 hover:bg-slate-50 cursor-pointer">
+                    <label
+                      key={c.id}
+                      className="flex items-center justify-between p-3.5 hover:bg-[#FAFAF8] cursor-pointer transition-colors"
+                    >
                       <span className="font-semibold text-slate-800">{c.label}</span>
-                      <input
-                        type="checkbox"
-                        checked={Boolean(couriers[c.id])}
-                        onChange={(e) => {
-                          setCouriers((prev) => ({ ...prev, [c.id]: e.target.checked }));
-                        }}
-                        className="rounded-xs border-slate-300 text-[#EE4D2D] focus:ring-0 cursor-pointer"
-                      />
+                      <span className="relative inline-flex items-center shrink-0">
+                        <input
+                          type="checkbox"
+                          className="peer sr-only"
+                          checked={Boolean(couriers[c.id])}
+                          onChange={(e) => {
+                            setCouriers((prev) => ({ ...prev, [c.id]: e.target.checked }));
+                          }}
+                        />
+                        <span className="w-9 h-5 rounded-full bg-slate-200 peer-checked:bg-[#111111] transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:h-4 after:w-4 after:bg-white after:rounded-full after:shadow-sm after:transition-all peer-checked:after:translate-x-4" />
+                      </span>
                     </label>
                   ))}
                 </div>
@@ -438,7 +453,7 @@ export default function SettingsPage() {
               <div className="space-y-3">
                 {/* Kartu DOKU Merchant Gateway */}
                 <div
-                  className={`border rounded-xs p-3 ${
+                  className={`border rounded-2xl p-4 ${
                     dokuActive ? 'border-emerald-200 bg-emerald-50/40' : 'border-slate-200'
                   }`}
                 >
@@ -451,7 +466,7 @@ export default function SettingsPage() {
                           <Loader2 className="w-3 h-3 animate-spin text-slate-400" />
                         ) : (
                           <span
-                            className={`inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-xs border ${
+                            className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full border ${
                               dokuActive
                                 ? 'text-emerald-600 bg-emerald-50 border-emerald-200'
                                 : 'text-amber-600 bg-amber-50 border-amber-200'
@@ -466,13 +481,13 @@ export default function SettingsPage() {
                       </p>
 
                       <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded-xs">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-600 bg-white border border-slate-200 px-2.5 py-1 rounded-full">
                           <QrCode className="w-3 h-3" /> QRIS
                         </span>
-                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded-xs">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-600 bg-white border border-slate-200 px-2.5 py-1 rounded-full">
                           <Zap className="w-3 h-3" /> Virtual Account
                         </span>
-                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded-xs">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-600 bg-white border border-slate-200 px-2.5 py-1 rounded-full">
                           <Truck className="w-3 h-3" /> COD
                         </span>
                       </div>
@@ -489,7 +504,7 @@ export default function SettingsPage() {
                         type="button"
                         onClick={() => dokuSetupMutation.mutate()}
                         disabled={dokuSetupMutation.isPending}
-                        className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#EE4D2D] hover:bg-[#d73f20] text-white text-xs font-bold rounded-xs transition-colors disabled:opacity-50 shadow-2xs"
+                        className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#EE4D2D] hover:bg-[#d73f20] text-white text-xs font-bold rounded-full transition-colors disabled:opacity-50 shadow-sm"
                       >
                         {dokuSetupMutation.isPending ? (
                           <>
@@ -504,17 +519,20 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                <div className="border border-slate-200 rounded-xs p-3 flex items-center justify-between">
+                <div className="border border-slate-200 rounded-2xl p-4 flex items-center justify-between">
                   <div>
                     <p className="font-semibold text-slate-800">Bayar di Tempat (COD)</p>
                     <p className="text-[11px] text-slate-500">Izinkan pembeli membayar tunai saat paket tiba melalui kurir SiCepat/J&T.</p>
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={allowCod}
-                    onChange={(e) => setAllowCod(e.target.checked)}
-                    className="rounded-xs border-slate-300 text-[#EE4D2D] focus:ring-0 cursor-pointer"
-                  />
+                  <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                    <input
+                      type="checkbox"
+                      className="peer sr-only"
+                      checked={allowCod}
+                      onChange={(e) => setAllowCod(e.target.checked)}
+                    />
+                    <span className="w-9 h-5 rounded-full bg-slate-200 peer-checked:bg-[#111111] transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:h-4 after:w-4 after:bg-white after:rounded-full after:shadow-sm after:transition-all peer-checked:after:translate-x-4" />
+                  </label>
                 </div>
 
                 <div className="border-t border-slate-100 pt-3 space-y-2.5">
@@ -526,7 +544,7 @@ export default function SettingsPage() {
                       <select
                         value={bankName}
                         onChange={(e) => setBankName(e.target.value)}
-                        className="w-full px-2.5 py-1.5 border border-slate-300 rounded-xs outline-none focus:border-[#EE4D2D]"
+                        className="w-full px-2.5 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/15 transition-all"
                       >
                         <option value="BCA">BCA</option>
                         <option value="MANDIRI">Bank Mandiri</option>
@@ -541,7 +559,7 @@ export default function SettingsPage() {
                         type="text"
                         value={accountNumber}
                         onChange={(e) => setAccountNumber(e.target.value)}
-                        className="w-full px-3 py-1.5 border border-slate-300 rounded-xs outline-none focus:border-[#EE4D2D] font-mono"
+                        className="w-full px-3 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/15 transition-all font-mono"
                         required
                       />
                     </div>
@@ -553,7 +571,7 @@ export default function SettingsPage() {
                       type="text"
                       value={accountHolder}
                       onChange={(e) => setAccountHolder(e.target.value)}
-                      className="w-full px-3 py-1.5 border border-slate-300 rounded-xs outline-none focus:border-[#EE4D2D]"
+                      className="w-full px-3 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/15 transition-all"
                       required
                     />
                   </div>
@@ -564,11 +582,11 @@ export default function SettingsPage() {
             {/* 5. Domain Tab */}
             {activeTab === 'domain' && (
               <div className="space-y-3">
-                <div className="bg-slate-50 border border-slate-200 rounded-xs p-2.5">
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
                   <p className="text-[11px] text-slate-700 font-medium">Alamat Publik Toko Anda</p>
                   <p className="text-[10px] text-slate-500 mt-0.5">
                     Setiap toko ALURELAB otomatis mendapat subdomain gratis. Domain khusus (custom domain)
-                    dapat diajukan melalui tim support.
+                    bisa langsung dicari &amp; didaftarkan lewat Openprovider (Sandbox).
                   </p>
                 </div>
 
@@ -579,26 +597,26 @@ export default function SettingsPage() {
                       type="text"
                       readOnly
                       value={(session as any)?.store?.slug || ''}
-                      className="w-full px-3 py-1.5 border border-slate-200 bg-slate-50 text-slate-600 rounded-l-xs outline-none font-mono cursor-not-allowed"
+                      className="w-full px-3 py-2 border border-slate-200 bg-slate-50 text-slate-600 rounded-xl outline-none font-mono cursor-not-allowed"
                     />
-                    <span className="inline-flex items-center bg-slate-50 border border-l-0 border-slate-200 text-[11px] text-slate-500 px-3 rounded-r-xs select-none font-mono whitespace-nowrap">
+                    <span className="inline-flex items-center bg-slate-50 border border-slate-200 text-[11px] text-slate-500 px-3 py-2 rounded-xl select-none font-mono whitespace-nowrap">
                       .alurelab.com
                     </span>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block font-medium text-slate-700 mb-1">Custom Domain</label>
+                  <label className="block font-medium text-slate-700 mb-1">Custom Domain Aktif</label>
                   <input
                     type="text"
                     readOnly
                     value={customDomain || ''}
-                    placeholder="Belum terpasang — hubungi tim support ALURELAB"
-                    className="w-full px-3 py-1.5 border border-slate-200 bg-slate-50 text-slate-600 rounded-xs outline-none font-mono cursor-not-allowed"
+                    placeholder="Belum terpasang — cari & daftarkan di bawah"
+                    className="w-full px-3 py-1.5 border border-slate-200 bg-slate-50 text-slate-600 rounded-xl outline-none font-mono cursor-not-allowed"
                   />
                   <div className="flex items-center gap-1.5 mt-1.5">
                     <span
-                      className={`inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-xs border ${
+                      className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full border ${
                         customDomainStatus === 'active'
                           ? 'text-emerald-600 bg-emerald-50 border-emerald-200'
                           : 'text-amber-600 bg-amber-50 border-amber-200'
@@ -607,23 +625,112 @@ export default function SettingsPage() {
                       {customDomainStatus === 'active' ? 'TERVERIFIKASI' : 'MENUNGGU VERIFIKASI'}
                     </span>
                     <span className="text-[10px] text-slate-400">
-                      Domain khusus dipakai bila status sudah aktif.
+                      Domain aktif langsung dipakai bila status sudah TERVERIFIKASI.
                     </span>
                   </div>
+                </div>
+
+                {/* Pencarian & pendaftaran domain (Openprovider Sandbox) */}
+                <div className="border border-slate-200 rounded-2xl p-4 space-y-2.5">
+                  <p className="text-[11px] font-semibold text-slate-700">Cari &amp; Daftarkan Domain</p>
+
+                  <div className="flex gap-1.5">
+                    <input
+                      type="text"
+                      value={domainName}
+                      onChange={(e) => {
+                        setDomainName(e.target.value.replace(/[^a-zA-Z0-9-]/g, ''));
+                        setDomainCheck(null);
+                      }}
+                      placeholder="namatoko"
+                      className="flex-1 min-w-0 px-3 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/15 transition-all font-mono text-sm"
+                    />
+                    <select
+                      value={domainTld}
+                      onChange={(e) => {
+                        setDomainTld(e.target.value);
+                        setDomainCheck(null);
+                      }}
+                      className="px-2 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-[#EE4D2D] focus:ring-2 focus:ring-[#EE4D2D]/15 transition-all font-mono text-sm bg-white"
+                    >
+                      {['com', 'id', 'net', 'shop', 'online', 'store', 'co.id', 'my.id'].map((tld) => (
+                        <option key={tld} value={tld}>
+                          .{tld}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => domainCheckMutation.mutate()}
+                      disabled={domainCheckMutation.isPending || domainName.trim() === ''}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-700 text-white text-[12px] font-semibold rounded-full transition-colors disabled:opacity-50"
+                    >
+                      {domainCheckMutation.isPending ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Search className="w-3.5 h-3.5" />
+                      )}
+                      Cek Ketersediaan
+                    </button>
+
+                    {domainCheck?.available && (
+                      <button
+                        type="button"
+                        onClick={() => domainRegisterMutation.mutate()}
+                        disabled={domainRegisterMutation.isPending}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#EE4D2D] hover:bg-[#d73f20] text-white text-[12px] font-semibold rounded-full transition-colors disabled:opacity-50"
+                      >
+                        {domainRegisterMutation.isPending ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Globe className="w-3.5 h-3.5" />
+                        )}
+                        Gunakan / Daftarkan Domain (Sandbox)
+                      </button>
+                    )}
+                  </div>
+
+                  {domainCheck && (
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span
+                        className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full border ${
+                          domainCheck.available
+                            ? 'text-emerald-600 bg-emerald-50 border-emerald-200'
+                            : 'text-rose-600 bg-rose-50 border-rose-200'
+                        }`}
+                      >
+                        {domainCheck.available ? 'TERSEDIA' : 'TIDAK TERSEDIA'}
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-mono">{domainCheck.domain}</span>
+                      {domainCheck.available && domainCheck.price != null && (
+                        <span className="text-[10px] text-slate-400">
+                          {domainCheck.currency || 'EUR'} {domainCheck.price}/tahun
+                        </span>
+                      )}
+                      {!domainCheck.available && (
+                        <span className="text-[10px] text-slate-400">Coba nama atau ekstensi lain.</span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
 
-            <div className="pt-3 border-t border-slate-100 flex justify-end">
-              <button
-                type="submit"
-                disabled={updateMutation.isPending}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#EE4D2D] hover:bg-[#d73f20] text-white font-semibold rounded-xs transition-colors disabled:opacity-50 shadow-2xs"
-              >
-                <Save className="w-3.5 h-3.5" />
-                <span>{updateMutation.isPending ? 'Menyimpan...' : 'Simpan Perubahan'}</span>
-              </button>
-            </div>
+            {activeTab !== 'domain' && (
+              <div className="pt-3 border-t border-slate-100 flex justify-end">
+                <button
+                  type="submit"
+                  disabled={updateMutation.isPending}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#EE4D2D] hover:bg-[#d73f20] text-white font-semibold rounded-full transition-colors disabled:opacity-50 shadow-sm"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>{updateMutation.isPending ? 'Menyimpan...' : 'Simpan Perubahan'}</span>
+                </button>
+              </div>
+            )}
           </form>
         )}
       </div>

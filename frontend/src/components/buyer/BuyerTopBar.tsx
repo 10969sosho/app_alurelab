@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search, MessageCircle, ShoppingBag, ArrowLeft } from 'lucide-react';
+import { Search, MessageCircle, ShoppingBag, ArrowLeft, User } from 'lucide-react';
 import { useCartStore } from '@/store/cart-store';
+import { useBuyerStore } from '@/store/buyer-store';
 import BuyerChatModal from './BuyerChatModal';
+import BuyerLoginModal from './BuyerLoginModal';
 
 interface BuyerTopBarProps {
   storeSlug: string;
@@ -31,13 +33,16 @@ export default function BuyerTopBar({
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+
+  const { buyer } = useBuyerStore();
 
   useEffect(() => {
     setHydrated(true);
   }, []);
 
-  const totalItems = useCartStore((state) => state.getTotalItems());
+  const totalItems = useCartStore((state) => state.getTotalItems(storeSlug));
   const displayName = storeName || storeSlug.replace(/-/g, ' ');
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -60,7 +65,7 @@ export default function BuyerTopBar({
   return (
     <>
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200/80 transition-shadow duration-200 shadow-xs">
-        <div className="mx-auto max-w-7xl px-3 sm:px-6 h-14 flex items-center gap-2 sm:gap-3">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 h-14 md:h-[4.5rem] flex items-center gap-2 sm:gap-3 md:gap-8">
           {/* Optional Back Button */}
           {showBackButton && (
             <button
@@ -72,10 +77,17 @@ export default function BuyerTopBar({
             </button>
           )}
 
+          <Link href={`/${storeSlug}`} className="hidden md:flex items-center gap-3 shrink-0 max-w-56">
+            <span className="w-9 h-9 rounded-full bg-neutral-900 text-white flex items-center justify-center text-sm font-semibold uppercase">
+              {displayName.charAt(0)}
+            </span>
+            <span className="truncate text-sm font-semibold tracking-tight text-neutral-900">{displayName}</span>
+          </Link>
+
           {/* Search Bar */}
           <form
             onSubmit={handleSearchSubmit}
-            className="flex-1 relative flex items-center min-w-0"
+            className="flex-1 relative flex items-center min-w-0 md:max-w-xl md:ml-auto"
           >
             <Search className="absolute left-3.5 w-4 h-4 text-slate-400 pointer-events-none" />
             <input
@@ -83,7 +95,7 @@ export default function BuyerTopBar({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={placeholder}
-              className="w-full h-10 pl-9 pr-3 rounded-full bg-stone-100/90 hover:bg-stone-100 focus:bg-white text-xs sm:text-sm text-slate-800 placeholder-slate-400 border border-transparent focus:border-slate-400 focus:outline-none transition-all"
+              className="w-full h-10 md:h-11 pl-9 pr-4 rounded-full bg-stone-100/80 hover:bg-stone-100 focus:bg-white text-xs sm:text-sm text-slate-800 placeholder-slate-400 border border-transparent focus:border-neutral-300 focus:ring-2 focus:ring-neutral-900/5 focus:outline-none transition-all"
             />
           </form>
 
@@ -113,6 +125,34 @@ export default function BuyerTopBar({
               </span>
             )}
           </Link>
+
+          {/* User Account / Login Button */}
+          {hydrated && buyer ? (
+            <Link
+              href={`/${storeSlug}/account`}
+              className="flex items-center gap-2 p-1 text-slate-700 hover:text-slate-900 rounded-full hover:bg-stone-100 transition-colors shrink-0"
+              aria-label="Akun Saya"
+              title={`Akun: ${buyer.fullName || 'Saya'}`}
+            >
+              <div className="w-8 h-8 rounded-full bg-neutral-900 text-white flex items-center justify-center text-xs font-bold uppercase shadow-xs">
+                {buyer.fullName ? buyer.fullName.charAt(0) : 'U'}
+              </div>
+              <span className="hidden lg:inline text-xs font-semibold text-slate-800 max-w-28 truncate">
+                {buyer.fullName || 'Akun'}
+              </span>
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsLoginOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-neutral-800 hover:text-black bg-stone-100 hover:bg-stone-200/80 rounded-full transition-all shrink-0 cursor-pointer"
+              aria-label="Masuk Pembeli"
+              title="Masuk sebagai Pembeli"
+            >
+              <User className="w-4 h-4" />
+              <span className="hidden sm:inline">Masuk</span>
+            </button>
+          )}
         </div>
       </header>
 
@@ -123,6 +163,14 @@ export default function BuyerTopBar({
         storeName={displayName}
         phoneNumber={phoneNumber}
         productTitle={productTitleForChat}
+      />
+
+      {/* Buyer Login / Register Modal */}
+      <BuyerLoginModal
+        isOpen={isLoginOpen}
+        onClose={() => setIsLoginOpen(false)}
+        storeSlug={storeSlug}
+        storeName={displayName}
       />
     </>
   );

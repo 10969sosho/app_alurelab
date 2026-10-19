@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Order;
 use App\Models\Store;
+use App\Models\Subscription;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -162,6 +164,65 @@ class DokuService
     }
 
     /**
+     * Membuat tagihan Checkout V1 DOKU untuk pembayaran langganan paket toko.
+     *
+     * @return array{success: bool, payment_url: ?string, error: ?string}
+     */
+    public function createSubscriptionInvoice(Subscription $subscription, Store $store, User $user): array
+    {
+        if (! $this->isConfigured()) {
+            return $this->subscriptionFailure('Kredensial DOKU (DOKU_CLIENT_ID / DOKU_SECRET_KEY) belum dikonfigurasi.');
+        }
+
+        $frontendUrl = rtrim((string) config('doku.frontend_url', 'https://app.alurelab.com'), '/');
+
+        $payload = [
+            'order' => [
+                'invoice_number' => $subscription->invoice_number,
+                'amount' => (int) $subscription->amount,
+                'currency' => 'IDR',
+                'description' => "Langganan paket {$subscription->plan_tier} untuk {$store->name}",
+                'callback_url' => "{$frontendUrl}/dashboard/subscription?status=success",
+                'callback_url_cancel' => "{$frontendUrl}/dashboard/subscription?status=cancel",
+            ],
+            'payment' => [
+                'payment_due_date' => 60,
+            ],
+            'customer' => [
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone_number ?? $store->phone_number,
+            ],
+        ];
+
+        $body = json_encode($payload, JSON_UNESCAPED_SLASHES);
+
+        $posted = $this->signedPost('/checkout/v1/payment', $body);
+
+        if (! $posted['ok']) {
+            Log::error('DOKU Create Subscription Invoice Failed', [
+                'invoice_number' => $subscription->invoice_number,
+                'status' => $posted['status'],
+                'body' => $posted['body'],
+            ]);
+
+            return $this->subscriptionFailure('Gagal membuat tagihan langganan DOKU: '.$posted['body']);
+        }
+
+        $json = json_decode($posted['body'], true) ?? [];
+        $paymentUrl = $json['response']['payment']['url']
+            ?? $json['payment']['url']
+            ?? $json['invoice_url']
+            ?? null;
+
+        if (! $paymentUrl) {
+            return $this->subscriptionFailure('Respons DOKU tidak memuat payment URL.');
+        }
+
+        return ['success' => true, 'payment_url' => (string) $paymentUrl, 'error' => null];
+    }
+
+    /**
      * Registrasi sub-account DOKU (SAC Merchant) untuk sebuah toko.
      * Simpan id sub-account ke store.doku_sub_account_id + status ke doku_account_status.
      *
@@ -295,6 +356,14 @@ class DokuService
             'expiry_date' => null,
             'error' => $error,
         ];
+    }
+
+    /**
+     * @return array{success: bool, payment_url: null, error: string}
+     */
+    protected function subscriptionFailure(string $error): array
+    {
+        return ['success' => false, 'payment_url' => null, 'error' => $error];
     }
 
     /**

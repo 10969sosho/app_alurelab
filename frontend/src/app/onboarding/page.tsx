@@ -258,7 +258,7 @@ export default function OnboardingPage() {
             disabled={loading}
             className="w-full btn-primary py-3.5 text-sm"
           >
-            {loading ? 'Membangun Toko dalam 60 Detik...' : 'Buat & Luncurkan Toko Sekarang 🚀'}
+            {loading ? 'Membuat Toko...' : 'Buat Toko'}
           </button>
         </form>
       </div>

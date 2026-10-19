@@ -4,6 +4,7 @@
  */
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
+import Google from 'next-auth/providers/google';
 import { CredentialsSignin } from 'next-auth';
 import type { NextAuthConfig } from 'next-auth';
 import axios from 'axios';
@@ -60,9 +61,43 @@ export const authConfig: NextAuthConfig = {
         }
       },
     }),
+    Google({
+      clientId:     process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    }),
   ],
 
   callbacks: {
+    // Google: tukar profile Google → backend Sanctum token
+    async signIn({ user, account }) {
+      if (account?.provider !== 'google') return true;
+
+      try {
+        const res = await axios.post(`${API_URL}/auth/google-callback`, {
+          email:     user.email,
+          name:      user.name,
+          google_id: account.providerAccountId,
+          avatar:    user.image,
+        });
+
+        const data = res.data;
+        if (data?.token && data?.user) {
+          user.id           = data.user.id;
+          user.name         = data.user.name;
+          user.email        = data.user.email;
+          (user as any).backendToken = data.token;
+          (user as any).store        = data.store ?? null;
+          (user as any).role         = 'owner';
+          (user as any).phoneNumber  = data.user.phone_number;
+          (user as any).isSuperadmin = data.user.is_superadmin;
+          return true;
+        }
+        return false;
+      } catch {
+        return false;
+      }
+    },
+
     async jwt({ token, user }) {
       // Saat login: simpan backend token + store info ke JWT
       if (user) {

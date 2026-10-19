@@ -76,4 +76,63 @@ class AuthTest extends TestCase
 
         $logoutResponse->assertStatus(200);
     }
+
+    public function test_google_callback_creates_new_verified_user_with_default_store(): void
+    {
+        $email = 'google.'.uniqid().'@gmail.com';
+
+        $response = $this->postJson('/api/v1/auth/google-callback', [
+            'email' => $email,
+            'name' => 'Google User',
+            'google_id' => 'gid-'.uniqid(),
+            'avatar' => 'https://example.com/avatar.jpg',
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJsonStructure(['token', 'user' => ['id', 'name', 'email'], 'store' => ['id', 'name', 'slug']]);
+
+        $this->assertNotNull($response->json('store'));
+        $this->assertSame('Toko Google', $response->json('store.name'));
+
+        $user = User::where('email', $email)->first();
+        $this->assertNotNull($user);
+        $this->assertNotNull($user->email_verified_at);
+
+        $this->assertDatabaseHas('store_users', [
+            'user_id' => $user->id,
+            'store_id' => $response->json('store.id'),
+            'role' => 'owner',
+        ]);
+
+        $me = $this->withHeader('Authorization', 'Bearer '.$response->json('token'))
+            ->getJson('/api/v1/auth/me');
+        $me->assertStatus(200)
+            ->assertJsonPath('user.email', $email)
+            ->assertJsonPath('store.id', $response->json('store.id'));
+    }
+
+    public function test_google_callback_links_existing_user_and_returns_store(): void
+    {
+        $email = 'existing.'.uniqid().'@example.com';
+
+        $this->postJson('/api/v1/auth/register', [
+            'name' => 'Existing User',
+            'email' => $email,
+            'phone_number' => '08'.rand(100000000, 999999999),
+            'password' => 'secret1234',
+            'password_confirmation' => 'secret1234',
+        ]);
+
+        $response = $this->postJson('/api/v1/auth/google-callback', [
+            'email' => $email,
+            'name' => 'Existing User',
+            'google_id' => 'gid-'.uniqid(),
+        ]);
+
+        $response->assertStatus(200)->assertJsonPath('user.email', $email);
+
+        $user = User::where('email', $email)->first();
+        $this->assertNotNull($user->google_id);
+        $this->assertNotNull($user->email_verified_at);
+    }
 }

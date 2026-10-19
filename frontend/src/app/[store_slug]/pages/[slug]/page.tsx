@@ -8,7 +8,6 @@ import {
   ShoppingBag,
   ShieldCheck,
 } from 'lucide-react';
-import { useCartStore } from '@/store/cart-store';
 import { useBuyerStore } from '@/store/buyer-store';
 import BuyerLoginModal from '@/components/buyer/BuyerLoginModal';
 import { CmsPage, CmsSettings, CmsBranding, CmsNavigation } from '@/components/templates/types';
@@ -21,7 +20,6 @@ export default function StorefrontCustomPage({
   params: Promise<{ store_slug: string; slug: string }>;
 }) {
   const { store_slug: storeSlug, slug: pageSlug } = use(params);
-  const { getTotalItems } = useCartStore();
   const { buyer } = useBuyerStore();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);

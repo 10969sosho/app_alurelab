@@ -54,26 +54,26 @@ export default function MobileStorefrontHome({
         phoneNumber={store.phone_number}
       />
 
-      <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 pt-3 sm:pt-6">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 space-y-8 md:space-y-12 pt-3 sm:pt-6 md:pt-10">
         {/* ── 2. Editorial Hero Banner (Mobile & Desktop Clean Luxury) ── */}
-        <section className="relative rounded-3xl overflow-hidden border border-neutral-200/60 shadow-xs bg-linear-to-br from-neutral-100 to-stone-200">
-          <div className="grid grid-cols-1 md:grid-cols-12 items-center min-h-[220px] sm:min-h-[320px]">
+        <section className="relative overflow-hidden rounded-2xl md:rounded-[2rem] border border-neutral-200/60 shadow-sm bg-linear-to-br from-[#eeeae2] via-[#f6f4ef] to-[#e6e1d7]">
+          <div className="grid grid-cols-1 md:grid-cols-12 items-center min-h-[220px] sm:min-h-[320px] md:min-h-[510px]">
             {/* Banner Text / CTA */}
-            <div className="p-6 sm:p-10 md:col-span-7 flex flex-col justify-center space-y-3 sm:space-y-4 z-10">
+            <div className="p-6 sm:p-10 md:col-span-6 lg:col-span-5 md:pl-12 lg:pl-16 md:py-16 flex flex-col justify-center space-y-3 sm:space-y-5 z-10">
               <div className="inline-flex items-center gap-1.5 self-start px-3 py-1 rounded-full bg-white/80 backdrop-blur-xs text-[11px] font-bold text-neutral-800 shadow-2xs">
                 <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                 <span>Koleksi Unggulan</span>
               </div>
-              <h1 className="text-xl sm:text-3xl md:text-4xl font-extrabold text-neutral-900 leading-tight">
+              <h1 className="text-xl sm:text-3xl md:text-5xl lg:text-6xl font-semibold text-neutral-900 leading-[1.08] tracking-tight max-w-xl">
                 {heroTitle}
               </h1>
-              <p className="text-xs sm:text-sm text-neutral-600 max-w-md leading-relaxed">
+              <p className="text-xs sm:text-sm md:text-base text-neutral-600 max-w-md leading-relaxed">
                 {heroSubtitle}
               </p>
               <div className="pt-1">
                 <Link
                   href={`/${storeSlug}/shop`}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-neutral-900 hover:bg-black text-white text-xs sm:text-sm font-bold shadow-xs active:scale-95 transition-all"
+                  className="inline-flex items-center gap-3 px-6 py-3.5 rounded-full bg-neutral-900 hover:bg-neutral-700 text-white text-xs sm:text-sm font-semibold shadow-md active:scale-[0.98] transition-all duration-200"
                 >
                   <span>Belanja Sekarang</span>
                   <ArrowRight className="w-4 h-4" />
@@ -82,13 +82,13 @@ export default function MobileStorefrontHome({
             </div>
 
             {/* Banner Visual / Fallback */}
-            <div className="relative h-44 sm:h-64 md:h-full md:col-span-5 overflow-hidden flex items-center justify-center">
+            <div className="relative h-44 sm:h-64 md:h-[430px] lg:h-[470px] md:col-span-6 lg:col-span-7 md:my-5 md:mr-5 overflow-hidden flex items-center justify-center md:rounded-[1.5rem]">
               <UniversalImage
                 src={bannerImage}
                 alt={heroTitle}
                 fallbackText="Banner Toko"
                 aspectRatio="auto"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transition-transform duration-700 hover:scale-[1.025]"
               />
             </div>
           </div>
@@ -163,7 +163,7 @@ export default function MobileStorefrontHome({
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 lg:gap-7">
               {filteredProducts.map((product) => (
                 <BuyerProductCard
                   key={product.id}
@@ -175,8 +175,24 @@ export default function MobileStorefrontHome({
           )}
         </section>
 
+        <section className="grid grid-cols-1 md:grid-cols-3 border-y border-neutral-200/80 py-6 md:py-8 divide-y md:divide-y-0 md:divide-x divide-neutral-200/80">
+          {[
+            ['01', 'Kurasi dengan cermat', 'Setiap produk dipilih untuk kualitas dan pengalaman yang terasa berbeda.'],
+            ['02', 'Kualitas terpercaya', 'Informasi produk yang jelas, pilihan aman, dan dukungan langsung dari toko.'],
+            ['03', 'Belanja dengan tenang', 'Pembayaran terlindungi dan pengiriman dapat dilacak hingga tiba.'],
+          ].map(([number, title, description]) => (
+            <div key={number} className="flex gap-4 px-0 md:px-7 py-4 md:py-0 first:md:pl-0 last:md:pr-0">
+              <span className="text-xs font-medium tracking-widest text-neutral-400">{number}</span>
+              <div className="space-y-1">
+                <h2 className="text-sm font-semibold text-neutral-900">{title}</h2>
+                <p className="max-w-sm text-xs leading-relaxed text-neutral-500">{description}</p>
+              </div>
+            </div>
+          ))}
+        </section>
+
         {/* ── 5. Minimalist Footer Info (Quiet Luxury Touch) ── */}
-        <footer className="pt-8 pb-4 border-t border-neutral-200/70 text-center space-y-2">
+        <footer className="pt-8 pb-4 border-t border-neutral-200/70 text-center space-y-2 md:pt-10">
           <p className="text-xs font-bold text-neutral-800 tracking-wider uppercase">
             {store.storeName}
           </p>

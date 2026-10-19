@@ -9,6 +9,8 @@ use App\Http\Controllers\Controller;
 use App\Models\MerchantWallet;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\Store;
+use App\Models\Subscription;
 use App\Models\WalletTransaction;
 use App\Services\DokuService;
 use App\Services\InventoryService;
@@ -44,6 +46,10 @@ class DokuWebhookController extends Controller
 
         if (! $invoiceNumber) {
             return response()->json(['error' => 'Missing invoice_number'], 400);
+        }
+
+        if (str_starts_with((string) $invoiceNumber, 'SUB-')) {
+            return $this->handleSubscriptionNotification((string) $invoiceNumber, $status, $payload);
         }
 
         // Webhook eksternal butuh system bypass untuk mencari order lintas-tenant
@@ -140,6 +146,59 @@ class DokuWebhookController extends Controller
                 Payment::where('order_id', $order->id)->update(['status' => PaymentStatus::EXPIRED]);
                 $this->inventoryService->releaseReservations($order->id);
             }
+        }
+
+        return response()->json(['status' => 'success']);
+    }
+
+    /**
+     * Notifikasi pembayaran langganan (invoice_number berawalan "SUB-").
+     * Menaikkan plan_tier toko setelah pembayaran sukses.
+     */
+    private function handleSubscriptionNotification(string $invoiceNumber, string $status, array $payload): JsonResponse
+    {
+        $subscription = Subscription::where('invoice_number', $invoiceNumber)->first();
+        if (! $subscription) {
+            Log::warning("Webhook DOKU: Subscription {$invoiceNumber} tidak ditemukan");
+
+            return response()->json(['status' => 'ignored']);
+        }
+
+        if ($subscription->status === 'paid') {
+            return response()->json(['status' => 'already_processed']);
+        }
+
+        $amount = $payload['order']['amount'] ?? $payload['amount'] ?? null;
+        if ($amount !== null && (int) $amount !== (int) $subscription->amount) {
+            return response()->json(['error' => 'Invoice amount mismatch'], 422);
+        }
+
+        if (in_array($status, ['PAID', 'SUCCESS'], true)) {
+            DB::transaction(function () use ($subscription, $payload) {
+                $subscription->update([
+                    'status' => 'paid',
+                    'paid_at' => now(),
+                    'expires_at' => now()->addDays(30),
+                    'payment_method' => $payload['payment']['channel']
+                        ?? $payload['payment']['type']
+                        ?? $payload['payment_method']
+                        ?? null,
+                ]);
+
+                Store::whereKey($subscription->store_id)->update([
+                    'plan_tier' => $subscription->plan_tier,
+                    'plan_expires_at' => $subscription->expires_at,
+                ]);
+            });
+
+            Log::info("Langganan #{$invoiceNumber} dibayar via DOKU", [
+                'store_id' => $subscription->store_id,
+                'plan_tier' => $subscription->plan_tier,
+            ]);
+        } elseif (in_array($status, ['EXPIRED', 'FAILED', 'CANCELLED'], true)) {
+            $subscription->update([
+                'status' => $status === 'FAILED' ? 'failed' : 'expired',
+            ]);
         }
 
         return response()->json(['status' => 'success']);

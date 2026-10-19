@@ -48,6 +48,7 @@ export default function BuyerProductCard({
       quantity: 1,
       imageUrl: product.images?.[0] || '',
       weightGrams: product.weight_grams,
+      storeSlug,
     });
 
     toast.success(`${product.title} ditambahkan ke keranjang`, {
@@ -58,7 +59,7 @@ export default function BuyerProductCard({
   const firstImage = product.images?.[0] || null;
 
   return (
-    <article className="group bg-white rounded-2xl border border-stone-200/70 overflow-hidden shadow-2xs hover:shadow-md transition-all flex flex-col justify-between relative">
+    <article className="group bg-white rounded-xl md:rounded-2xl border border-stone-200/70 overflow-hidden shadow-2xs hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between relative">
       <Link
         href={`/${storeSlug}/products/${product.slug}`}
         className="block relative aspect-square sm:aspect-[4/5] bg-stone-100 overflow-hidden"
@@ -68,13 +69,13 @@ export default function BuyerProductCard({
           alt={product.title}
           fallbackText={product.title || 'Foto Produk'}
           aspectRatio="square"
-          className="group-hover:scale-105 transition-transform duration-300"
+          className="group-hover:scale-[1.04] transition-transform duration-500 ease-out"
         />
 
         {/* Top Badges */}
         <div className="absolute top-2.5 left-2.5 flex flex-col gap-1 z-10">
           {discountPercent !== null && discountPercent > 0 ? (
-            <span className="bg-rose-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full shadow-xs uppercase tracking-wider">
+            <span className="bg-white/90 backdrop-blur-xs text-neutral-800 text-[10px] font-semibold px-2.5 py-1 rounded-full shadow-xs tracking-wide">
               -{discountPercent}%
             </span>
           ) : (
@@ -100,7 +101,7 @@ export default function BuyerProductCard({
       </Link>
 
       {/* Product Info */}
-      <div className="p-3 sm:p-4 flex-1 flex flex-col justify-between">
+      <div className="p-3 sm:p-4 md:p-5 flex-1 flex flex-col justify-between">
         <div>
           {product.category && (
             <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 truncate mb-1">

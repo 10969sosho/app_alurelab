@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { ArrowLeft, Loader2, Rocket, Store } from 'lucide-react';
+import { ArrowLeft, Loader2, Store } from 'lucide-react';
 import api, { STORE_SLUG_KEY } from '@/lib/api';
 
 const CATEGORIES = [
@@ -108,7 +108,7 @@ export default function CreateStorePage() {
               <Store className="w-6 h-6" />
             </div>
             <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#EE4D2D] bg-orange-50 border border-orange-200 px-2.5 py-1 rounded-xs mb-3">
-              <Rocket className="w-3 h-3" /> Buat Toko Baru
+              Buat Toko Baru
             </span>
             <h1 className="text-lg font-bold text-slate-900 leading-tight">
               Selamat datang, {session?.user?.name?.split(' ')[0] || 'Seller'}!
@@ -136,11 +136,10 @@ export default function CreateStorePage() {
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-700 mb-1.5">Slug Toko</label>
+              <label className="block font-semibold text-slate-700 mb-1.5">Slug Toko (opsional)</label>
               <div className="flex items-stretch">
                 <input
                   type="text"
-                  required
                   placeholder="kopi-senja"
                   value={slug}
                   onChange={(e) => {
@@ -154,7 +153,7 @@ export default function CreateStorePage() {
                 </span>
               </div>
               <p className="text-[10px] text-slate-400 mt-1">
-                Alamat publik toko Anda. Huruf kecil, tanpa spasi.
+                Kosongkan saja untuk otomatis dibuatkan dari nama toko Anda.
               </p>
             </div>
 
@@ -175,16 +174,16 @@ export default function CreateStorePage() {
 
             <button
               type="submit"
-              disabled={loading || !name || !slug}
+              disabled={loading || !name}
               className="w-full py-3 bg-[#EE4D2D] hover:bg-[#d73f20] text-white font-bold rounded-xs transition-colors disabled:opacity-50 shadow-2xs flex items-center justify-center gap-2 mt-2"
             >
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Membangun Toko...
+                  Membuat Toko...
                 </>
               ) : (
-                <>Buat Toko Sekarang 🚀</>
+                <>Buat Toko</>
               )}
             </button>
           </form>
