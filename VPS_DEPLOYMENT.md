@@ -47,8 +47,26 @@ Internet Request
   ├── api.alurelab.com ────────> /var/www/alurelab/backend/public (PHP 8.4-FPM)
   │
   └── app.alurelab.com / * ────┬──> /_next/static/ ──> Direct Nginx cache
-                               ├──> /api/ ──────────> Proxy ke api.alurelab.com (Laravel)
-                               └──> / (routes lain) ─> Proxy ke PM2 port 3000 (Next.js)
+                                ├──> /api/ ──────────> Proxy ke api.alurelab.com (Laravel)
+                                └──> / (routes lain) ─> Proxy ke PM2 port 3000 (Next.js)
+```
+
+> `location ^~ /api/auth/` dan `location ^~ /api/wilayah/` harus diarahkan ke port 3000 sebelum aturan umum `/api/` ke Laravel. Auth.js dan dropdown alamat wilayah menggunakan route Next.js tersebut.
+
+```nginx
+location ^~ /api/auth/ {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_http_version 1.1;
+    proxy_set_header Host app.alurelab.com;
+    proxy_set_header X-Forwarded-Proto https;
+}
+
+location ^~ /api/wilayah/ {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_http_version 1.1;
+    proxy_set_header Host app.alurelab.com;
+    proxy_set_header X-Forwarded-Proto https;
+}
 ```
 
 ---

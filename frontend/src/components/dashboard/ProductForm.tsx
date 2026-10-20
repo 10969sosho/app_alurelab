@@ -39,6 +39,7 @@ const productSchema = z.object({
   compare_at_price: z.coerce.number().optional().nullable(),
   cost_price:       z.coerce.number().optional().nullable(),
   weight_grams:     z.coerce.number().min(1, 'Berat produk minimal 1 gram'),
+  stock:            z.coerce.number().int().min(0, 'Stok minimal 0'),
   is_active:        z.boolean().default(true),
   variants:         z.array(variantSchema).optional(),
 });
@@ -129,6 +130,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
       compare_at_price: initialData?.compare_at_price ? Number(initialData.compare_at_price) : null,
       cost_price:       initialData?.cost_price ? Number(initialData.cost_price) : null,
       weight_grams:     initialData?.weight_grams ? Number(initialData.weight_grams) : 200,
+      stock:            0,
       is_active:        initialData?.is_active ?? true,
       variants:         initialData?.variants?.map((v: any) => ({
         title:        v.title,
@@ -477,7 +479,7 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               <div>
                 <label className="block text-xs font-medium text-slate-700 mb-1">
                   Harga Jual (Rp) <span className="text-lime-800">*</span>
@@ -519,6 +521,21 @@ export function ProductForm({ initialData, isEdit, productId }: ProductFormProps
                   placeholder="75000"
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30"
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">
+                  Stok Awal <span className="text-lime-800">*</span>
+                </label>
+                <input
+                  type="number"
+                  {...register('stock')}
+                  placeholder="0"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30"
+                />
+                {errors.stock && (
+                  <p className="mt-1 text-[11px] text-red-500">{errors.stock.message}</p>
+                )}
               </div>
             </div>
 

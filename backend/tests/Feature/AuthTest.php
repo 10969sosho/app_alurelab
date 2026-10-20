@@ -89,7 +89,8 @@ class AuthTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-            ->assertJsonStructure(['token', 'user' => ['id', 'name', 'email'], 'store' => ['id', 'name', 'slug']]);
+            ->assertJsonStructure(['token', 'user' => ['id', 'name', 'email'], 'store' => ['id', 'name', 'slug']])
+            ->assertJsonPath('store.plan_tier', 'free');
 
         $this->assertNotNull($response->json('store'));
         $this->assertSame('Toko Google', $response->json('store.name'));

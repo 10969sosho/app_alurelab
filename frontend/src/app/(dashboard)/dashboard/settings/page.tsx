@@ -188,9 +188,9 @@ export default function SettingsPage() {
       }
 
       if (s.bank_account) {
-        setBankName(s.bank_account.bank_name || '');
+        setBankName(s.bank_account.bank_name || s.bank_account.bank_code || '');
         setAccountNumber(s.bank_account.account_number || '');
-        setAccountHolder(s.bank_account.account_holder || data.name || '');
+        setAccountHolder(s.bank_account.account_holder || s.bank_account.account_holder_name || data.name || '');
       }
     }
   }, [data]);
@@ -222,39 +222,48 @@ export default function SettingsPage() {
       return;
     }
 
+    const bankFields = [bankName.trim(), accountNumber.trim(), accountHolder.trim()];
+    const hasBankDetails = bankFields.some(Boolean);
+    if (hasBankDetails && bankFields.some((value) => !value)) {
+      toast.error('Lengkapi bank, nomor rekening, dan nama pemilik rekening.');
+      return;
+    }
+
+    const settings: Record<string, unknown> = {
+      tagline,
+      origin_address: {
+        contact_name: contactName,
+        phone: warehousePhone,
+        address,
+        city: wilayah.regencyName || '',
+        province: wilayah.provinceName || '',
+        district: wilayah.districtName || '',
+        village: wilayah.villageName || '',
+        province_code: wilayah.provinceCode || '',
+        regency_code: wilayah.regencyCode || '',
+        district_code: wilayah.districtCode || '',
+        village_code: wilayah.villageCode || '',
+        area_id: wilayah.areaId || '',
+        area_name: wilayah.areaName || '',
+        postal_code: postalCode || wilayah.postalCode || '',
+      },
+      couriers,
+      allow_cod: allowCod,
+    };
+    if (hasBankDetails) {
+      settings.bank_account = {
+        bank_name: bankName.trim(),
+        account_number: accountNumber.trim(),
+        account_holder: accountHolder.trim(),
+      };
+    }
+
     updateMutation.mutate({
       name: storeName,
       phone_number: phoneNumber,
-      settings: {
-        tagline,
-        origin_address: {
-          contact_name: contactName,
-          phone: warehousePhone,
-          address,
-          city: wilayah.regencyName || '',
-          province: wilayah.provinceName || '',
-          district: wilayah.districtName || '',
-          village: wilayah.villageName || '',
-          province_code: wilayah.provinceCode || '',
-          regency_code: wilayah.regencyCode || '',
-          district_code: wilayah.districtCode || '',
-          village_code: wilayah.villageCode || '',
-          area_id: wilayah.areaId || '',
-          area_name: wilayah.areaName || '',
-          postal_code: postalCode || wilayah.postalCode || '',
-        },
-        couriers,
-        allow_cod: allowCod,
-        bank_account: {
-          bank_name: bankCodeValid(bankName),
-          account_number: accountNumber,
-          account_holder: accountHolder,
-        },
-      },
+      settings,
     });
   };
-
-  const bankCodeValid = (b: string) => b || 'BCA';
 
   return (
     <div className="space-y-3 font-sans pb-10">
@@ -546,6 +555,7 @@ export default function SettingsPage() {
                         onChange={(e) => setBankName(e.target.value)}
                         className="w-full px-2.5 py-1.5 border border-slate-200 rounded-xl outline-none focus:border-slate-800 focus:ring-2 focus:ring-[#C8FF3D]/30 transition-all"
                       >
+                        <option value="" disabled>Pilih bank</option>
                         <option value="BCA">BCA</option>
                         <option value="MANDIRI">Bank Mandiri</option>
                         <option value="BRI">BRI</option>

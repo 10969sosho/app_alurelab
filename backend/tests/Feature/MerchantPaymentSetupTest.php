@@ -174,6 +174,7 @@ class MerchantPaymentSetupTest extends TestCase
 
         $store = Store::where('slug', 'onboard-'.$suffix)->first();
         $this->assertNotNull($store);
+        $this->assertSame('free', $store->plan_tier);
         $this->assertNull($store->doku_sub_account_id);
         $this->assertSame('unregistered', $store->doku_account_status);
     }

@@ -178,7 +178,7 @@ class AuthController extends Controller
                 'name' => 'Toko '.$firstName,
                 'slug' => Str::slug('toko-'.$firstName.'-'.Str::lower(Str::random(5))),
                 'phone_number' => $user->phone_number ?: '-',
-                'plan_tier' => 'starter',
+                'plan_tier' => 'free',
                 'custom_domain_status' => 'pending',
                 'settings' => [
                     'template' => 'default',

@@ -118,7 +118,7 @@ export function Sidebar() {
       <div className="space-y-2 border-t border-white/10 bg-[#111111] px-3 py-3">
         {store && (
           <div className="flex items-center justify-between rounded-full bg-white/10 px-3 py-1.5 text-[10px] text-white/60">
-            <span className="flex items-center gap-1.5"><Crown className="h-3 w-3" /> Paket {store.plan_tier && store.plan_tier !== 'starter' ? store.plan_tier : 'Free'}</span>
+            <span className="flex items-center gap-1.5"><Crown className="h-3 w-3" /> Paket {store.plan_tier && store.plan_tier !== 'free' ? store.plan_tier : 'Free'}</span>
             <span>Aktif</span>
           </div>
         )}

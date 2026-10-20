@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 
 const API = '/api/wilayah';
 
@@ -19,6 +19,68 @@ export interface WilayahAddressValue {
 }
 
 type Region = { code: string; name: string };
+
+function SearchableRegionField({
+  label,
+  regions,
+  value,
+  disabled = false,
+  required = false,
+  resetKey = '',
+  onSelect,
+}: {
+  label: string;
+  regions: Region[];
+  value?: string;
+  disabled?: boolean;
+  required?: boolean;
+  resetKey?: string;
+  onSelect: (region?: Region) => void;
+}) {
+  const id = useId();
+  const [query, setQuery] = useState('');
+  const selected = regions.find((region) => region.code === value);
+
+  useEffect(() => setQuery(''), [resetKey]);
+
+  return (
+    <div>
+      <label htmlFor={id} className="block text-xs font-medium text-slate-700">
+        {label}
+      </label>
+      <input
+        id={id}
+        type="text"
+        list={`${id}-options`}
+        value={query || selected?.name || ''}
+        onChange={(event) => {
+          const nextValue = event.target.value;
+          setQuery(nextValue);
+          const match = regions.find((region) => region.name.toLocaleLowerCase() === nextValue.trim().toLocaleLowerCase());
+          if (match) {
+            setQuery('');
+            onSelect(match);
+          } else if (!nextValue) {
+            onSelect(undefined);
+          }
+        }}
+        onBlur={() => {
+          if (query && !regions.some((region) => region.name.toLocaleLowerCase() === query.trim().toLocaleLowerCase())) {
+            setQuery('');
+          }
+        }}
+        placeholder={`Ketik atau cari ${label.toLowerCase()}...`}
+        disabled={disabled || regions.length === 0}
+        required={required}
+        autoComplete="off"
+        className="w-full px-3 py-2 border border-slate-300 rounded-xs bg-white text-xs outline-none focus:border-[#EE4D2D] disabled:bg-slate-50"
+      />
+      <datalist id={`${id}-options`}>
+        {regions.map((region) => <option key={region.code} value={region.name} />)}
+      </datalist>
+    </div>
+  );
+}
 
 interface Props {
   value: WilayahAddressValue;
@@ -65,8 +127,31 @@ export function WilayahAddressFields({ value, onChange, className = '', required
   const districts = useRegions(value.regencyCode ? `districts/${value.regencyCode}` : '');
   const villages = useRegions(value.districtCode ? `villages/${value.districtCode}` : '');
 
-  const selectRegion = (level: 'province' | 'regency' | 'district' | 'village', region: Region) => {
+  const selectRegion = (level: 'province' | 'regency' | 'district' | 'village', region?: Region) => {
     const next = { ...value };
+
+    if (!region) {
+      if (level === 'province') {
+        Object.assign(next, {
+          provinceCode: '', provinceName: '', regencyCode: '', regencyName: '', districtCode: '', districtName: '', villageCode: '', villageName: '',
+          areaId: '', areaName: '',
+        });
+      }
+      if (level === 'regency') {
+        Object.assign(next, {
+          regencyCode: '', regencyName: '', districtCode: '', districtName: '', villageCode: '', villageName: '',
+          areaId: '', areaName: '',
+        });
+      }
+      if (level === 'district') {
+        Object.assign(next, {
+          districtCode: '', districtName: '', villageCode: '', villageName: '', areaId: '', areaName: '',
+        });
+      }
+      if (level === 'village') Object.assign(next, { villageCode: '', villageName: '' });
+      onChange(next);
+      return;
+    }
 
     if (level === 'province') {
       Object.assign(next, {
@@ -102,53 +187,12 @@ export function WilayahAddressFields({ value, onChange, className = '', required
     onChange(next);
   };
 
-  const selectClass = 'w-full px-3 py-2 border border-slate-300 rounded-xs bg-white text-xs outline-none focus:border-[#EE4D2D]';
-
   return (
     <div className={`grid grid-cols-1 sm:grid-cols-2 gap-2.5 ${className}`}>
-      <label className="block text-xs font-medium text-slate-700">
-        Provinsi
-        <select required={required} value={value.provinceCode || ''} onChange={(event) => {
-          const region = provinces.find((item) => item.code === event.target.value);
-          if (region) selectRegion('province', region);
-        }} className={selectClass}>
-          <option value="">Pilih provinsi</option>
-          {provinces.map((region) => <option key={region.code} value={region.code}>{region.name}</option>)}
-        </select>
-      </label>
-
-      <label className="block text-xs font-medium text-slate-700">
-        Kabupaten / Kota
-        <select required={required} value={value.regencyCode || ''} disabled={!value.provinceCode} onChange={(event) => {
-          const region = regencies.find((item) => item.code === event.target.value);
-          if (region) selectRegion('regency', region);
-        }} className={selectClass}>
-          <option value="">Pilih kabupaten / kota</option>
-          {regencies.map((region) => <option key={region.code} value={region.code}>{region.name}</option>)}
-        </select>
-      </label>
-
-      <label className="block text-xs font-medium text-slate-700">
-        Kecamatan
-        <select required={required} value={value.districtCode || ''} disabled={!value.regencyCode} onChange={(event) => {
-          const region = districts.find((item) => item.code === event.target.value);
-          if (region) selectRegion('district', region);
-        }} className={selectClass}>
-          <option value="">Pilih kecamatan</option>
-          {districts.map((region) => <option key={region.code} value={region.code}>{region.name}</option>)}
-        </select>
-      </label>
-
-      <label className="block text-xs font-medium text-slate-700">
-        Kelurahan / Desa
-        <select required={required} value={value.villageCode || ''} disabled={!value.districtCode} onChange={(event) => {
-          const region = villages.find((item) => item.code === event.target.value);
-          if (region) selectRegion('village', region);
-        }} className={selectClass}>
-          <option value="">Pilih kelurahan / desa</option>
-          {villages.map((region) => <option key={region.code} value={region.code}>{region.name}</option>)}
-        </select>
-      </label>
+      <SearchableRegionField label="Provinsi" regions={provinces} value={value.provinceCode} required={required} onSelect={(region) => selectRegion('province', region)} />
+      <SearchableRegionField label="Kabupaten / Kota" regions={regencies} value={value.regencyCode} disabled={!value.provinceCode} required={required} resetKey={value.provinceCode} onSelect={(region) => selectRegion('regency', region)} />
+      <SearchableRegionField label="Kecamatan" regions={districts} value={value.districtCode} disabled={!value.regencyCode} required={required} resetKey={value.regencyCode} onSelect={(region) => selectRegion('district', region)} />
+      <SearchableRegionField label="Kelurahan / Desa" regions={villages} value={value.villageCode} disabled={!value.districtCode} required={required} resetKey={value.districtCode} onSelect={(region) => selectRegion('village', region)} />
     </div>
   );
 }

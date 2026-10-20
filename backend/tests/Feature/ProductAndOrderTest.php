@@ -94,6 +94,31 @@ class ProductAndOrderTest extends TestCase
             ->assertJsonPath('is_active', false);
     }
 
+    public function test_simple_product_requires_and_uses_explicit_starting_stock(): void
+    {
+        $headers = [
+            'Authorization' => 'Bearer '.$this->token,
+            'X-Store-Slug' => $this->store->slug,
+        ];
+        $payload = [
+            'title' => 'Item 1',
+            'price' => 10000,
+            'weight_grams' => 200,
+            'is_active' => true,
+            'variants' => [],
+        ];
+
+        $this->withHeaders($headers)
+            ->postJson('/api/v1/merchant/products', $payload)
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['stock']);
+
+        $response = $this->withHeaders($headers)
+            ->postJson('/api/v1/merchant/products', $payload + ['stock' => 1]);
+
+        $response->assertCreated()->assertJsonPath('variants.0.stock', 1);
+    }
+
     public function test_can_view_orders_and_stats(): void
     {
         $headers = [

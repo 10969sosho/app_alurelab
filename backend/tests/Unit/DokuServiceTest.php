@@ -41,7 +41,18 @@ class DokuServiceTest extends TestCase
             'shipping_recipient_name' => 'Budi Santoso',
             'shipping_recipient_phone' => '08123456789',
         ]);
-        $store = new Store(['name' => 'Toko Uji', 'slug' => 'toko-uji']);
+        $store = new Store([
+            'name' => 'Toko Uji',
+            'slug' => 'toko-uji',
+            'doku_sub_account_id' => 'ACC-TEST',
+            'settings' => [
+                'bank_account' => [
+                    'bank_name' => 'BCA',
+                    'account_number' => '1234567890',
+                    'account_holder' => 'Pemilik Toko',
+                ],
+            ],
+        ]);
 
         $result = (new DokuService)->createCheckoutInvoice($order, $store);
 
@@ -63,10 +74,11 @@ class DokuServiceTest extends TestCase
             $this->assertSame('IDR', $payload['order']['currency']);
             $this->assertSame(150000, $payload['order']['amount']);
             $this->assertNotEmpty($payload['order']['callback_url']);
+            $this->assertSame('Pemilik Toko', $payload['additional_info']['settlement']['bank']['account_name']);
 
             $requestId = $request->header('Request-Id')[0];
             $timestamp = $request->header('Request-Timestamp')[0];
-            $this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/', $timestamp);
+            $this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $timestamp);
 
             $digest = base64_encode(hash('sha256', $body, true));
             $this->assertSame($digest, $request->header('Digest')[0]);

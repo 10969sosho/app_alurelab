@@ -63,6 +63,17 @@ class SellerFlowSetupTest extends TestCase
         return $store;
     }
 
+    public function test_store_database_default_plan_is_free(): void
+    {
+        $store = Store::create([
+            'name' => 'Free Plan Store',
+            'slug' => 'free-plan-'.Str::lower(Str::random(6)),
+            'phone_number' => '081'.rand(10000000, 99999999),
+        ]);
+
+        $this->assertSame('free', $store->fresh()->plan_tier);
+    }
+
     // ─── POST /stores ────────────────────────────────────────────────────────
 
     public function test_authenticated_user_can_create_store(): void
@@ -87,6 +98,7 @@ class SellerFlowSetupTest extends TestCase
 
         $store = Store::where('slug', $slug)->first();
         $this->assertNotNull($store);
+        $this->assertSame('free', $store->plan_tier);
         $this->assertSame('default', $store->settings['template']);
         $this->assertSame('default', $store->settings['theme']);
         $this->assertSame('active', $store->settings['status']);
@@ -120,6 +132,83 @@ class SellerFlowSetupTest extends TestCase
             ->postJson('/api/v1/stores', ['name' => 'Nama Cukup Panjang', 'slug' => $taken->slug])
             ->assertStatus(422)
             ->assertJsonValidationErrors(['slug']);
+    }
+
+    public function test_settings_reject_incomplete_bank_account_and_save_complete_details(): void
+    {
+        $store = $this->createStoreForUser($this->user);
+        $headers = array_merge($this->authHeaders, ['X-Store-Slug' => $store->slug]);
+
+        $this->withHeaders($headers)
+            ->putJson('/api/v1/merchant/settings', [
+                'settings' => [
+                    'bank_account' => [
+                        'bank_name' => 'BCA',
+                        'account_number' => '',
+                        'account_holder' => '',
+                    ],
+                ],
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors([
+                'settings.bank_account.account_number',
+                'settings.bank_account.account_holder',
+            ]);
+
+        $this->assertArrayNotHasKey('bank_account', $store->fresh()->settings ?? []);
+
+        $this->withHeaders($headers)
+            ->putJson('/api/v1/merchant/settings', [
+                'settings' => [
+                    'bank_account' => [
+                        'bank_name' => 'BCA',
+                        'account_number' => '1234567890',
+                        'account_holder' => 'Cristian Test',
+                    ],
+                ],
+            ])
+            ->assertOk();
+
+        $bankAccount = $store->fresh()->settings['bank_account'];
+        $this->assertSame('BCA', $bankAccount['bank_name']);
+        $this->assertSame('1234567890', $bankAccount['account_number']);
+        $this->assertSame('Cristian Test', $bankAccount['account_holder']);
+    }
+
+    public function test_settings_save_address_without_bank_details(): void
+    {
+        $store = $this->createStoreForUser($this->user);
+        $headers = array_merge($this->authHeaders, ['X-Store-Slug' => $store->slug]);
+
+        $this->withHeaders($headers)
+            ->putJson('/api/v1/merchant/settings', [
+                'name' => $store->name,
+                'phone_number' => $store->phone_number,
+                'settings' => [
+                    'origin_address' => [
+                        'contact_name' => 'Seller Store',
+                        'phone' => '081334999789',
+                        'address' => 'Jl. Makmur RT 02/RW 03',
+                        'province' => 'Jawa Timur',
+                        'city' => 'Kabupaten Blitar',
+                        'district' => 'Nglegok',
+                        'village' => 'Nglegok',
+                        'province_code' => '35',
+                        'regency_code' => '35.05',
+                        'district_code' => '35.05.09',
+                        'village_code' => '35.05.09.1009',
+                        'area_id' => 'ID_ID_3505_350509',
+                        'area_name' => 'Nglegok',
+                        'postal_code' => '66181',
+                    ],
+                    'couriers' => ['jne', 'sicepat', 'jnt', 'anteraja'],
+                    'allow_cod' => true,
+                ],
+            ])
+            ->assertOk();
+
+        $this->assertSame('ID_ID_3505_350509', $store->fresh()->address_area_id);
+        $this->assertArrayNotHasKey('bank_account', $store->fresh()->settings ?? []);
     }
 
     // ─── GET /merchant/setup-guide ───────────────────────────────────────────

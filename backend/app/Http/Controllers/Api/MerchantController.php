@@ -57,7 +57,7 @@ class MerchantController extends Controller
                 'name' => $validated['store_name'],
                 'slug' => Str::slug($validated['store_slug']),
                 'phone_number' => $validated['owner_phone'],
-                'plan_tier' => 'starter',
+                'plan_tier' => 'free',
                 'custom_domain_status' => 'pending',
                 'settings' => [
                     'theme_color' => '#0F172A',
@@ -161,7 +161,7 @@ class MerchantController extends Controller
                 'name' => $validated['name'],
                 'slug' => $slug,
                 'phone_number' => $user->phone_number ?: '-',
-                'plan_tier' => 'starter',
+                'plan_tier' => 'free',
                 'custom_domain_status' => 'pending',
                 'settings' => [
                     'template' => 'default',
@@ -717,9 +717,14 @@ class MerchantController extends Controller
             'name' => 'nullable|string|max:255',
             'phone_number' => 'nullable|string|max:30',
             'settings' => 'required|array',
+            'settings.bank_account' => 'sometimes|array',
+            'settings.bank_account.bank_name' => 'required_with:settings.bank_account|string|in:BCA,MANDIRI,BRI,BNI,BSI',
+            'settings.bank_account.account_number' => 'required_with:settings.bank_account|string|max:50',
+            'settings.bank_account.account_holder' => 'required_with:settings.bank_account|string|max:255',
         ]);
 
-        $origin = $validated['settings']['origin_address'] ?? null;
+        $settings = $request->input('settings');
+        $origin = $settings['origin_address'] ?? null;
         if (is_array($origin)) {
             $missing = collect(['province', 'city', 'district', 'village'])
                 ->filter(fn ($key) => trim((string) ($origin[$key] ?? '')) === '');
@@ -742,9 +747,9 @@ class MerchantController extends Controller
         }
 
         $current = $store->settings ?? [];
-        $store->settings = array_merge($current, $validated['settings']);
+        $store->settings = array_merge($current, $settings);
 
-        $origin = $validated['settings']['origin_address'] ?? [];
+        $origin = $settings['origin_address'] ?? [];
         if (array_key_exists('area_id', $origin)) {
             $store->address_area_id = $origin['area_id'] ?: null;
         }

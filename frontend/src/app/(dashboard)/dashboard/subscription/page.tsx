@@ -90,7 +90,7 @@ function SubscriptionContent() {
   const subscriptions = historyData?.subscriptions ?? [];
 
   const rankOf = (tier: string) => plans.findIndex((plan) => plan.tier === tier);
-  const activeRank = rankOf(activePlan?.tier ?? 'starter');
+  const activeRank = rankOf(activePlan?.tier ?? 'free');
 
   if (isLoadingPlans) {
     return (
@@ -114,7 +114,7 @@ function SubscriptionContent() {
         </div>
         <span className="inline-flex items-center gap-2 self-start rounded-full border border-[#C8FF3D]/40 bg-[#C8FF3D]/15 px-3.5 py-1.5 text-xs font-semibold text-slate-900 shadow-sm">
           <Crown className="w-3.5 h-3.5 text-lime-700" />
-          <span className="font-semibold text-slate-800">Paket Aktif: {activePlan?.name ?? 'Starter'}</span>
+          <span className="font-semibold text-slate-800">Paket Aktif: {activePlan?.name ?? 'Free'}</span>
           {activePlan?.expires_at && (
             <span className="text-[11px] text-slate-500">berlaku s/d {formatDateTime(activePlan.expires_at)}</span>
           )}

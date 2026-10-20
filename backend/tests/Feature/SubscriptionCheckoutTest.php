@@ -31,7 +31,7 @@ class SubscriptionCheckoutTest extends TestCase
             'name' => 'Subscription Store '.Str::random(5),
             'slug' => 'sub-store-'.Str::lower(Str::random(6)),
             'phone_number' => '081'.rand(10000000, 99999999),
-            'plan_tier' => 'starter',
+            'plan_tier' => 'free',
         ]);
 
         $this->user = User::create([
@@ -72,7 +72,7 @@ class SubscriptionCheckoutTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonPath('plans.0.tier', 'starter')
             ->assertJsonPath('plans.1.amount', 249000)
-            ->assertJsonPath('active_plan.tier', 'starter');
+            ->assertJsonPath('active_plan.tier', 'free');
     }
 
     public function test_checkout_creates_pending_subscription_and_returns_payment_url(): void
@@ -112,6 +112,26 @@ class SubscriptionCheckoutTest extends TestCase
                 && str_starts_with($payload['order']['invoice_number'], 'SUB-')
                 && $payload['payment']['payment_due_date'] === 60;
         });
+    }
+
+    public function test_free_store_can_upgrade_to_starter(): void
+    {
+        Http::preventStrayRequests();
+        $this->configureDoku();
+
+        Http::fake([
+            'api-sandbox.doku.com/checkout/*' => Http::response([
+                'response' => ['payment' => ['url' => 'https://sandbox.doku.com/checkout/token-free-upgrade']],
+            ]),
+        ]);
+
+        $this->withHeaders($this->headers)
+            ->postJson('/api/v1/merchant/subscription/checkout', ['plan' => 'starter'])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->assertSame('free', $this->store->fresh()->plan_tier);
+        $this->assertSame(99000, (int) Subscription::where('store_id', $this->store->id)->firstOrFail()->amount);
     }
 
     public function test_checkout_rejects_plan_that_is_already_active_or_lower(): void
@@ -190,7 +210,7 @@ class SubscriptionCheckoutTest extends TestCase
         $this->callWebhook($content)->assertOk()->assertJson(['status' => 'success']);
 
         $this->assertSame('expired', $subscription->fresh()->status);
-        $this->assertSame('starter', $this->store->fresh()->plan_tier);
+        $this->assertSame('free', $this->store->fresh()->plan_tier);
     }
 
     public function test_history_returns_store_subscriptions(): void

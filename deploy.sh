@@ -27,7 +27,9 @@ deploy_backend() {
         --exclude='.git' \
         --exclude='vendor' \
         --exclude='node_modules' \
-        --exclude='storage/logs/*.log' \
+        --exclude='storage/' \
+        --exclude='bootstrap/cache/*.php' \
+        --exclude='.phpunit.result.cache' \
         --exclude='.env' \
         backend/ ${TARGET}:${TARGET_DIR}/backend/
 

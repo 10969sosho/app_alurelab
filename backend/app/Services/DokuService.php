@@ -364,7 +364,7 @@ class DokuService
                 'bank' => $bank ? array_filter([
                     'bank_name' => $bank['bank_code'] ?? $bank['bank_name'] ?? null,
                     'account_no' => $bank['account_number'] ?? null,
-                    'account_name' => $bank['account_holder_name'] ?? null,
+                    'account_name' => $bank['account_holder_name'] ?? $bank['account_holder'] ?? null,
                 ]) : null,
             ]),
         ];

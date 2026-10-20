@@ -57,7 +57,7 @@ class SubscriptionController extends Controller
             ];
         }
 
-        $activeTier = $store?->plan_tier ?? 'starter';
+        $activeTier = $store?->plan_tier ?? 'free';
 
         return response()->json([
             'success' => true,
@@ -110,8 +110,8 @@ class SubscriptionController extends Controller
 
         $rank = array_flip(array_keys(self::PLANS));
         $tier = $validated['plan'];
-        $currentTier = $store->plan_tier ?? 'starter';
-        $currentRank = $rank[$currentTier] ?? 0;
+        $currentTier = $store->plan_tier ?? 'free';
+        $currentRank = $rank[$currentTier] ?? -1;
 
         if ($rank[$tier] <= $currentRank) {
             return response()->json([

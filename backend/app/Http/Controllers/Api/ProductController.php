@@ -65,7 +65,7 @@ class ProductController extends Controller
     {
         $store = $request->attributes->get('current_store');
 
-        $validated = $request->validate([
+        $rules = [
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'category_name' => 'nullable|string|max:100',
@@ -85,7 +85,14 @@ class ProductController extends Controller
             'variants.*.title' => 'required_with:variants|string|max:150',
             'variants.*.price' => 'required_with:variants|numeric|min:0',
             'variants.*.stock' => 'required_with:variants|integer|min:0',
-        ]);
+            'stock' => 'nullable|integer|min:0',
+        ];
+
+        if (empty($request->input('variants'))) {
+            $rules['stock'] = 'required|integer|min:0';
+        }
+
+        $validated = $request->validate($rules);
 
         $slug = Str::slug($validated['title']);
         $baseSlug = $slug;
@@ -132,7 +139,7 @@ class ProductController extends Controller
                 'sku' => strtoupper(Str::random(8)),
                 'title' => 'Standard',
                 'price' => $product->price,
-                'stock' => $request->input('stock', 100),
+                'stock' => $validated['stock'],
             ]);
         }
 
