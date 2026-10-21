@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\Store;
 use App\Models\StoreUser;
 use App\Models\User;
+use App\Services\BiteshipService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -63,9 +64,13 @@ class ProductAndOrderTest extends TestCase
             'compare_at_price' => 249000,
             'cost_price' => 95000,
             'weight_grams' => 250,
+            'images' => [
+                'https://cdn.example.com/products/front.jpg',
+                'https://cdn.example.com/products/back.jpg',
+            ],
             'is_active' => true,
             'variants' => [
-                ['title' => 'Putih / M', 'price' => 189000, 'stock' => 20, 'sku' => 'KL-WHT-M'],
+                ['title' => 'Putih / M', 'price' => 189000, 'stock' => 20, 'sku' => 'KL-WHT-M', 'weight_grams' => 350],
                 ['title' => 'Putih / L', 'price' => 189000, 'stock' => 15, 'sku' => 'KL-WHT-L'],
             ],
         ];
@@ -75,9 +80,18 @@ class ProductAndOrderTest extends TestCase
 
         $createRes->assertStatus(201)
             ->assertJsonPath('title', 'Kemeja Linen Premium')
+            ->assertJsonPath('images', $payload['images'])
+            ->assertJsonPath('variants.0.weight_grams', 350)
             ->assertJsonCount(2, 'variants');
 
         $productId = $createRes->json('id');
+        $rateItems = (new BiteshipService)->buildRateItems($this->store, [[
+            'product_id' => $productId,
+            'variant_id' => $createRes->json('variants.0.id'),
+            'quantity' => 2,
+        ]]);
+        $this->assertSame(350, $rateItems[0]['weight']);
+        $this->assertSame(2, $rateItems[0]['quantity']);
 
         // 2. List products
         $listRes = $this->withHeaders($headers)
@@ -117,6 +131,39 @@ class ProductAndOrderTest extends TestCase
             ->postJson('/api/v1/merchant/products', $payload + ['stock' => 1]);
 
         $response->assertCreated()->assertJsonPath('variants.0.stock', 1);
+    }
+
+    public function test_product_update_uses_unique_slug_and_replaces_variants_atomically(): void
+    {
+        $headers = [
+            'Authorization' => 'Bearer '.$this->token,
+            'X-Store-Slug' => $this->store->slug,
+        ];
+        $payload = [
+            'price' => 10000,
+            'weight_grams' => 200,
+            'stock' => 2,
+            'variants' => [],
+        ];
+
+        $first = $this->withHeaders($headers)->postJson('/api/v1/merchant/products', $payload + ['title' => 'Produk Awal']);
+        $second = $this->withHeaders($headers)->postJson('/api/v1/merchant/products', $payload + ['title' => 'Nama Baru']);
+
+        $first->assertCreated();
+        $second->assertCreated();
+
+        $this->withHeaders($headers)
+            ->putJson('/api/v1/merchant/products/'.$first->json('id'), [
+                'title' => 'Nama Baru',
+                'images' => ['https://cdn.example.com/produk.jpg'],
+                'variants' => [],
+                'stock' => 5,
+            ])
+            ->assertOk()
+            ->assertJsonPath('slug', 'nama-baru-1')
+            ->assertJsonPath('images.0', 'https://cdn.example.com/produk.jpg')
+            ->assertJsonCount(1, 'variants')
+            ->assertJsonPath('variants.0.stock', 5);
     }
 
     public function test_can_view_orders_and_stats(): void

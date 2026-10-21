@@ -2,31 +2,26 @@
 
 namespace App\Services;
 
-use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Support\Facades\Http;
-
+/**
+ * FonnteService compatibility wrapper
+ * Now powered by self-hosted AlureLab WhatsApp Gateway (Baileys)
+ */
 class FonnteService
 {
+    protected WhatsAppService $whatsapp;
+
+    public function __construct(WhatsAppService $whatsapp)
+    {
+        $this->whatsapp = $whatsapp;
+    }
+
     public function sendOtp(string $phone, string $otp): bool
     {
-        $token = (string) config('services.fonnte.token', '');
+        return $this->whatsapp->sendOtp($phone, $otp);
+    }
 
-        if ($token === '') {
-            return false;
-        }
-
-        try {
-            $response = Http::asForm()
-                ->withHeaders(['Authorization' => $token])
-                ->timeout(10)
-                ->post((string) config('services.fonnte.url', 'https://api.fonnte.com/send'), [
-                    'target' => $phone,
-                    'message' => "Kode OTP AlureLab Anda adalah: {$otp}. Jangan berikan kode ini kepada siapapun.",
-                ]);
-        } catch (ConnectionException) {
-            return false;
-        }
-
-        return $response->successful() && $response->json('status') === true;
+    public function sendMessage(string $phone, string $message): bool
+    {
+        return $this->whatsapp->sendMessage($phone, $message);
     }
 }

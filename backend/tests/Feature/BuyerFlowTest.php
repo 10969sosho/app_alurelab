@@ -22,7 +22,10 @@ class BuyerFlowTest extends TestCase
 
     public function test_buyer_registers_with_otp_without_ktp(): void
     {
-        config(['services.fonnte.token' => 'test-token']);
+        config([
+            'services.whatsapp.url' => 'https://api.fonnte.com/send',
+            'services.whatsapp.token' => 'test-token',
+        ]);
         Http::fake([
             'https://api.fonnte.com/send' => Http::response(['status' => true]),
         ]);
@@ -36,9 +39,9 @@ class BuyerFlowTest extends TestCase
 
         $otpResponse->assertOk()->assertJsonStructure(['dev_otp']);
         Http::assertSent(fn ($request) => $request->url() === 'https://api.fonnte.com/send'
-            && $request->hasHeader('Authorization', 'test-token')
+            && $request->hasHeader('Authorization', 'Bearer test-token')
             && $request['target'] === '6281234'.substr($phone, -6)
-            && $request['message'] === 'Kode OTP AlureLab Anda adalah: '.$otpResponse->json('dev_otp').'. Jangan berikan kode ini kepada siapapun.');
+            && $request['message'] === 'Kode OTP AlureLab Anda adalah: *'.$otpResponse->json('dev_otp')."*.\nJangan berikan kode ini kepada siapapun demi keamanan akun Anda.");
 
         $loginResponse = $this->withHeaders($headers)->postJson('/api/v1/buyer/verify-otp', [
             'phone_number' => $phone,
@@ -55,7 +58,12 @@ class BuyerFlowTest extends TestCase
 
     public function test_otp_response_omits_dev_code_outside_local_and_testing(): void
     {
-        config(['services.fonnte.token' => 'test-token']);
+        config([
+            'services.whatsapp.url' => 'https://api.fonnte.com/send',
+            'services.whatsapp.token' => 'test-token',
+            'app.env' => 'production',
+            'app.debug' => false,
+        ]);
         Http::fake([
             'https://api.fonnte.com/send' => Http::response(['status' => true]),
         ]);

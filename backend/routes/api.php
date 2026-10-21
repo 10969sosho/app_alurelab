@@ -96,7 +96,7 @@ Route::prefix('v1')->group(function () {
     // ═══════════════════════════════════════════════════════════════════════
     // 2. WEBHOOKS — Public (verifikasi kriptografis internal)
     // ═══════════════════════════════════════════════════════════════════════
-    Route::post('/webhooks/doku/notification', [DokuWebhookController::class, 'handleNotification']);
+    Route::match(['get', 'post'], '/webhooks/doku/notification', [DokuWebhookController::class, 'handleNotification']);
     Route::post('/webhooks/biteship/tracking', [BiteshipWebhookController::class, 'handleTracking']);
     // [DEPRECATED 2026-10-15] Xendit digantikan DOKU Checkout V1
     // Route::post('/webhooks/xendit/invoice', [XenditWebhookController::class, 'handleInvoice']);
@@ -124,11 +124,13 @@ Route::prefix('v1')->group(function () {
         Route::post('/buyer/login', [CustomerAuthController::class, 'login']);
         Route::post('/buyer/request-otp', [CustomerAuthController::class, 'requestOtp']);
         Route::post('/buyer/verify-otp', [CustomerAuthController::class, 'verifyOtp']);
+        Route::get('/buyer/orders/{id}', [CustomerAuthController::class, 'getOrder']);
+        // Halaman bayar in-app toko: /{store_slug}/orders/{id}/pay
+        Route::post('/buyer/orders/{id}/pay', [CustomerAuthController::class, 'payOrder']);
         Route::middleware('auth:sanctum')->group(function () {
             Route::get('/buyer/profile', [CustomerAuthController::class, 'getProfile']);
             Route::put('/buyer/profile', [CustomerAuthController::class, 'updateProfile']);
             Route::get('/buyer/orders', [CustomerAuthController::class, 'getOrders']);
-            Route::get('/buyer/orders/{id}', [CustomerAuthController::class, 'getOrder']);
             Route::get('/buyer/kyc/status', [BuyerFlowController::class, 'kycStatus']);
             Route::post('/buyer/kyc/submit', [BuyerFlowController::class, 'submitKyc']);
             Route::get('/buyer/bank-account', [BuyerFlowController::class, 'bankAccount']);
@@ -204,8 +206,10 @@ Route::prefix('v1')->group(function () {
             Route::put('/settings', [MerchantController::class, 'updateSettings'])->middleware('store.role:owner');
 
             // ── Domain Custom (Openprovider Sandbox) ─────────────────────────
+            Route::get('/domains', [DomainController::class, 'index'])->middleware('store.role:owner,manager');
             Route::post('/domain/check', [DomainController::class, 'check'])->middleware('store.role:owner,manager');
             Route::post('/domain/register', [DomainController::class, 'register'])->middleware('store.role:owner');
+            Route::put('/domain/connect', [DomainController::class, 'connect'])->middleware('store.role:owner');
 
             // ── Pusat Promosi ─────────────────────────────────────────────────
             Route::get('/promotions', [MerchantController::class, 'getPromotions'])->middleware('store.role:owner,manager');

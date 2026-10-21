@@ -2,14 +2,19 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Store;
+use App\Services\DokuService;
 use App\Services\FonnteService;
+use App\Services\OrderPaymentSyncService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class CustomerAuthController extends Controller
 {
@@ -52,14 +57,27 @@ class CustomerAuthController extends Controller
 
         $normalizedPhone = $this->normalizePhone($validated['phone_number']);
         $otp = random_int(100000, 999999);
-        if (! $fonnte->sendOtp($normalizedPhone, (string) $otp)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Pengiriman OTP sedang tidak tersedia. Coba lagi nanti.',
-            ], 503);
-        }
+        $sent = $fonnte->sendOtp($normalizedPhone, (string) $otp);
 
+        // Simpan OTP ke cache selama 5 menit
         Cache::put('otp_'.$normalizedPhone, $otp, 300);
+
+        if (! $sent) {
+            Log::warning("Fonnte WA Gateway disconnected for {$normalizedPhone}. Falling back to simulation OTP.");
+
+            if (! app()->environment(['local', 'testing'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Layanan WhatsApp sedang dalam pemeliharaan. Coba lagi nanti.',
+                ], 503);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Layanan WhatsApp sedang dalam pemeliharaan. Gunakan kode verifikasi di bawah.',
+                'dev_otp' => $otp,
+            ]);
+        }
 
         $response = [
             'success' => true,
@@ -117,6 +135,14 @@ class CustomerAuthController extends Controller
         }
 
         $token = $customer->createToken('buyer-session', ['role:buyer'])->plainTextToken;
+
+        // Ikat pelanggan ke toko tempat ia mendaftar agar langsung muncul
+        // di daftar Pelanggan & Member dashboard merchant (meski belum belanja).
+        /** @var Store|null $store */
+        $store = app('current_tenant');
+        if ($store && ! $customer->tenant_id) {
+            $customer->forceFill(['tenant_id' => $store->id])->save();
+        }
 
         return response()->json([
             'success' => true,
@@ -208,29 +234,172 @@ class CustomerAuthController extends Controller
         ]);
     }
 
-    public function getOrder(Request $request, string $id): JsonResponse
+    public function getOrder(Request $request, string $id, OrderPaymentSyncService $paymentSync): JsonResponse
     {
         /** @var Store $store */
         $store = app('current_tenant');
         $customer = $request->user();
 
-        if (! $customer instanceof Customer) {
-            return response()->json(['error' => 'CustomerNotFound'], 404);
-        }
-
-        $order = Order::where('tenant_id', $store->id)
-            ->where('customer_id', $customer->id)
+        $orderQuery = Order::where('tenant_id', $store->id)
             ->with([
                 'items.product',
                 'payment',
                 'shipment',
                 'refundRequests:id,order_id,type,reason,amount,status,reviewed_at,created_at',
-            ])
-            ->findOrFail($id);
+            ]);
+
+        if (Str::isUuid($id)) {
+            $orderQuery->where('id', $id);
+        } else {
+            $orderQuery->where('order_number', $id);
+        }
+
+        if ($customer instanceof Customer) {
+            $orderQuery->where('customer_id', $customer->id);
+        }
+
+        $order = $orderQuery->first();
+
+        if (! $order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pesanan tidak ditemukan.',
+            ], 404);
+        }
+
+        // On-demand sync payment jika order masih pending_payment
+        if ($order->status === OrderStatus::PENDING_PAYMENT) {
+            $order = $paymentSync->syncOrderPayment($order);
+            $order->load(['payment', 'shipment']);
+        }
 
         return response()->json([
             'success' => true,
             'data' => $order,
+        ]);
+    }
+
+    /**
+     * Inisiasi pembayaran dari halaman pembayaran in-app toko
+     * (/{store_slug}/orders/{id}/pay).
+     *
+     * channel: BCA_VA | MANDIRI_VA | BRI_VA | BNI_VA (Direct VA) atau QRIS | DOKU_CHECKOUT (modal DOKU Checkout JS).
+     */
+    public function payOrder(Request $request, string $id, DokuService $dokuService): JsonResponse
+    {
+        $validated = $request->validate([
+            'channel' => 'required|string|in:BCA_VA,MANDIRI_VA,BRI_VA,BNI_VA,QRIS,DOKU_CHECKOUT',
+        ]);
+
+        /** @var Store $store */
+        $store = app('current_tenant');
+
+        $orderQuery = Order::where('tenant_id', $store->id)->with(['payment', 'customer']);
+
+        if (Str::isUuid($id)) {
+            $orderQuery->where('id', $id);
+        } else {
+            $orderQuery->where('order_number', $id);
+        }
+
+        $order = $orderQuery->first();
+
+        if (! $order) {
+            return response()->json(['success' => false, 'message' => 'Pesanan tidak ditemukan.'], 404);
+        }
+
+        if ($order->status === OrderStatus::PAID_ESCROW) {
+            return response()->json([
+                'success' => true,
+                'status' => 'paid',
+                'order_number' => $order->order_number,
+            ]);
+        }
+
+        if ($order->status !== OrderStatus::PENDING_PAYMENT) {
+            return response()->json(['success' => false, 'message' => 'Pesanan ini tidak menunggu pembayaran.'], 422);
+        }
+
+        $payment = $order->payment;
+        if (! $payment) {
+            return response()->json(['success' => false, 'message' => 'Record pembayaran pesanan ini tidak ditemukan.'], 422);
+        }
+
+        if ($payment->payment_method === 'COD') {
+            return response()->json(['success' => false, 'message' => 'Pesanan COD dibayar di tempat, tidak perlu pembayaran online.'], 422);
+        }
+
+        $channel = $validated['channel'];
+
+        // ── Mode A: Virtual Account Direct ───────────────────────────────
+        if (str_ends_with($channel, '_VA')) {
+            $bank = substr($channel, 0, -3);
+            $existingVa = $payment->raw_webhook_payload['virtual_account'] ?? null;
+
+            if ($existingVa && ($existingVa['bank'] ?? null) === $bank && ! empty($existingVa['va_number'])) {
+                return response()->json([
+                    'success' => true,
+                    'mode' => 'va',
+                    'va_number' => $existingVa['va_number'],
+                    'bank' => $bank,
+                    'expired_at' => $existingVa['expired_at'] ?? null,
+                    'order_number' => $order->order_number,
+                    'total_amount' => (float) $order->total_amount,
+                ]);
+            }
+
+            $va = $dokuService->createDirectVa($order, $store, $bank);
+
+            if (! $va['success']) {
+                return response()->json(['success' => false, 'message' => $va['error']], 502);
+            }
+
+            $payment->update([
+                'payment_channel' => $va['bank'],
+                'raw_webhook_payload' => array_merge($payment->raw_webhook_payload ?? [], [
+                    'virtual_account' => [
+                        'va_number' => $va['va_number'],
+                        'bank' => $va['bank'],
+                        'expired_at' => $va['expired_at'],
+                    ],
+                ]),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'mode' => 'va',
+                'va_number' => $va['va_number'],
+                'bank' => $va['bank'],
+                'expired_at' => $va['expired_at'],
+                'order_number' => $order->order_number,
+                'total_amount' => (float) $order->total_amount,
+            ]);
+        }
+
+        // ── Mode B: QRIS / E-Wallet / All Channel (modal DOKU Checkout) ──
+        $paymentUrl = $payment->payment_url;
+
+        if (! $paymentUrl) {
+            $invoice = $dokuService->createCheckoutInvoice($order, $store);
+
+            if (! $invoice['success'] || ! $invoice['invoice_url']) {
+                return response()->json(['success' => false, 'message' => $invoice['error'] ?? 'Gagal membuat tagihan pembayaran.'], 502);
+            }
+
+            $paymentUrl = $invoice['invoice_url'];
+            $payment->update([
+                'payment_url' => $paymentUrl,
+                'doku_invoice_id' => $invoice['invoice_id'] ?? $order->order_number,
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'mode' => 'checkout',
+            'payment_url' => $paymentUrl,
+            'checkout_js_url' => $dokuService->checkoutJsUrl(),
+            'order_number' => $order->order_number,
+            'total_amount' => (float) $order->total_amount,
         ]);
     }
 }

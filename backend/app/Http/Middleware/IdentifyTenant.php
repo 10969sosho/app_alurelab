@@ -19,7 +19,7 @@ class IdentifyTenant
     public function handle(Request $request, Closure $next): Response
     {
         $host = $request->header('x-forwarded-host') ?: $request->getHost();
-        $rootDomain = config('app.root_domain', 'alurelab.shop');
+        $rootDomain = config('app.root_domain', 'alurelab.com');
 
         // Boleh override lewat header atau route parameter untuk development & API testing
         $explicitStoreId = $request->header('x-tenant-id')
@@ -56,7 +56,7 @@ class IdentifyTenant
                 $store = Store::find($storeId);
             } else {
                 if (str_ends_with($host, $rootDomain)) {
-                    // Contoh: amanda.alurelab.shop -> subdomain = amanda
+                    // Contoh: amanda.alurelab.com -> subdomain = amanda
                     $subdomain = str_replace(".{$rootDomain}", '', $host);
                     $store = Store::where('slug', $subdomain)->first();
                 } else {

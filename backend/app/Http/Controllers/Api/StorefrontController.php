@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
-use App\Enums\WalletTxType;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\MerchantWallet;
@@ -14,7 +13,6 @@ use App\Models\Payment;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Store;
-use App\Models\WalletTransaction;
 use App\Services\AntiRtsService;
 use App\Services\BiteshipService;
 use App\Services\DokuService;
@@ -130,7 +128,7 @@ class StorefrontController extends Controller
     public function checkout(Request $request): JsonResponse
     {
         /** @var Store|null $store */
-        $store = $this->getStore($request);
+        $store = $this->resolveCurrentStore($request);
         if (! $store) {
             return response()->json([
                 'success' => false,
@@ -181,7 +179,7 @@ class StorefrontController extends Controller
                 'name' => $product->title.' ('.$variant->title.')',
                 'value' => (int) $variant->price,
                 'quantity' => $itemData['quantity'],
-                'weight' => max(1, (int) $product->weight_grams),
+                'weight' => max(1, (int) ($variant?->weight_grams ?? $product->weight_grams)),
             ];
         }
 
@@ -324,7 +322,8 @@ class StorefrontController extends Controller
                 // Potongan Platform ALURELAB 1.5% dari nilai barang
                 $platformFeePercent = 1.50;
                 $platformFeeAmount = round($subtotal * ($platformFeePercent / 100), 2);
-                $merchantNetAmount = $totalAmount - $platformFeeAmount;
+                // Merchant net = nilai barang saja; ongkir dipisahkan ke pool ongkir saat pembayaran.
+                $merchantNetAmount = $subtotal - $platformFeeAmount;
 
                 $orderNumber = 'ORD-'.date('Ymd').'-'.strtoupper(Str::random(6));
 
@@ -414,26 +413,11 @@ class StorefrontController extends Controller
                         'payment_channel' => 'QA_SIMULATION',
                     ]);
 
-                    $wallet = MerchantWallet::firstOrCreate(
-                        ['store_id' => $store->id],
-                        ['available_balance' => 0, 'escrow_held_balance' => 0]
+                    MerchantWallet::creditOrderPayment(
+                        $order,
+                        'qa_payment_'.$order->order_number,
+                        'QA payment simulated',
                     );
-                    $balanceBefore = $wallet->escrow_held_balance;
-                    $creditAmount = $order->merchant_net_amount;
-                    $wallet->increment('escrow_held_balance', $creditAmount);
-
-                    WalletTransaction::create([
-                        'tenant_id' => $store->id,
-                        'wallet_id' => $wallet->id,
-                        'order_id' => $order->id,
-                        'type' => WalletTxType::ORDER_ESCROW_CREDIT,
-                        'amount' => $creditAmount,
-                        'balance_before' => $balanceBefore,
-                        'balance_after' => $balanceBefore + $creditAmount,
-                        'description' => "QA payment simulated untuk pesanan #{$order->order_number}",
-                        'idempotency_key' => 'qa_payment_'.$order->order_number,
-                        'created_at' => now(),
-                    ]);
                 }
 
                 return response()->json([

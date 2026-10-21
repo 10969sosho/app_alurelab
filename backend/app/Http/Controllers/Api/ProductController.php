@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class ProductController extends Controller
@@ -85,6 +86,7 @@ class ProductController extends Controller
             'variants.*.title' => 'required_with:variants|string|max:150',
             'variants.*.price' => 'required_with:variants|numeric|min:0',
             'variants.*.stock' => 'required_with:variants|integer|min:0',
+            'variants.*.weight_grams' => 'nullable|integer|min:1',
             'stock' => 'nullable|integer|min:0',
         ];
 
@@ -94,35 +96,27 @@ class ProductController extends Controller
 
         $validated = $request->validate($rules);
 
-        $slug = Str::slug($validated['title']);
-        $baseSlug = $slug;
-        $counter = 1;
-        while (Product::where('tenant_id', $store->id)->where('slug', $slug)->exists()) {
-            $slug = $baseSlug.'-'.$counter++;
-        }
+        $product = DB::transaction(function () use ($store, $validated): Product {
+            $product = Product::create([
+                'tenant_id' => $store->id,
+                'title' => $validated['title'],
+                'slug' => $this->uniqueSlug($store->id, $validated['title']),
+                'description' => $validated['description'] ?? null,
+                'category_name' => $validated['category_name'] ?? null,
+                'price' => $validated['price'],
+                'compare_at_price' => $validated['compare_at_price'] ?? null,
+                'cost_price' => $validated['cost_price'] ?? null,
+                'weight_grams' => $validated['weight_grams'],
+                'images' => $validated['images'] ?? [],
+                'is_active' => $validated['is_active'] ?? true,
+                'settings' => [
+                    'meta_title' => $validated['meta_title'] ?? null,
+                    'meta_description' => $validated['meta_description'] ?? null,
+                    'tags' => $validated['tags'] ?? [],
+                ],
+            ]);
 
-        $product = Product::create([
-            'tenant_id' => $store->id,
-            'title' => $validated['title'],
-            'slug' => $slug,
-            'description' => $validated['description'] ?? null,
-            'category_name' => $validated['category_name'] ?? null,
-            'price' => $validated['price'],
-            'compare_at_price' => $validated['compare_at_price'] ?? null,
-            'cost_price' => $validated['cost_price'] ?? null,
-            'weight_grams' => $validated['weight_grams'],
-            'images' => $validated['images'] ?? [],
-            'is_active' => $validated['is_active'] ?? true,
-            'settings' => [
-                'meta_title' => $validated['meta_title'] ?? null,
-                'meta_description' => $validated['meta_description'] ?? null,
-                'tags' => $validated['tags'] ?? [],
-            ],
-        ]);
-
-        // Buat varian jika ada, atau buat varian default jika produk tunggal
-        if (! empty($validated['variants'])) {
-            foreach ($validated['variants'] as $variantData) {
+            foreach ($validated['variants'] ?? [] as $variantData) {
                 ProductVariant::create([
                     'tenant_id' => $store->id,
                     'product_id' => $product->id,
@@ -130,18 +124,23 @@ class ProductController extends Controller
                     'title' => $variantData['title'],
                     'price' => $variantData['price'],
                     'stock' => $variantData['stock'],
+                    'weight_grams' => $variantData['weight_grams'] ?? $validated['weight_grams'],
                 ]);
             }
-        } else {
-            ProductVariant::create([
-                'tenant_id' => $store->id,
-                'product_id' => $product->id,
-                'sku' => strtoupper(Str::random(8)),
-                'title' => 'Standard',
-                'price' => $product->price,
-                'stock' => $validated['stock'],
-            ]);
-        }
+
+            if (empty($validated['variants'])) {
+                ProductVariant::create([
+                    'tenant_id' => $store->id,
+                    'product_id' => $product->id,
+                    'sku' => strtoupper(Str::random(8)),
+                    'title' => 'Standard',
+                    'price' => $product->price,
+                    'stock' => $validated['stock'],
+                ]);
+            }
+
+            return $product;
+        });
 
         return response()->json(
             $product->load('variants'),
@@ -185,6 +184,12 @@ class ProductController extends Controller
             'meta_description' => 'nullable|string|max:160',
             'tags' => 'nullable|array',
             'variants' => 'nullable|array',
+            'variants.*.sku' => 'nullable|string|max:100',
+            'variants.*.title' => 'required_with:variants|string|max:150',
+            'variants.*.price' => 'required_with:variants|numeric|min:0',
+            'variants.*.stock' => 'required_with:variants|integer|min:0',
+            'variants.*.weight_grams' => 'nullable|integer|min:1',
+            'stock' => 'sometimes|integer|min:0',
         ]);
 
         // Merge settings jika ada
@@ -199,21 +204,38 @@ class ProductController extends Controller
         }
 
         $variantsData = $validated['variants'] ?? null;
-        unset($validated['variants']);
+        unset($validated['variants'], $validated['stock']);
 
-        $product->update($validated);
+        DB::transaction(function () use ($product, $store, $validated, $variantsData, $request): void {
+            if (isset($validated['title']) && $validated['title'] !== $product->title) {
+                $validated['slug'] = $this->uniqueSlug($store->id, $validated['title'], $product->id);
+            }
 
-        if ($variantsData !== null) {
-            if (! empty($variantsData)) {
+            $product->update($validated);
+
+            if ($variantsData !== null) {
                 ProductVariant::where('product_id', $product->id)->delete();
+
                 foreach ($variantsData as $variantData) {
                     ProductVariant::create([
                         'tenant_id' => $store->id,
                         'product_id' => $product->id,
                         'sku' => $variantData['sku'] ?? strtoupper(Str::random(8)),
                         'title' => $variantData['title'],
-                        'price' => $variantData['price'] ?? $product->price,
-                        'stock' => $variantData['stock'] ?? 10,
+                        'price' => $variantData['price'],
+                        'stock' => $variantData['stock'],
+                        'weight_grams' => $variantData['weight_grams'] ?? $product->weight_grams,
+                    ]);
+                }
+
+                if ($variantsData === []) {
+                    ProductVariant::create([
+                        'tenant_id' => $store->id,
+                        'product_id' => $product->id,
+                        'sku' => strtoupper(Str::random(8)),
+                        'title' => 'Standard',
+                        'price' => $product->price,
+                        'stock' => $request->integer('stock', 0),
                     ]);
                 }
             } elseif ($product->variants()->count() === 0) {
@@ -223,19 +245,10 @@ class ProductController extends Controller
                     'sku' => strtoupper(Str::random(8)),
                     'title' => 'Standard',
                     'price' => $product->price,
-                    'stock' => $request->input('stock', 100),
+                    'stock' => 100,
                 ]);
             }
-        } elseif ($product->variants()->count() === 0) {
-            ProductVariant::create([
-                'tenant_id' => $store->id,
-                'product_id' => $product->id,
-                'sku' => strtoupper(Str::random(8)),
-                'title' => 'Standard',
-                'price' => $product->price,
-                'stock' => 100,
-            ]);
-        }
+        });
 
         return response()->json($product->load('variants'));
     }
@@ -294,12 +307,14 @@ class ProductController extends Controller
             'title' => 'required|string|max:150',
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
+            'weight_grams' => 'nullable|integer|min:1',
         ]);
 
         $variant = ProductVariant::create([
             'tenant_id' => $store->id,
             'product_id' => $product->id,
             ...$validated,
+            'weight_grams' => $validated['weight_grams'] ?? $product->weight_grams,
         ]);
 
         return response()->json($variant, 201);
@@ -320,6 +335,7 @@ class ProductController extends Controller
             'title' => 'sometimes|string|max:150',
             'price' => 'sometimes|numeric|min:0',
             'stock' => 'sometimes|integer|min:0',
+            'weight_grams' => 'nullable|integer|min:1',
         ]);
 
         $variant->update($validated);
@@ -364,5 +380,21 @@ class ProductController extends Controller
         };
 
         return response()->json(['message' => 'Aksi berhasil dijalankan pada '.count($validated['ids']).' produk.']);
+    }
+
+    private function uniqueSlug(string $tenantId, string $title, ?string $exceptProductId = null): string
+    {
+        $baseSlug = Str::slug($title) ?: 'product';
+        $slug = $baseSlug;
+        $counter = 1;
+
+        while (Product::where('tenant_id', $tenantId)
+            ->where('slug', $slug)
+            ->when($exceptProductId, fn ($query) => $query->where('id', '!=', $exceptProductId))
+            ->exists()) {
+            $slug = $baseSlug.'-'.$counter++;
+        }
+
+        return $slug;
     }
 }

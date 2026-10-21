@@ -85,6 +85,12 @@ class MerchantPaymentSetupTest extends TestCase
         $this->assertSame($accId, $fresh->doku_sub_account_id);
         $this->assertSame('ACTIVE', $fresh->doku_account_status);
         $this->assertSame('1234567890', $fresh->settings['bank_account']['account_number']);
+
+        Http::assertSent(function ($request) {
+            $payload = json_decode((string) $request->body(), true);
+
+            return $payload['account']['email'] === $this->user->email;
+        });
     }
 
     public function test_payment_setup_registers_when_doku_fails_but_still_saves_bank(): void

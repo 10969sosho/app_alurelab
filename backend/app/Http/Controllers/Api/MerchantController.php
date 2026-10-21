@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Enums\OrderStatus;
+use App\Enums\WalletTxType;
 use App\Http\Controllers\Controller;
+use App\Models\Customer;
 use App\Models\MerchantWallet;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -18,6 +20,7 @@ use Carbon\Carbon;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -213,8 +216,7 @@ class MerchantController extends Controller
     }
 
     /**
-     * Status Setup Guide — 4 pilar onboarding seller (gaya Shopify):
-     * produk, tampilan toko, pembayaran, domain.
+     * Status Setup Guide — 5 pilar onboarding seller (gaya Shopify).
      * Dihitung real-time dari data toko, bukan state tersimpan.
      */
     public function getSetupGuide(Request $request): JsonResponse
@@ -231,6 +233,8 @@ class MerchantController extends Controller
             'payments_configured' => ! empty($store->doku_sub_account_id)
                 || ! empty($settings['payment_methods'])
                 || $codEnabled,
+            'shipping_configured' => ! empty($store->address_area_id)
+                || ! empty($settings['origin_address']['area_id']),
             'domain_connected' => ! empty($store->custom_domain) && $store->custom_domain_status === 'active',
         ];
 
@@ -269,7 +273,10 @@ class MerchantController extends Controller
 
         $error = null;
         if (empty($store->doku_sub_account_id)) {
-            $result = $this->dokuService->registerSubAccount($store);
+            $ownerEmail = $request->user()?->email
+                ?? $store->users()->wherePivot('role', 'owner')->first()?->email;
+
+            $result = $this->dokuService->registerSubAccount($store, $ownerEmail);
             $error = $result['error'];
         }
 
@@ -430,11 +437,25 @@ class MerchantController extends Controller
         $store = app('current_tenant') ?? $request->attributes->get('current_store');
         $search = $request->query('search');
 
+        $customerMap = [];
+
+        // Pelanggan terdaftar (OTP WhatsApp) — tampil walau total pesanan masih 0
+        foreach (Customer::where('tenant_id', $store->id)->get() as $customer) {
+            $customerMap[$customer->id] = [
+                'id' => (string) $customer->id,
+                'name' => $customer->full_name,
+                'phone' => $customer->phone_number,
+                'email' => $customer->email ?? '-',
+                'total_orders' => 0,
+                'total_spent' => 0,
+                'last_order_at' => null,
+            ];
+        }
+
         $orders = Order::where('tenant_id', $store->id)
             ->with('customer')
             ->get();
 
-        $customerMap = [];
         foreach ($orders as $order) {
             $name = $order->customer->full_name ?? 'Pelanggan #'.substr($order->id, 0, 6);
             $phone = $order->customer->phone_number ?? '-';
@@ -450,33 +471,23 @@ class MerchantController extends Controller
                     'total_orders' => 0,
                     'total_spent' => 0,
                     'last_order_at' => $order->created_at ? $order->created_at->toIso8601String() : now()->toIso8601String(),
-                    'tier' => 'Member Regular',
                 ];
             }
 
             $customerMap[$key]['total_orders'] += 1;
             $customerMap[$key]['total_spent'] += (float) $order->total_amount;
-            if ($order->created_at && strtotime($order->created_at) > strtotime($customerMap[$key]['last_order_at'])) {
+            if ($order->created_at && strtotime($order->created_at) > strtotime($customerMap[$key]['last_order_at'] ?? '')) {
                 $customerMap[$key]['last_order_at'] = $order->created_at->toIso8601String();
             }
         }
 
         $customers = array_values($customerMap);
 
-        foreach ($customers as &$c) {
-            if ($c['total_spent'] >= 1000000) {
-                $c['tier'] = 'VIP Platinum';
-            } elseif ($c['total_spent'] >= 500000) {
-                $c['tier'] = 'Gold Member';
-            } elseif ($c['total_spent'] >= 200000) {
-                $c['tier'] = 'Silver Member';
-            }
-        }
-        unset($c);
-
         if ($search) {
             $customers = array_values(array_filter($customers, function ($c) use ($search) {
-                return stripos($c['name'], $search) !== false || stripos($c['phone'], $search) !== false || stripos($c['email'], $search) !== false;
+                return stripos($c['name'], $search) !== false
+                    || stripos($c['phone'], $search) !== false
+                    || stripos($c['email'] ?? '-', $search) !== false;
             }));
         }
 
@@ -530,8 +541,9 @@ class MerchantController extends Controller
 
     /**
      * Ajukan Penarikan Saldo (Payout DOKU Disbursement).
-     * Menyimpan record Payout berstatus PENDING; pencairan disbursement
-     * diproses terpisah setelah settlement escrow siap.
+     * Saat diajukan, available_balance langsung didebet dalam satu transaksi DB
+     * (dengan lock baris) dan dicatat ke ledger WalletTransaction tipe WITHDRAWAL;
+     * record Payout dibuat PENDING sebagai instruksi pencairan.
      */
     public function requestPayout(Request $request): JsonResponse
     {
@@ -565,27 +577,51 @@ class MerchantController extends Controller
             ], 422);
         }
 
-        $wallet = MerchantWallet::firstOrCreate(
-            ['store_id' => $store->id],
-            ['available_balance' => 0, 'escrow_held_balance' => 0]
-        );
+        $payout = DB::transaction(function () use ($store, $amount, $bankCode, $accountNumber, $accountHolder) {
+            $wallet = MerchantWallet::where('store_id', $store->id)->lockForUpdate()->first()
+                ?? MerchantWallet::create([
+                    'store_id' => $store->id,
+                    'available_balance' => 0,
+                    'escrow_held_balance' => 0,
+                ]);
 
-        // ponytail: tanpa lock baris — saldo hanya didebet saat disbursement benar-benar diproses
-        if ($amount > (float) $wallet->available_balance) {
+            if ($amount > (float) $wallet->available_balance) {
+                return null;
+            }
+
+            $availableBefore = (float) $wallet->available_balance;
+            $wallet->decrement('available_balance', $amount);
+
+            $payout = Payout::create([
+                'tenant_id' => $store->id,
+                'bank_code' => $bankCode,
+                'account_number' => $accountNumber,
+                'account_holder_name' => $accountHolder,
+                'amount' => $amount,
+                'status' => 'PENDING',
+            ]);
+
+            WalletTransaction::create([
+                'tenant_id' => $store->id,
+                'wallet_id' => $wallet->id,
+                'type' => WalletTxType::WITHDRAWAL,
+                'amount' => $amount,
+                'balance_before' => $availableBefore,
+                'balance_after' => $availableBefore - $amount,
+                'description' => "Penarikan saldo ke {$bankCode} {$accountNumber} (payout pending)",
+                'idempotency_key' => "payout_{$payout->id}",
+                'created_at' => now(),
+            ]);
+
+            return $payout;
+        });
+
+        if (! $payout) {
             return response()->json([
                 'success' => false,
                 'message' => 'Saldo tersedia tidak mencukupi untuk nominal penarikan ini.',
             ], 422);
         }
-
-        $payout = Payout::create([
-            'tenant_id' => $store->id,
-            'bank_code' => $bankCode,
-            'account_number' => $accountNumber,
-            'account_holder_name' => $accountHolder,
-            'amount' => $amount,
-            'status' => 'PENDING',
-        ]);
 
         return response()->json([
             'success' => true,
@@ -700,6 +736,7 @@ class MerchantController extends Controller
                 'name' => $store->name,
                 'slug' => $store->slug,
                 'phone_number' => $store->phone_number,
+                'logo_url' => $store->logo_url,
                 'settings' => $merged,
             ],
         ]);
@@ -713,14 +750,28 @@ class MerchantController extends Controller
         /** @var Store $store */
         $store = app('current_tenant') ?? $request->attributes->get('current_store');
 
+        // Slug yang dipakai route internal storefront — tidak boleh dipakai jadi subdomain toko
+        $reservedSlugs = [
+            'api', 'dashboard', 'admin', 'login', 'register', 'forgot-password', 'onboarding',
+            'mock', '_next', 'favicon.ico', 'chat', 'cart', 'checkout', 'account', 'orders',
+            'products', 'pages', 'shop',
+        ];
+
         $validated = $request->validate([
             'name' => 'nullable|string|max:255',
+            'slug' => 'nullable|string|min:3|max:100|regex:/^[a-z0-9-]+$/|not_in:'.implode(',', $reservedSlugs).'|unique:stores,slug,'.$store->id,
             'phone_number' => 'nullable|string|max:30',
+            'logo_url' => 'nullable|string|max:1000',
             'settings' => 'required|array',
             'settings.bank_account' => 'sometimes|array',
             'settings.bank_account.bank_name' => 'required_with:settings.bank_account|string|in:BCA,MANDIRI,BRI,BNI,BSI',
             'settings.bank_account.account_number' => 'required_with:settings.bank_account|string|max:50',
             'settings.bank_account.account_holder' => 'required_with:settings.bank_account|string|max:255',
+        ], [
+            'slug.regex' => 'Subdomain hanya boleh berisi huruf kecil, angka, dan tanda minus.',
+            'slug.unique' => 'Subdomain ini sudah dipakai toko lain. Pilih subdomain lain.',
+            'slug.not_in' => 'Subdomain ini reserved dan tidak bisa dipakai.',
+            'slug.min' => 'Subdomain minimal 3 karakter.',
         ]);
 
         $settings = $request->input('settings');
@@ -744,6 +795,20 @@ class MerchantController extends Controller
         }
         if (! empty($validated['phone_number'])) {
             $store->phone_number = $validated['phone_number'];
+        }
+
+        // Update subdomain toko (slug) — opsional, divalidasi unik di atas
+        if (! empty($validated['slug']) && $validated['slug'] !== $store->slug) {
+            $oldSlug = $store->slug;
+            $store->slug = $validated['slug'];
+            Cache::forget("tenant:id_by_slug_or_id:{$oldSlug}");
+            Cache::forget("tenant:id_by_slug_or_id:{$store->slug}");
+            Cache::forget('domain:'.$oldSlug.'.'.config('app.root_domain', 'alurelab.com'));
+        }
+
+        // Logo / icon toko (favicon & header storefront)
+        if (array_key_exists('logo_url', $validated)) {
+            $store->logo_url = $validated['logo_url'] ?: null;
         }
 
         $current = $store->settings ?? [];

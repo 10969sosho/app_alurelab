@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Subscription;
+use App\Models\User;
 use App\Services\DokuService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class SubscriptionController extends Controller
@@ -95,15 +97,20 @@ class SubscriptionController extends Controller
         $cleanPhone = $this->dokuService->sanitizePhoneNumber($rawPhone);
 
         if ($request->filled('phone')) {
-            if ($user) {
+            if ($user && ! $this->phoneIsUsedByAnotherUser($cleanPhone, $user)) {
                 $user->update(['phone_number' => $cleanPhone]);
+            } elseif ($user) {
+                Log::warning('Subscription phone is already assigned to another user; keeping account phone unchanged.', [
+                    'user_id' => $user->id,
+                ]);
             }
             $store->update(['phone_number' => $cleanPhone]);
         } else {
             if (empty($store->phone_number) || $store->phone_number === '-') {
                 $store->update(['phone_number' => $cleanPhone]);
             }
-            if ($user && (empty($user->phone_number) || $user->phone_number === '-')) {
+            if ($user && (empty($user->phone_number) || $user->phone_number === '-')
+                && ! $this->phoneIsUsedByAnotherUser($cleanPhone, $user)) {
                 $user->update(['phone_number' => $cleanPhone]);
             }
         }
@@ -130,7 +137,7 @@ class SubscriptionController extends Controller
             'invoice_number' => $this->invoiceNumber(),
         ]);
 
-        $result = $this->dokuService->createSubscriptionInvoice($subscription, $store, $request->user());
+        $result = $this->dokuService->createSubscriptionInvoice($subscription, $store, $user, $cleanPhone);
 
         if (! $result['success']) {
             $subscription->update(['status' => 'failed']);
@@ -183,5 +190,12 @@ class SubscriptionController extends Controller
         } while (Subscription::where('invoice_number', $invoiceNumber)->exists());
 
         return $invoiceNumber;
+    }
+
+    private function phoneIsUsedByAnotherUser(string $phone, User $user): bool
+    {
+        return User::where('phone_number', $phone)
+            ->where('id', '!=', $user->id)
+            ->exists();
     }
 }

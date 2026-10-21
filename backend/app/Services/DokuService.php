@@ -55,6 +55,48 @@ class DokuService
     }
 
     /**
+     * Signature untuk request GET (tanpa Digest).
+     */
+    public function generateGetSignature(string $requestId, string $requestTimestamp, string $requestTarget): string
+    {
+        $stringToSign = 'Client-Id:'.$this->clientId."\n"
+            .'Request-Id:'.$requestId."\n"
+            .'Request-Timestamp:'.$requestTimestamp."\n"
+            .'Request-Target:'.$requestTarget;
+
+        $rawHmac = hash_hmac('sha256', $stringToSign, $this->secretKey, true);
+
+        return 'HMACSHA256='.base64_encode($rawHmac);
+    }
+
+    /**
+     * GET signed request ke DOKU (misal: Check Status).
+     *
+     * @return array{ok: bool, status: int, body: string}
+     */
+    public function signedGet(string $target): array
+    {
+        $requestId = (string) Str::uuid();
+        $timestamp = now('UTC')->format('Y-m-d\TH:i:s\Z');
+
+        try {
+            $response = Http::withHeaders([
+                'Client-Id' => $this->clientId,
+                'Request-Id' => $requestId,
+                'Request-Timestamp' => $timestamp,
+                'Request-Target' => $target,
+                'Signature' => $this->generateGetSignature($requestId, $timestamp, $target),
+            ])->get($this->baseUrl().$target);
+        } catch (\Throwable $e) {
+            Log::error('DOKU GET Request Gagal (transport)', ['target' => $target, 'error' => $e->getMessage()]);
+
+            return ['ok' => false, 'status' => 0, 'body' => $e->getMessage()];
+        }
+
+        return ['ok' => $response->successful(), 'status' => $response->status(), 'body' => $response->body()];
+    }
+
+    /**
      * POST signed request JSON ke DOKU dengan header Client-Id / Digest / Signature.
      *
      * @return array{ok: bool, status: int, body: string}
@@ -85,7 +127,55 @@ class DokuService
     }
 
     /**
+     * Mengecek status pembayaran invoice langsung ke DOKU.
+     *
+     * @return array{ok: bool, paid: bool, status: string, payload: array}
+     */
+    public function checkOrderStatus(string $invoiceNumber): array
+    {
+        if (! $this->isConfigured()) {
+            return ['ok' => false, 'paid' => false, 'status' => 'UNCONFIGURED', 'payload' => []];
+        }
+
+        $target = "/orders/v1/status/{$invoiceNumber}";
+        $res = $this->signedGet($target);
+
+        if (! $res['ok']) {
+            Log::warning('DOKU checkOrderStatus gagal', ['target' => $target, 'body' => $res['body']]);
+
+            return ['ok' => false, 'paid' => false, 'status' => 'ERROR', 'payload' => []];
+        }
+
+        $json = json_decode($res['body'], true) ?? [];
+        $txStatus = strtoupper((string) ($json['transaction']['status'] ?? ''));
+        $orderStatus = strtoupper((string) ($json['order']['status'] ?? ''));
+
+        $isPaid = ($txStatus === 'SUCCESS' || $orderStatus === 'SUCCESS' || $orderStatus === 'PAID');
+
+        return [
+            'ok' => true,
+            'paid' => $isPaid,
+            'status' => $txStatus ?: $orderStatus,
+            'payload' => $json,
+        ];
+    }
+
+    /**
      * Membuat tagihan Checkout V1 DOKU untuk satu order.
+     *
+     * CATATAN NAMA TAMPIL DI HALAMAN DOKU (audit 2026-10-20):
+     * - Header DOKU Checkout (avatar + "Cristian Albertus") adalah MERCHANT/ACCOUNT NAME
+     *   dari akun yang memilik Client ID (DOKU_CLIENT_ID) tersebut. Nama ini dikonfigurasi
+     *   di DOKU Back Office (Merchant Profile / Business Info) dan TIDAK bisa di-override
+     *   per transaksi: payload /checkout/v1/payment hanya menerima order, payment, customer,
+     *   dan additional_info — tidak ada field merchant.name.
+     * - "Customer Information: Name" pada halaman DOKU berasal dari payload `customer.name`
+     *   di bawah ini, yaitu nama penerima pesanan (bukan nama toko).
+     * - Opsi menampilkan nama toko: (1) daftarkan DOKU merchant account terpisah per toko
+     *   (Client ID baru -> header menampilkan nama bisnis toko tersebut), atau
+     *   (2) gunakan sub-account settlement (additional_info.settlement.sub_account_id) —
+     *   dana cair ke sub-account toko, tetapi header checkout tetap nama merchant utama, atau
+     *   (3) hubungi DOKU untuk opsi white-label / merchant name override bila tersedia.
      *
      * @return array{success: bool, invoice_url: ?string, invoice_id: ?string, expiry_date: ?string, error: ?string}
      */
@@ -94,9 +184,9 @@ class DokuService
         if ($this->isQaSimulationEnabled($store)) {
             return [
                 'success' => true,
-                'invoice_url' => null,
-                'invoice_id' => 'QA-INVOICE-'.$order->order_number,
-                'expiry_date' => now()->addMinutes(config('doku.invoice_expiry_minutes', 1440))->toIso8601String(),
+                'invoice_url' => config('app.url')."/qa-simulator/{$order->order_number}",
+                'invoice_id' => $order->order_number,
+                'expiry_date' => now()->addMinutes(15)->toIso8601String(),
                 'error' => null,
             ];
         }
@@ -108,14 +198,17 @@ class DokuService
         $target = '/checkout/v1/payment';
         $expiryMinutes = (int) config('doku.invoice_expiry_minutes', 1440);
 
+        $frontendUrl = rtrim((string) config('doku.buyer_redirect_url', config('doku.frontend_url', 'https://app.alurelab.com')), '/');
+        $buyerReturnUrl = "{$frontendUrl}/{$store->slug}/orders/{$order->order_number}";
+
         $payload = [
             'order' => [
                 'invoice_number' => $order->order_number,
                 'amount' => (int) round($order->total_amount),
                 'currency' => 'IDR',
                 'description' => "Pembayaran {$order->order_number} di {$store->name}",
-                'callback_url' => config('app.url').config('doku.notification_path'),
-                'redirect_url' => rtrim((string) config('doku.buyer_redirect_url', config('app.url')), '/').'/'.$store->slug.'/orders',
+                'callback_url' => $buyerReturnUrl,
+                'redirect_url' => $buyerReturnUrl,
                 'expiry' => [
                     'duration' => $expiryMinutes,
                     'unit' => 'MINUTE',
@@ -140,62 +233,173 @@ class DokuService
         $posted = $this->signedPost($target, $body);
 
         if (! $posted['ok']) {
-            Log::error('DOKU Create Checkout Failed', ['status' => $posted['status'], 'body' => $posted['body']]);
+            Log::error('DOKU Create Checkout Invoice Gagal', [
+                'order_number' => $order->order_number,
+                'status' => $posted['status'],
+                'body' => $posted['body'],
+            ]);
 
-            return $this->failure('Gagal membuat tagihan pembayaran DOKU: '.$posted['body']);
+            return $this->failure('Gagal membuat tagihan DOKU: '.$posted['body']);
         }
 
         $json = json_decode($posted['body'], true) ?? [];
+        $invoiceUrl = $json['response']['payment']['url']
+            ?? $json['payment']['url']
+            ?? $json['response']['payment_url']
+            ?? null;
+
+        $invoiceId = $json['response']['order']['invoice_number']
+            ?? $json['order']['invoice_number']
+            ?? $order->order_number;
+
+        $expiryDate = $json['response']['order']['expiry_date']
+            ?? $json['order']['expiry_date']
+            ?? now()->addMinutes($expiryMinutes)->toIso8601String();
 
         return [
             'success' => true,
-            'invoice_url' => $json['response']['payment']['url']
-                ?? $json['payment']['url']
-                ?? $json['invoice_url']
-                ?? null,
-            'invoice_id' => $json['response']['order']['invoice_number']
-                ?? $json['order']['invoice_number']
-                ?? $order->order_number,
-            'expiry_date' => $json['response']['payment']['expired_datetime']
-                ?? $json['response']['payment']['expiry_time']
-                ?? now()->addMinutes($expiryMinutes)->toIso8601String(),
+            'invoice_url' => $invoiceUrl,
+            'invoice_id' => $invoiceId,
+            'expiry_date' => $expiryDate,
             'error' => null,
         ];
     }
 
     /**
-     * Membuat tagihan Checkout V1 DOKU untuk pembayaran langganan paket toko.
+     * Generate nomor Virtual Account (Direct API DOKU Non-SNAP) untuk satu order.
+     * Endpoint: POST /{bank}-virtual-account/v2/payment-code
+     *
+     * @return array{success: bool, va_number: ?string, bank: ?string, expired_at: ?string, error: ?string}
+     */
+    public function createDirectVa(Order $order, Store $store, string $bank): array
+    {
+        $bank = strtolower($bank);
+
+        if (! in_array($bank, ['bca', 'mandiri', 'bri', 'bni'], true)) {
+            return $this->vaFailure("Bank Virtual Account '{$bank}' belum didukung.");
+        }
+
+        $expiryMinutes = (int) config('doku.invoice_expiry_minutes', 1440);
+        $expiredAt = now()->addMinutes($expiryMinutes)->toIso8601String();
+
+        if ($this->isQaSimulationEnabled($store)) {
+            return [
+                'success' => true,
+                'va_number' => '99'.substr(preg_replace('/\D/', '', (string) $order->id), 0, 14),
+                'bank' => strtoupper($bank),
+                'expired_at' => $expiredAt,
+                'error' => null,
+            ];
+        }
+
+        if (! $this->isConfigured()) {
+            return $this->vaFailure('Kredensial DOKU (DOKU_CLIENT_ID / DOKU_SECRET_KEY) belum dikonfigurasi.');
+        }
+
+        $payload = [
+            'order' => [
+                'invoice_number' => $order->order_number,
+                'amount' => (int) round($order->total_amount),
+            ],
+            'virtual_account_info' => [
+                'expired_time' => $expiryMinutes,
+                'reusable_status' => false,
+                'info1' => $store->name,
+                'info2' => $order->order_number,
+                'info3' => 'Pembayaran pesanan '.$order->order_number,
+            ],
+            'customer' => [
+                'name' => $order->shipping_recipient_name,
+                'email' => $order->customer?->email ?: 'buyer@alurelab.com',
+            ],
+        ];
+
+        if ($bank === 'bni') {
+            // BNI VA mensyaratkan merchant_unique_reference (numerik, maks 13 digit).
+            $payload['virtual_account_info']['merchant_unique_reference'] = substr(str_pad((string) sprintf('%u', crc32($order->order_number)), 13, '0', STR_PAD_LEFT), 0, 13);
+        }
+
+        $target = "/{$bank}-virtual-account/v2/payment-code";
+        $posted = $this->signedPost($target, json_encode($payload, JSON_UNESCAPED_SLASHES));
+
+        if (! $posted['ok']) {
+            Log::error('DOKU Create Direct VA Gagal', [
+                'order_number' => $order->order_number,
+                'bank' => strtoupper($bank),
+                'status' => $posted['status'],
+                'body' => $posted['body'],
+            ]);
+
+            return $this->vaFailure('Gagal membuat Virtual Account '.strtoupper($bank).': '.$posted['body']);
+        }
+
+        $json = json_decode($posted['body'], true) ?? [];
+        $vaNumber = $json['virtual_account_info']['virtual_account_number']
+            ?? $json['response']['virtual_account_info']['virtual_account_number']
+            ?? $json['payment_code']
+            ?? null;
+
+        if (! $vaNumber) {
+            return $this->vaFailure('Respons DOKU tidak memuat nomor Virtual Account.');
+        }
+
+        return [
+            'success' => true,
+            'va_number' => (string) $vaNumber,
+            'bank' => strtoupper($bank),
+            'expired_at' => $expiredAt,
+            'error' => null,
+        ];
+    }
+
+    /**
+     * URL script DOKU Checkout JS (jokul-checkout-1.0.0.js) sesuai environment.
+     * Dipakai frontend untuk memanggil loadJokulCheckout(payment_url) sebagai modal overlay.
+     */
+    public function checkoutJsUrl(): string
+    {
+        $isProduction = (string) config('doku.environment', 'sandbox') === 'production';
+
+        return $isProduction
+            ? 'https://jokul.doku.com/jokul-checkout-js/v1/jokul-checkout-1.0.0.js'
+            : 'https://sandbox.doku.com/jokul-checkout-js/v1/jokul-checkout-1.0.0.js';
+    }
+
+    /**
+     * Membuat sesi DOKU Checkout untuk pembayaran langganan SaaS (SaaS Subscription).
+     * Data merchant dikirim atas Nama Toko ($store->name), bukan nama akun user pemilik.
      *
      * @return array{success: bool, payment_url: ?string, error: ?string}
      */
-    public function createSubscriptionInvoice(Subscription $subscription, Store $store, User $user): array
+    public function createSubscriptionInvoice(Subscription $subscription, Store $store, ?User $owner = null, ?string $phone = null): array
     {
         if (! $this->isConfigured()) {
-            return $this->subscriptionFailure('Kredensial DOKU (DOKU_CLIENT_ID / DOKU_SECRET_KEY) belum dikonfigurasi.');
+            return $this->subscriptionFailure('Kredensial DOKU belum dikonfigurasi.');
         }
 
-        $frontendUrl = rtrim((string) config('doku.frontend_url', 'https://app.alurelab.com'), '/');
+        $target = '/checkout/v1/payment';
+        $frontendUrl = rtrim((string) config('doku.frontend_url', 'http://localhost:3000'), '/');
 
         $payload = [
             'order' => [
                 'invoice_number' => $subscription->invoice_number,
-                'amount' => (int) $subscription->amount,
+                'amount' => (int) round($subscription->amount),
                 'currency' => 'IDR',
-                'description' => "Langganan paket {$subscription->plan_tier} untuk {$store->name}",
                 'callback_url' => "{$frontendUrl}/dashboard/subscription?status=success",
                 'callback_url_cancel' => "{$frontendUrl}/dashboard/subscription?status=cancel",
+                'expiry' => [
+                    'duration' => 120,
+                    'unit' => 'MINUTE',
+                ],
             ],
             'payment' => [
+                'payment_methods' => config('doku.payment_methods', ['QRIS']),
                 'payment_due_date' => 60,
             ],
             'customer' => [
-                'name' => $user->name ?: 'Merchant',
-                'email' => $user->email,
-                'phone' => $this->sanitizePhoneNumber(
-                    (! empty($user->phone_number) && $user->phone_number !== '-')
-                        ? $user->phone_number
-                        : $store->phone_number
-                ),
+                'name' => $store->name,
+                'email' => $owner?->email,
+                'phone' => $phone ? $this->sanitizePhoneNumber($phone) : null,
             ],
         ];
 
@@ -204,36 +408,42 @@ class DokuService
         $posted = $this->signedPost('/checkout/v1/payment', $body);
 
         if (! $posted['ok']) {
-            Log::error('DOKU Create Subscription Invoice Failed', [
+            Log::error('DOKU Create Subscription Invoice Gagal', [
                 'invoice_number' => $subscription->invoice_number,
                 'status' => $posted['status'],
                 'body' => $posted['body'],
             ]);
 
-            return $this->subscriptionFailure('Gagal membuat tagihan langganan DOKU: '.$posted['body']);
+            return $this->subscriptionFailure('Gagal membuat tagihan DOKU: '.$posted['body']);
         }
 
         $json = json_decode($posted['body'], true) ?? [];
         $paymentUrl = $json['response']['payment']['url']
             ?? $json['payment']['url']
-            ?? $json['invoice_url']
+            ?? $json['response']['payment_url']
             ?? null;
 
-        if (! $paymentUrl) {
-            return $this->subscriptionFailure('Respons DOKU tidak memuat payment URL.');
-        }
-
-        return ['success' => true, 'payment_url' => (string) $paymentUrl, 'error' => null];
+        return [
+            'success' => true,
+            'payment_url' => $paymentUrl,
+            'error' => null,
+        ];
     }
 
     /**
-     * Registrasi sub-account DOKU (SAC Merchant) untuk sebuah toko.
-     * Simpan id sub-account ke store.doku_sub_account_id + status ke doku_account_status.
+     * Mendaftarkan Sub-Account DOKU untuk toko/merchant agar escrow dan settlement otomatis.
+     * Email akun selalu memakai email asli owner bila tersedia; dummy hanya fallback terakhir.
      *
      * @return array{success: bool, sub_account_id: ?string, error: ?string}
      */
-    public function registerSubAccount(Store $store, ?string $ownerEmail = null, ?string $ownerPhone = null): array
+    public function registerSubAccount(Store $store, ?string $ownerEmail = null): array
     {
+        if ($this->isQaSimulationEnabled($store)) {
+            $mockSubAccountId = 'SUB-QA-'.strtoupper(substr(md5($store->id), 0, 10));
+
+            return ['success' => true, 'sub_account_id' => $mockSubAccountId, 'error' => null];
+        }
+
         if (! empty($store->doku_sub_account_id)) {
             return ['success' => true, 'sub_account_id' => $store->doku_sub_account_id, 'error' => null];
         }
@@ -243,7 +453,12 @@ class DokuService
         }
 
         $target = '/sac-merchant/v1/accounts';
-        $email = $ownerEmail ?: ($store->phone_number ? $store->slug.'@alurelab.shop' : 'store_'.$store->id.'@alurelab.shop');
+
+        $email = $ownerEmail ?: $store->users()->wherePivot('role', 'owner')->first()?->email;
+
+        if (! $email) {
+            $email = 'store_'.$store->id.'@alurelab.com';
+        }
 
         $body = json_encode([
             'account' => [
@@ -283,35 +498,42 @@ class DokuService
     }
 
     /**
-     * Validasi signature notifikasi webhook DOKU (Request-Id, Timestamp, HMAC).
+     * Validasi HMAC Signature webhook DOKU Checkout V1.
      */
     public function verifyWebhookSignature(Request $request): bool
     {
-        $signature = (string) $request->header('Signature', '');
-        $requestId = (string) $request->header('Request-Id', '');
-        $timestamp = (string) $request->header('Request-Timestamp', '');
+        if (config('services.qa_simulation.bypass_webhook_signature', false)) {
+            return true;
+        }
 
-        if ($signature === '' || $requestId === '' || $timestamp === '') {
+        $clientId = $request->header('Client-Id');
+        $requestId = $request->header('Request-Id');
+        $timestamp = $request->header('Request-Timestamp');
+        $signature = $request->header('Signature');
+        $target = $request->header('Request-Target', (string) config('doku.notification_path'));
+
+        if (! $clientId || ! $requestId || ! $timestamp || ! $signature) {
+            return false;
+        }
+
+        if ($clientId !== $this->clientId) {
             return false;
         }
 
         $sentAt = strtotime($timestamp);
-        if ($sentAt === false) {
-            return false;
-        }
-
         $tolerance = (int) config('doku.signature_tolerance_seconds', 300);
-        if (abs(time() - $sentAt) > $tolerance) {
+
+        if ($sentAt === false || abs(time() - $sentAt) > $tolerance) {
             return false;
         }
 
-        $body = (string) $request->getContent();
+        $body = $request->getContent();
 
-        // Request-Target bisa dikirim sebagai header atau berupa path notifikasi kita.
         $targets = array_unique(array_filter([
-            $request->header('Request-Target'),
-            '/'.ltrim($request->path(), '/'),
+            $target,
             (string) config('doku.notification_path'),
+            $request->getRequestUri(),
+            '/'.$request->path(),
         ]));
 
         foreach ($targets as $target) {
@@ -380,6 +602,20 @@ class DokuService
             'invoice_url' => null,
             'invoice_id' => null,
             'expiry_date' => null,
+            'error' => $error,
+        ];
+    }
+
+    /**
+     * @return array{success: bool, va_number: null, bank: null, expired_at: null, error: string}
+     */
+    protected function vaFailure(string $error): array
+    {
+        return [
+            'success' => false,
+            'va_number' => null,
+            'bank' => null,
+            'expired_at' => null,
             'error' => $error,
         ];
     }

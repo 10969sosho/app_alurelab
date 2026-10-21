@@ -114,6 +114,40 @@ class SubscriptionCheckoutTest extends TestCase
         });
     }
 
+    public function test_checkout_uses_duplicate_phone_for_invoice_without_updating_user(): void
+    {
+        $this->configureDoku();
+        $phone = '08'.random_int(100000000, 999999999);
+        $cleanPhone = '628'.substr($phone, 2);
+        $originalUserPhone = $this->user->phone_number;
+
+        User::create([
+            'name' => 'Existing Phone Owner',
+            'email' => 'phone.owner.'.Str::random(8).'@example.com',
+            'phone_number' => $cleanPhone,
+            'password_hash' => Hash::make('password123'),
+        ]);
+
+        Http::fake([
+            'api-sandbox.doku.com/checkout/*' => Http::response([
+                'response' => ['payment' => ['url' => 'https://sandbox.doku.com/checkout/duplicate-phone']],
+            ]),
+        ]);
+
+        $this->withHeaders($this->headers)
+            ->postJson('/api/v1/merchant/subscription/checkout', ['plan' => 'pro', 'phone' => $phone])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->assertSame($originalUserPhone, $this->user->fresh()->phone_number);
+        $this->assertSame($cleanPhone, $this->store->fresh()->phone_number);
+        Http::assertSent(function ($request) use ($cleanPhone): bool {
+            $payload = json_decode((string) $request->body(), true);
+
+            return ($payload['customer']['phone'] ?? null) === $cleanPhone;
+        });
+    }
+
     public function test_free_store_can_upgrade_to_starter(): void
     {
         Http::preventStrayRequests();
@@ -248,8 +282,10 @@ class SubscriptionCheckoutTest extends TestCase
 
         return $this->call('POST', self::WEBHOOK_TARGET, [], [], [], [
             'CONTENT_TYPE' => 'application/json',
+            'HTTP_CLIENT_ID' => 'BRN-0287-test',
             'HTTP_REQUEST_ID' => $requestId,
             'HTTP_REQUEST_TIMESTAMP' => $timestamp,
+            'HTTP_REQUEST_TARGET' => self::WEBHOOK_TARGET,
             'HTTP_SIGNATURE' => $service->generateSignature($requestId, $timestamp, self::WEBHOOK_TARGET, $content),
         ], $content);
     }

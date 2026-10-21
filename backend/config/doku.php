@@ -20,8 +20,11 @@ return [
 
     'notification_path' => '/api/v1/webhooks/doku/notification',
 
-    // URL frontend tempat DOKU mengembalikan pembeli setelah checkout langganan.
+    // URL frontend tempat DOKU mengembalikan pembeli setelah checkout langganan atau order toko.
     'frontend_url' => env('FRONTEND_URL', 'https://app.alurelab.com'),
+
+    // Buyer redirect fallback URL
+    'buyer_redirect_url' => env('DOKU_BUYER_REDIRECT_URL', env('FRONTEND_URL', 'https://app.alurelab.com')),
 
     // Toleransi clock-skew untuk validasi Request-Timestamp webhook (detik).
     'signature_tolerance_seconds' => 300,

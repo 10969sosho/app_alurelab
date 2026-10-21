@@ -22,13 +22,17 @@ class ProviderWebhookVerificationTest extends TestCase
 
         $this->assertFalse($service->verifyWebhookSignature($this->dokuRequest($body)));
         $this->assertFalse($service->verifyWebhookSignature($this->dokuRequest($body, [
+            'HTTP_CLIENT_ID' => 'BRN-0287-test',
             'HTTP_REQUEST_ID' => $requestId,
             'HTTP_REQUEST_TIMESTAMP' => $timestamp,
+            'HTTP_REQUEST_TARGET' => self::TARGET,
             'HTTP_SIGNATURE' => 'wrong-signature',
         ])));
         $this->assertTrue($service->verifyWebhookSignature($this->dokuRequest($body, [
+            'HTTP_CLIENT_ID' => 'BRN-0287-test',
             'HTTP_REQUEST_ID' => $requestId,
             'HTTP_REQUEST_TIMESTAMP' => $timestamp,
+            'HTTP_REQUEST_TARGET' => self::TARGET,
             'HTTP_SIGNATURE' => $signature,
         ])));
     }
@@ -41,8 +45,10 @@ class ProviderWebhookVerificationTest extends TestCase
         $stale = now()->subMinutes(30)->setTimezone('UTC')->format('Y-m-d\TH:i:s.v\Z');
 
         $request = $this->dokuRequest($body, [
+            'HTTP_CLIENT_ID' => 'BRN-0287-test',
             'HTTP_REQUEST_ID' => $requestId,
             'HTTP_REQUEST_TIMESTAMP' => $stale,
+            'HTTP_REQUEST_TARGET' => self::TARGET,
             'HTTP_SIGNATURE' => $service->generateSignature($requestId, $stale, self::TARGET, $body),
         ]);
 
@@ -59,8 +65,10 @@ class ProviderWebhookVerificationTest extends TestCase
 
         $this->call('POST', self::TARGET, [], [], [], [
             'CONTENT_TYPE' => 'application/json',
+            'HTTP_CLIENT_ID' => 'BRN-0287-test',
             'HTTP_REQUEST_ID' => $requestId,
             'HTTP_REQUEST_TIMESTAMP' => $timestamp,
+            'HTTP_REQUEST_TARGET' => self::TARGET,
             'HTTP_SIGNATURE' => $service->generateSignature($requestId, $timestamp, self::TARGET, $content),
         ], $content)->assertOk()->assertJson(['status' => 'ignored']);
     }
@@ -72,8 +80,10 @@ class ProviderWebhookVerificationTest extends TestCase
 
         $this->call('POST', self::TARGET, [], [], [], [
             'CONTENT_TYPE' => 'application/json',
+            'HTTP_CLIENT_ID' => 'BRN-0287-test',
             'HTTP_REQUEST_ID' => (string) Str::uuid(),
             'HTTP_REQUEST_TIMESTAMP' => $this->timestamp(),
+            'HTTP_REQUEST_TARGET' => self::TARGET,
             'HTTP_SIGNATURE' => 'forged-signature',
         ], $content)->assertStatus(401);
     }
@@ -116,6 +126,8 @@ class ProviderWebhookVerificationTest extends TestCase
     {
         return Request::create(self::TARGET, 'POST', [], [], [], array_merge([
             'CONTENT_TYPE' => 'application/json',
+            'HTTP_CLIENT_ID' => 'BRN-0287-test',
+            'HTTP_REQUEST_TARGET' => self::TARGET,
             'HTTP_REQUEST_ID' => null,
             'HTTP_REQUEST_TIMESTAMP' => $this->timestamp(),
             'HTTP_SIGNATURE' => null,

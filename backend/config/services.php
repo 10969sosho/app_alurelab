@@ -58,9 +58,14 @@ return [
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
     ],
 
+    'whatsapp' => [
+        'url' => env('WA_GATEWAY_URL', 'http://127.0.0.1:5001/send'),
+        'token' => env('WA_API_KEY', 'alurelab_wa_secret_2026'),
+    ],
+
     'fonnte' => [
-        'token' => env('FONNTE_API_TOKEN'),
-        'url' => env('FONNTE_API_URL', 'https://api.fonnte.com/send'),
+        'token' => env('FONNTE_API_TOKEN', env('WA_API_KEY', 'alurelab_wa_secret_2026')),
+        'url' => env('FONNTE_API_URL', env('WA_GATEWAY_URL', 'http://127.0.0.1:5001/send')),
     ],
 
     'qa_simulation' => [

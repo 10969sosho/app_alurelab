@@ -4,8 +4,11 @@ namespace Tests\Unit;
 
 use App\Models\Order;
 use App\Models\Store;
+use App\Models\StoreUser;
+use App\Models\User;
 use App\Services\DokuService;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -15,6 +18,8 @@ class DokuServiceTest extends TestCase
     private const TARGET = '/checkout/v1/payment';
 
     private const SUB_ACCOUNT_TARGET = '/sac-merchant/v1/accounts';
+
+    private const VA_TARGET = '/bca-virtual-account/v2/payment-code';
 
     public function test_create_checkout_invoice_sends_signed_doku_request(): void
     {
@@ -74,6 +79,7 @@ class DokuServiceTest extends TestCase
             $this->assertSame('IDR', $payload['order']['currency']);
             $this->assertSame(150000, $payload['order']['amount']);
             $this->assertNotEmpty($payload['order']['callback_url']);
+            $this->assertSame('ACC-TEST', $payload['additional_info']['settlement']['sub_account_id']);
             $this->assertSame('Pemilik Toko', $payload['additional_info']['settlement']['bank']['account_name']);
 
             $requestId = $request->header('Request-Id')[0];
@@ -162,6 +168,49 @@ class DokuServiceTest extends TestCase
         });
     }
 
+    public function test_register_sub_account_uses_store_owner_real_email_when_not_passed(): void
+    {
+        config([
+            'doku.client_id' => 'BRN-0287-test',
+            'doku.secret_key' => 'doku-secret-test',
+            'doku.base_url' => 'https://api-sandbox.doku.com',
+        ]);
+
+        Http::fake([
+            'api-sandbox.doku.com/sac-merchant/*' => Http::response([
+                'response' => ['account' => ['id' => 'ACC-REAL-EMAIL', 'status' => 'ACTIVE']],
+            ]),
+        ]);
+
+        $store = Store::create([
+            'name' => 'Toko Email Asli',
+            'slug' => 'toko-email-'.Str::lower(Str::random(6)),
+            'phone_number' => '0812'.rand(10000000, 99999999),
+        ]);
+
+        $ownerEmail = 'pemilik.'.Str::lower(Str::random(8)).'@example.com';
+
+        StoreUser::create([
+            'store_id' => $store->id,
+            'user_id' => User::create([
+                'name' => 'Pemilik Toko',
+                'email' => $ownerEmail,
+                'password_hash' => Hash::make('password123'),
+            ])->id,
+            'role' => 'owner',
+        ]);
+
+        $result = (new DokuService)->registerSubAccount($store);
+
+        $this->assertTrue($result['success']);
+
+        Http::assertSent(function ($request) use ($ownerEmail) {
+            $payload = json_decode((string) $request->body(), true);
+
+            return $payload['account']['email'] === $ownerEmail;
+        });
+    }
+
     public function test_register_sub_account_is_idempotent_when_already_registered(): void
     {
         config([
@@ -232,6 +281,71 @@ class DokuServiceTest extends TestCase
         $result = (new DokuService)->registerSubAccount($store);
 
         $this->assertFalse($result['success']);
+        Http::assertNothingSent();
+    }
+
+    public function test_create_direct_va_generates_bca_payment_code(): void
+    {
+        config([
+            'doku.client_id' => 'BRN-0287-test',
+            'doku.secret_key' => 'doku-secret-test',
+            'doku.base_url' => 'https://api-sandbox.doku.com',
+            'doku.invoice_expiry_minutes' => 1440,
+            'services.qa_simulation.enabled' => false,
+        ]);
+
+        Http::fake([
+            'api-sandbox.doku.com/bca-virtual-account/*' => Http::response([
+                'virtual_account_info' => ['virtual_account_number' => '8801234567890'],
+            ]),
+        ]);
+
+        $order = new Order([
+            'order_number' => 'ORD-20261020-VA001',
+            'total_amount' => 250000,
+            'shipping_recipient_name' => 'Budi Santoso',
+        ]);
+        $store = new Store(['name' => 'PECEL mini', 'slug' => 'pecel-mini']);
+
+        $result = (new DokuService)->createDirectVa($order, $store, 'BCA');
+
+        $this->assertTrue($result['success']);
+        $this->assertSame('8801234567890', $result['va_number']);
+        $this->assertSame('BCA', $result['bank']);
+        $this->assertNotNull($result['expired_at']);
+        $this->assertNull($result['error']);
+
+        Http::assertSent(function ($request) {
+            $payload = json_decode((string) $request->body(), true);
+
+            $this->assertSame('POST', $request->method());
+            $this->assertSame('https://api-sandbox.doku.com/bca-virtual-account/v2/payment-code', $request->url());
+            $this->assertSame(self::VA_TARGET, $request->header('Request-Target')[0]);
+            $this->assertSame('ORD-20261020-VA001', $payload['order']['invoice_number']);
+            $this->assertSame(250000, $payload['order']['amount']);
+            $this->assertSame(1440, $payload['virtual_account_info']['expired_time']);
+            $this->assertSame('PECEL mini', $payload['virtual_account_info']['info1']);
+            $this->assertSame('Budi Santoso', $payload['customer']['name']);
+
+            return true;
+        });
+    }
+
+    public function test_create_direct_va_rejects_unsupported_bank(): void
+    {
+        config(['services.qa_simulation.enabled' => false]);
+
+        Http::fake();
+
+        $result = (new DokuService)->createDirectVa(
+            new Order(['order_number' => 'ORD-1', 'total_amount' => 1000]),
+            new Store(['name' => 'Toko', 'slug' => 'toko']),
+            'BCA_SYND'
+        );
+
+        $this->assertFalse($result['success']);
+        $this->assertNull($result['va_number']);
+        $this->assertNotNull($result['error']);
         Http::assertNothingSent();
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Enums\OrderStatus;
 use App\Enums\ShipmentStatus;
 use App\Http\Controllers\Controller;
+use App\Models\MerchantWallet;
 use App\Models\Shipment;
 use App\Services\AntiRtsService;
 use App\Services\BiteshipService;
@@ -117,6 +118,7 @@ class BiteshipWebhookController extends Controller
                 ]);
                 $order->update(['status' => OrderStatus::DELIVERED]);
                 $this->antiRtsService->recordOrderOutcome($order->customer, true);
+                MerchantWallet::releaseOrderEscrow($order);
                 break;
 
             case 'cancelled':

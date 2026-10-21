@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
-use App\Enums\WalletTxType;
 use App\Http\Controllers\Controller;
 use App\Models\MerchantWallet;
 use App\Models\Order;
@@ -29,8 +28,26 @@ class DokuWebhookController extends Controller
     /**
      * Endpoint notifikasi resmi DOKU Checkout V1.
      */
-    public function handleNotification(Request $request): JsonResponse
+    public function handleNotification(Request $request): mixed
     {
+        // Jika browser redirect (GET) dari tombol 'Back to Merchant' DOKU simulator/checkout
+        if ($request->isMethod('GET')) {
+            $invoiceNumber = $request->query('invoice_number') ?? $request->query('order_id');
+            $frontendUrl = rtrim((string) config('doku.buyer_redirect_url', config('doku.frontend_url', 'https://app.alurelab.com')), '/');
+
+            if ($invoiceNumber) {
+                if (DB::getDriverName() === 'pgsql') {
+                    DB::statement("SET app.is_system_bypass = 'on';");
+                }
+                $order = Order::where('order_number', $invoiceNumber)->first();
+                if ($order && $order->store) {
+                    return redirect()->to("{$frontendUrl}/{$order->store->slug}/orders/{$order->order_number}");
+                }
+            }
+
+            return redirect()->to("{$frontendUrl}");
+        }
+
         if (! $this->dokuService->verifyWebhookSignature($request)) {
             Log::warning('Percobaan Webhook DOKU Tidak Sah (Invalid Signature)', [
                 'ip' => $request->ip(),
@@ -41,7 +58,8 @@ class DokuWebhookController extends Controller
 
         $payload = $request->all();
         $invoiceNumber = $payload['order']['invoice_number'] ?? $payload['invoice_number'] ?? null;
-        $status = strtoupper((string) ($payload['order']['status'] ?? $payload['status'] ?? ''));
+        // Checkout V1 memakai order.status; notifikasi Direct VA memakai transaction.status.
+        $status = strtoupper((string) ($payload['order']['status'] ?? $payload['status'] ?? $payload['transaction']['status'] ?? ''));
         $amount = $payload['order']['amount'] ?? $payload['amount'] ?? null;
 
         if (! $invoiceNumber) {
@@ -91,7 +109,7 @@ class DokuWebhookController extends Controller
                 return response()->json(['status' => 'already_processed']);
             }
 
-            DB::transaction(function () use ($order, $payload, $status, $idempotencyKey) {
+            DB::transaction(function () use ($order, $payment, $payload, $status, $idempotencyKey) {
                 // 1. Update status order
                 $order->update([
                     'status' => OrderStatus::PAID_ESCROW,
@@ -105,37 +123,19 @@ class DokuWebhookController extends Controller
                     'payment_channel' => $payload['payment']['channel']
                         ?? $payload['payment']['type']
                         ?? $payload['payment_channel']
-                        ?? null,
+                        // Notifikasi Direct VA tidak memuat objek payment, channel ada di channel.id
+                        ?? $payload['channel']['id']
+                        ?? $payment->payment_channel,
                     'raw_webhook_payload' => $payload,
                 ]);
 
-                // 3. Kredit escrow dompet toko (ledger append-only)
-                $wallet = MerchantWallet::firstOrCreate(
-                    ['store_id' => $order->tenant_id],
-                    ['available_balance' => 0, 'escrow_held_balance' => 0]
-                );
-
-                $balanceBefore = $wallet->escrow_held_balance;
-                $creditAmount = $order->merchant_net_amount;
-                $balanceAfter = $balanceBefore + $creditAmount;
-
-                $wallet->increment('escrow_held_balance', $creditAmount);
-
-                WalletTransaction::create([
-                    'tenant_id' => $order->tenant_id,
-                    'wallet_id' => $wallet->id,
-                    'order_id' => $order->id,
-                    'type' => WalletTxType::ORDER_ESCROW_CREDIT,
-                    'amount' => $creditAmount,
-                    'balance_before' => $balanceBefore,
-                    'balance_after' => $balanceAfter,
-                    'description' => "Dana escrow masuk untuk pesanan #{$order->order_number} (DOKU {$status})",
-                    'idempotency_key' => $idempotencyKey,
-                    'created_at' => now(),
-                ]);
+                // 3. Split kredit: escrow merchant (barang - fee), pool ongkir, fee platform
+                MerchantWallet::creditOrderPayment($order, $idempotencyKey, "DOKU {$status}");
 
                 Log::info("Pesanan #{$order->order_number} berhasil dibayar via DOKU", [
-                    'amount' => $creditAmount,
+                    'merchant_escrow' => round((float) $order->items_subtotal - (float) $order->platform_fee_amount, 2),
+                    'shipping_pool' => (float) $order->shipping_cost,
+                    'platform_fee' => (float) $order->platform_fee_amount,
                     'tenant_id' => $order->tenant_id,
                 ]);
             });
